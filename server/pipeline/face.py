@@ -58,7 +58,8 @@ def _landmarkers():
     return mp, face, pose
 
 
-def analyse(video_path: str, fps_sample: float = 6.0) -> PresenceFacts:
+def analyse(video_path: str, fps_sample: float = 6.0, face_mesh: bool = True) -> PresenceFacts:
+    """face_mesh=False: delivery-only mode for people who aren't the account holder (pose only, no face landmarks)."""
     cap = cv2.VideoCapture(video_path)
     if not cap.isOpened():
         return PresenceFacts()
@@ -88,8 +89,8 @@ def analyse(video_path: str, fps_sample: float = 6.0) -> PresenceFacts:
         n += 1
         rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         img = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
-        fr = face.detect(img)
-        if fr.face_landmarks:
+        fr = face.detect(img) if face_mesh else None
+        if fr is not None and fr.face_landmarks:
             found += 1
             lm = fr.face_landmarks[0]
             # head yaw/pitch from the transformation matrix

@@ -18,7 +18,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, Response, HTMLResponse, FileResponse
 from fastapi import Request
 
-from pipeline import audio, face, rubric, poise, tts
+from pipeline import audio, face, rubric, poise, tts, converse
 from training import store as train_store, learned
 
 app = FastAPI(title="Aura", version="0.1")
@@ -40,10 +40,10 @@ async def _save(upload: UploadFile, suffix: str) -> str:
     return path
 
 
-async def measure(video_path: str, with_face: bool = True) -> tuple[dict, dict]:
+async def measure(video_path: str, with_face: bool = True, face_mesh: bool = True) -> tuple[dict, dict]:
     wav = audio.extract_wav(video_path)
     dg_task = audio.transcribe(wav)
-    face_task = asyncio.to_thread(face.analyse, video_path) if with_face else None
+    face_task = asyncio.to_thread(face.analyse, video_path, 6.0, face_mesh) if with_face else None
     dg = await dg_task
     v = await asyncio.to_thread(audio.analyse, wav, dg)
     p = await face_task if face_task else face.PresenceFacts()
@@ -245,3 +245,97 @@ async def rate_submit(token: str, request: Request):
     except (ValueError, KeyError) as e:
         raise HTTPException(422, str(e))
     return {"ok": True}
+
+
+# ---------------------------------------------------------------- live conversations
+
+def _voice_url(text: str, voice_id: str) -> str:
+    from urllib.parse import quote
+    return f"{PUBLIC_URL}/tts?voice_id={voice_id}&text={quote(text)}"
+
+
+@app.post("/session/start")
+async def session_start(request: Request):
+    b = await request.json()
+    try:
+        out = converse.start(room_id=b.get("room_id"), goal=b.get("goal"), lesson=b.get("lesson"), pressure=int(b.get("pressure", 1)), max_turns=b.get("max_turns"), attempt_of=b.get("attempt_of"))
+    except KeyError as e:
+        raise HTTPException(410, str(e))
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    out["opener_audio"] = _voice_url(out["opener"], out["character"]["voice"])
+    return out
+
+
+@app.post("/session/{sid}/turn")
+async def session_turn(sid: str, audio_file: UploadFile = File(..., alias="audio")):
+    path = await _save(audio_file, ".m4a")
+    try:
+        v, _ = await measure(path, with_face=False)
+    finally:
+        os.remove(path)
+    text = v.get("transcript") or ""
+    if len(text.split()) < 2:
+        raise HTTPException(422, "Didn't catch that. Try again, a little closer to the mic.")
+    facts = {k: x for k, x in v.items() if k != "transcript"}
+    try:
+        r = await converse.turn(sid, text, facts)
+    except KeyError as e:
+        raise HTTPException(410, str(e))
+    return {"user_text": text, "facts": {k: facts[k] for k in ("duration_s", "wpm", "filler_count", "hedge_count", "apology_count", "first_word_s", "ended_mid_sentence")}, "reply": r["reply"], "reply_audio": _voice_url(r["reply"], r["voice"]), "done": r["done"], "turn": r["turn"]}
+
+
+@app.post("/session/{sid}/evaluate")
+async def session_evaluate(sid: str, voice: bool = True):
+    try:
+        out = await converse.evaluate(sid)
+    except KeyError as e:
+        raise HTTPException(410, str(e))
+    if voice:
+        out["script_audio"] = _voice_url(out["script"], tts.VOICE_ID)
+    return out
+
+
+@app.post("/lesson")
+async def lesson(request: Request):
+    b = await request.json()
+    return await converse.generate_lesson(unit=b.get("unit", ""), objective=b.get("objective", ""), weak=b.get("weak", []), avoid=b.get("avoid", []), pressure=int(b.get("pressure", 1)))
+
+
+@app.post("/ledger")
+async def make_ledger(text: str = Form(""), context: str = Form(""), audio_file: UploadFile | None = File(None, alias="audio")):
+    story = text
+    if audio_file is not None:
+        path = await _save(audio_file, ".m4a")
+        try:
+            v, _ = await measure(path, with_face=False)
+            story = v.get("transcript") or text
+        finally:
+            os.remove(path)
+    if len(story.split()) < 5:
+        raise HTTPException(422, "Tell me a little more about what happened.")
+    out = await converse.ledger(story, context)
+    out["story"] = story
+    return out
+
+
+@app.post("/scan")
+async def scan(video: UploadFile = File(...), prompt_text: str = Form(...), subject_consent: str = Form("0"), is_self: str = Form("0"), name: str = Form("")):
+    """Back-camera Aura Scan / uploads. Consent required. Others get delivery-only mode (no face mesh). Clip deleted immediately."""
+    if subject_consent != "1":
+        raise HTTPException(403, "The person on camera has to confirm they're in and 18+.")
+    path = await _save(video, ".mp4")
+    try:
+        v, p = await measure(path, with_face=True, face_mesh=(is_self == "1"))
+    finally:
+        os.remove(path)
+    if v["word_count"] < 4:
+        raise HTTPException(422, "Not enough speech to read.")
+    vf = audio.VoiceFacts(**v)
+    pf = face.PresenceFacts(**p)
+    axes = {"delivery": rubric.voice_score(vf), "composure": rubric.composure_score(vf), "command": rubric.command_score(vf), "posture": rubric.presence_score(pf) if pf.available or p.get("frames_analysed") else 50}
+    score = round(sum(axes.values()) / len(axes))
+    tiers = [(90, "Gravity"), (75, "Magnetic"), (60, "Composed"), (45, "Present"), (30, "Faint"), (0, "Static")]
+    tier = next(t for m, t in tiers if score >= m)
+    card = await converse._json_call(converse.M_EVAL, """You write the playful result card for an 'Aura Scan' party game. Return JSON: {"archetype": "The ..." (2-3 words, fun, flattering-ish, never about looks), "best_moment": str (<= 12 words, cites a quote from the transcript), "roast": str (<= 14 words, affectionate, about delivery only, never looks/body/identity)}. No slang like alpha/sigma/mog/rizz.""", json.dumps({"prompt": prompt_text, "transcript": v["transcript"], "fillers": v["filler_count"], "hedges": v["hedge_count"], "wpm": v["wpm"], "score": score}), max_tokens=400)
+    return {"score": score, "tier": tier, "axes": axes, "name": name, "transcript": v["transcript"], "counts": {"fillers": v["filler_count"], "hedges": v["hedge_count"], "wpm": v["wpm"]}, **card}
