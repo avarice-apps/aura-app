@@ -15,5 +15,5 @@ server/**/__pycache__/
 *.mov
 .DS_Store
 **/models/*.task
-training_data/
-models/perception_synthetic*
+**/training_data/
+**/models/perception_synthetic*

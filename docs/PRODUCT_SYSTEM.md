@@ -139,7 +139,8 @@ Honest statement: Aura does not ship a custom-trained neural network on day one.
 2. **A calibrated rubric** turns facts into axis scores with fixed anchors ("filler rate >6 per minute = Voice ≤45") so that scoring is consistent run to run and cannot be charmed.
 3. **Claude (Sonnet for speed, Opus for the weekly Re-read)** receives the facts, the rubric, the user's history, and twelve anchor examples of verdicts at each tier. It writes the three tells, the drill, and Poise's script. It is forbidden from inventing a number that was not in the facts.
 4. **Consistency guard.** Every verdict is run through a second, cheap check: does each tell cite a fact? Does the drill target the lowest axis? Is any banned word present? Fail → regenerate.
-5. **Data flywheel.** Every Read, with consent, stores facts + verdict + the user's next-week delta. After ~5,000 Reads that becomes a fine-tuning set where the label is *what actually improved people*, not what sounded clever. That is the moat: a judgment model trained on outcomes.
+5. **Aura's own perception model** (built; see `docs/MODEL_TRAINING.md`). Opted-in Reads are rated by a paid panel on six perceptions; a model trained on those ratings blends into the rubric once it proves itself on held-out clips.
+6. **Data flywheel.** Every Read, with consent, stores facts + verdict + the user's next-week delta. After ~5,000 Reads that becomes a fine-tuning set where the label is *what actually improved people*, not what sounded clever. That is the moat: a judgment model trained on outcomes.
 
 ---
 
