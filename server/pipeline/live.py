@@ -14,7 +14,9 @@ import os
 import re
 import secrets
 import subprocess
+import shutil
 import tempfile
+import time
 
 import httpx
 
@@ -153,16 +155,21 @@ def last_user_text(messages: list[dict]) -> str:
 
 
 def rollback_if_retry(session_id: str, text: str) -> None:
-    """ElevenLabs may re-ask for a reply when his turn turns out longer than first transcribed.
-    If the new text repeats or extends the last thing he said, replace that exchange instead of adding a duplicate."""
+    """ElevenLabs re-asks for a reply when his turn turns out longer than first transcribed (he kept talking,
+    so the reply he got was cut off). If the new text extends the last thing he said and that reply is only
+    seconds old, replace that exchange instead of adding a duplicate. Older exchanges are never touched."""
     s = converse.SESSIONS.get(session_id)
     if not s or not text or len(s["turns"]) < 3:
         return
     *_, u, ch = s["turns"]
-    if u["role"] == "user" and ch["role"] == "char" and u["text"] and text.strip().lower().startswith(u["text"].strip().lower()[:40]):
+    if u["role"] != "user" or ch["role"] != "char" or not u["text"].strip():
+        return
+    prev, new = u["text"].strip().lower(), text.strip().lower()
+    fresh = time.time() - ch.get("at", 0) < 8
+    if fresh and len(new) > len(prev) and new.startswith(prev[:60]):
         s["turns"] = s["turns"][:-2]
-        if s.get("beat") and ch.get("beat_used"):
-            s["beat"] -= 1
+        s["beat"] = ch.get("beat_before", s.get("beat", 0))
+        s.pop("done", None)
 
 
 async def openai_stream(session_id: str, user_text: str, model: str = "kleos-character"):
@@ -174,6 +181,9 @@ async def openai_stream(session_id: str, user_text: str, model: str = "kleos-cha
             yield f"data: {json.dumps({**base, 'choices': [{'index': 0, 'delta': {'content': piece}, 'finish_reason': None}]})}\n\n"
     except KeyError:
         yield f"data: {json.dumps({**base, 'choices': [{'index': 0, 'delta': {'content': 'Sorry, I have to run.'}, 'finish_reason': None}]})}\n\n"
+    except Exception as e:  # model overloaded or similar: stay in the scene instead of dropping the call
+        print("live reply failed:", repr(e)[:200])
+        yield f"data: {json.dumps({**base, 'choices': [{'index': 0, 'delta': {'content': 'Wait, what?'}, 'finish_reason': None}]})}\n\n"
     yield f"data: {json.dumps({**base, 'choices': [{'index': 0, 'delta': {}, 'finish_reason': 'stop'}]})}\n\n"
     yield "data: [DONE]\n\n"
 
@@ -184,13 +194,13 @@ async def fetch_conversation(conversation_id: str) -> tuple[dict, bytes | None]:
     async with httpx.AsyncClient(timeout=60) as c:
         meta = None
         # The recording and transcript are finalised a few seconds after hang-up.
-        for _ in range(12):
+        for _ in range(10):
             r = await c.get(f"{API}/convai/conversations/{conversation_id}", headers={"xi-api-key": _key()})
             if r.status_code < 300:
                 meta = r.json()
                 if meta.get("status") in ("done", "failed"):
                     break
-            await asyncio.sleep(2.5)
+            await asyncio.sleep(2)
         audio_bytes = None
         if meta and meta.get("has_audio", True):
             a = await c.get(f"{API}/convai/conversations/{conversation_id}/audio", headers={"xi-api-key": _key()})
@@ -215,28 +225,46 @@ async def analyse_call(session_id: str, conversation_id: str) -> None:
     s = converse.SESSIONS.get(session_id)
     if not s:
         raise KeyError("session expired")
+    user_turns = [t for t in s["turns"] if t["role"] == "user" and t["text"].strip()]
+    if not user_turns:
+        return
     meta, rec = await fetch_conversation(conversation_id)
     transcript = meta.get("transcript") or []
     if not rec:
         return
     tmp = tempfile.mkdtemp(prefix="kleos_live_")
+    try:
+        await _measure(s, user_turns, transcript, meta, rec, tmp)
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+    s["conversation_id"] = conversation_id
+
+
+async def _measure(s: dict, user_turns: list[dict], transcript: list[dict], meta: dict, rec: bytes, tmp: str) -> None:
     src = os.path.join(tmp, "call.mp3")
     with open(src, "wb") as f:
         f.write(rec)
     total = float((meta.get("metadata") or {}).get("call_duration_secs") or 0) or 600.0
     spans = _user_spans(transcript, total)
-    user_turns = [t for t in s["turns"] if t["role"] == "user"]
 
     async def one(i: int, span: tuple[float, float, str]):
         t0, t1, _ = span
         wav = os.path.join(tmp, f"u{i}.wav")
-        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{t0:.2f}", "-to", f"{t1:.2f}", "-i", src, "-ac", "1", "-ar", "16000", wav], check=True)
+        await asyncio.to_thread(subprocess.run, ["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{t0:.2f}", "-to", f"{t1:.2f}", "-i", src, "-ac", "1", "-ar", "16000", wav], check=True)
         dg = await audio.transcribe(wav)
         v = await asyncio.to_thread(audio.analyse, wav, dg)
         return {k: x for k, x in v.to_dict().items() if k != "transcript"}
 
     results = await asyncio.gather(*(one(i, sp) for i, sp in enumerate(spans)), return_exceptions=True)
-    for turn, res in zip(user_turns, results):
-        if isinstance(res, dict):
-            turn["facts"] = {**res, **{k: v for k, v in (turn.get("facts") or {}).items() if k in ("interrupted", "presence")}}
-    s["conversation_id"] = conversation_id
+    # Match each recorded span to the stored turn with the same words, in order (spoken turns only).
+    norm = lambda x: re.sub(r"[^a-z0-9 ]", "", x.lower()).strip()
+    j = 0
+    for (_, _, said), res in zip(spans, results):
+        for k in range(j, len(user_turns)):
+            a, b = norm(said), norm(user_turns[k]["text"])
+            if a[:24] == b[:24] or a in b or b in a:
+                if isinstance(res, dict):
+                    t = user_turns[k]
+                    t["facts"] = {**res, **{x: v for x, v in (t.get("facts") or {}).items() if x in ("interrupted", "presence")}}
+                j = k + 1
+                break

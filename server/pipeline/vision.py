@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import os
+import shutil
 import subprocess
 import tempfile
 
@@ -45,10 +46,10 @@ Return only JSON:
 
 
 def _frames(video: str, n: int = 6) -> list[tuple[float, bytes]]:
-    out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", video], capture_output=True, text=True)
     try:
+        out = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "default=nw=1:nk=1", video], capture_output=True, text=True)
         dur = float(out.stdout.strip())
-    except ValueError:
+    except (ValueError, FileNotFoundError):
         dur = 10.0
     tmp = tempfile.mkdtemp(prefix="kleos_frames_")
     frames = []
@@ -57,7 +58,9 @@ def _frames(video: str, n: int = 6) -> list[tuple[float, bytes]]:
         path = os.path.join(tmp, f"f{i}.jpg")
         subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-ss", f"{t:.2f}", "-i", video, "-frames:v", "1", "-vf", "scale=640:-2", "-q:v", "4", path], check=False)
         if os.path.exists(path):
-            frames.append((t, open(path, "rb").read()))
+            with open(path, "rb") as fh:
+                frames.append((t, fh.read()))
+    shutil.rmtree(tmp, ignore_errors=True)
     return frames
 
 
@@ -67,6 +70,8 @@ def _img(b: bytes, media: str = "image/jpeg") -> dict:
 
 async def rate_moment(video: str, note: str = "", tone: str = "real") -> dict:
     frames = await asyncio.to_thread(_frames, video)
+    if not frames:
+        return {"declined": True, "reason": "Couldn't read that video. Try a different clip (MP4 or MOV, under 90 seconds)."}
     words = ""
     try:
         wav = video + ".wav"

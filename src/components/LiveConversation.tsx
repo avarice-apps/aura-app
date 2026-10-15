@@ -58,6 +58,7 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
   const [secs, setSecs] = useState(0);
   const [turns, setTurns] = useState(0);
   const [err, setErr] = useState('');
+  const [retryId, setRetryId] = useState<string | null>(null);
   const energy = useSharedValue(0);
   const idle = useSharedValue(0);
   const scroll = useRef<ScrollView>(null);
@@ -65,6 +66,9 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
   const leavingRef = useRef(false);
   const startRef = useRef<LiveStart | null>(null);
   const convId = useRef('');
+
+  // Callbacks below run long after this render; they reach the latest finish/fail through this ref.
+  const act = useRef({ finish: () => {}, fail: (_m: string) => {} });
 
   const conv = useConversation({
     onConnect: ({ conversationId }) => {
@@ -102,15 +106,32 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
       }
     },
     onModeChange: ({ mode }) => {
+      if (mode !== 'listening' || ending.current || !startRef.current) return;
       // They said their exit line and finished speaking: hang up and read it back.
-      if (mode === 'listening' && leavingRef.current && !ending.current) setTimeout(() => finish(), 900);
+      if (leavingRef.current) {
+        setTimeout(() => act.current.finish(), 900);
+        return;
+      }
+      // The state check from onMessage may still be in flight on a slow connection; ask once more.
+      liveState(startRef.current.session_id)
+        .then((st) => {
+          if (st.leaving && !ending.current) {
+            leavingRef.current = true;
+            setLeaving(true);
+            setTimeout(() => act.current.finish(), 600);
+          }
+        })
+        .catch(() => {});
     },
     onDisconnect: () => {
       // The line closed on their side (time limit, network). Read back what we have.
-      if (!ending.current && startRef.current && convId.current) finish();
+      if (!ending.current && startRef.current && convId.current) act.current.finish();
     },
     onError: (m) => {
-      if (!ending.current) fail(typeof m === 'string' ? m : 'The live line dropped.');
+      if (ending.current) return;
+      // Mid-call error: never leave the mic running with no way out. Hang up and read what we have.
+      if (convId.current) act.current.finish();
+      else act.current.fail(typeof m === 'string' ? m : 'The live line dropped.');
     },
   });
 
@@ -172,6 +193,21 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
     onError?.(m);
   }
 
+  async function readBack(id: string) {
+    if (!startRef.current) return;
+    setErr('');
+    setPhase('evaluating');
+    try {
+      const e = await liveFinish(startRef.current.session_id, id);
+      play('reveal');
+      onDone({ sessionId: startRef.current.session_id, evaluation: e, start: startRef.current });
+    } catch (e: any) {
+      setErr(e?.message ?? 'Poise could not read that one.');
+      setPhase('error');
+      setRetryId(id);
+    }
+  }
+
   async function finish() {
     if (ending.current || !startRef.current) return;
     ending.current = true;
@@ -186,15 +222,12 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
       conv.endSession();
     } catch {}
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setPhase('evaluating');
-    try {
-      const e = await liveFinish(startRef.current.session_id, id);
-      play('reveal');
-      onDone({ sessionId: startRef.current.session_id, evaluation: e, start: startRef.current });
-    } catch (e: any) {
-      fail(e?.message ?? 'Poise could not read that one.');
-    }
+    await readBack(id);
   }
+
+  useEffect(() => {
+    act.current = { finish, fail };
+  });
 
   const speaking = conv.isSpeaking;
   const shared = phase === 'live' ? energy : idle;
@@ -259,6 +292,10 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
         {phase === 'live' ? (
           <Pressable onPress={finish} hitSlop={10} style={{ paddingHorizontal: 20, height: 40, borderRadius: 20, backgroundColor: turns > 0 ? t.ink : t.card, borderWidth: turns > 0 ? 0 : 1, borderColor: t.line, justifyContent: 'center' }}>
             <RNText style={{ fontFamily: font.medium, fontSize: 14, color: turns > 0 ? t.bg : t.ink2 }}>{turns > 0 ? 'End call and get my read' : 'Hang up'}</RNText>
+          </Pressable>
+        ) : phase === 'error' && retryId !== null ? (
+          <Pressable onPress={() => readBack(retryId)} hitSlop={10} style={{ paddingHorizontal: 20, height: 40, borderRadius: 20, backgroundColor: t.accent, justifyContent: 'center' }}>
+            <RNText style={{ fontFamily: font.medium, fontSize: 14, color: t.onAccent }}>Try the read again</RNText>
           </Pressable>
         ) : (
           <View style={{ height: 40 }} />

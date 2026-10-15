@@ -289,9 +289,16 @@ async def live_start(request: Request):
     try:
         out = converse.start(room_id=b.get("room_id"), goal=b.get("goal"), lesson=b.get("lesson"), floor_id=b.get("floor_id"), daily_id=b.get("daily_id"), pressure=int(b.get("pressure", 2)), max_turns=b.get("max_turns"), attempt_of=b.get("attempt_of"), tone=b.get("tone", "real"), live=True)
     except KeyError as e:
-        raise HTTPException(410, str(e))
-    agent_id = await _agent_id()
-    token = await live.conversation_token(agent_id)
+        raise HTTPException(410, f"That scene isn't available: {e}")
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    try:
+        agent_id = await _agent_id()
+        token = await live.conversation_token(agent_id)
+    except Exception as e:
+        _LIVE_AGENT.pop("id", None)  # re-create next time
+        print("live start failed:", repr(e)[:300])
+        raise HTTPException(502, "Couldn't open the live line. Check the server's ElevenLabs key and credits, then try again.")
     sid = out["session_id"]
     return {**out, "agent_id": agent_id, "conversation_token": token, "overrides": {"agent": {"prompt": {"prompt": f"[[kleos:{sid}]]"}, "firstMessage": out["opener"]}, "tts": {"voiceId": out["character"]["voice"]}}}
 
@@ -306,28 +313,59 @@ async def live_state(sid: str):
     return {"done": bool(s.get("done")), "leaving": bool(last.get("leaving")), "turns": sum(1 for t in s["turns"] if t["role"] == "user"), "interest": last.get("interest"), "trust": last.get("trust")}
 
 
-@app.post("/live/{sid}/finish")
-async def live_finish(sid: str, request: Request, voice: bool = True):
-    """After hang-up: measure the recording, then Poise evaluates."""
-    b = await request.json()
-    cid = b.get("conversation_id")
-    if sid in converse.SESSIONS:
-        # Hung up: anything ElevenLabs still sends for this call is ignored.
-        converse.SESSIONS[sid]["closed"] = True
+async def _read_back(sid: str, cid: str | None, voice: bool) -> dict:
+    s = converse.SESSIONS[sid]
     if cid:
         try:
             await live.analyse_call(sid, cid)
-        except KeyError as e:
-            raise HTTPException(410, str(e))
+        except KeyError:
+            raise
         except Exception as e:
             print("live analysis failed:", e)
-    try:
-        out = await converse.evaluate(sid)
-    except KeyError as e:
-        raise HTTPException(410, str(e))
+    out = await converse.evaluate(sid)
     if voice and out.get("script"):
         out["script_audio"] = _voice_url(out["script"], tts.VOICE_ID)
+    s["evaluation"] = out
     return out
+
+
+@app.post("/live/{sid}/finish")
+async def live_finish(sid: str, request: Request, voice: bool = True):
+    """After hang-up: measure the recording, then Poise evaluates. Runs as a job so slow reads never
+    hit a request timeout: returns the read if it's ready within ~25s, otherwise {"pending": true}
+    and the app polls GET /live/{sid}/result."""
+    b = await request.json()
+    s = converse.SESSIONS.get(sid)
+    if s is None:
+        raise HTTPException(410, "That call expired. Start a new one.")
+    s["closed"] = True  # anything ElevenLabs still sends for this call is ignored
+    if s.get("evaluation"):
+        return s["evaluation"]
+    job = s.get("read_job")
+    if job is None or (job.done() and job.exception()):
+        job = asyncio.create_task(_read_back(sid, b.get("conversation_id"), voice))
+        s["read_job"] = job
+    try:
+        return await asyncio.wait_for(asyncio.shield(job), timeout=25)
+    except asyncio.TimeoutError:
+        return {"pending": True}
+    except KeyError as e:
+        raise HTTPException(410, str(e))
+
+
+@app.get("/live/{sid}/result")
+async def live_result(sid: str):
+    s = converse.SESSIONS.get(sid)
+    if s is None:
+        raise HTTPException(410, "That call expired. Start a new one.")
+    if s.get("evaluation"):
+        return s["evaluation"]
+    job = s.get("read_job")
+    if job is None:
+        raise HTTPException(404, "No read in progress.")
+    if job.done() and job.exception():
+        raise HTTPException(500, "Poise couldn't read that call. Try again.")
+    return {"pending": True}
 
 
 @app.post("/llm/v1/chat/completions")
@@ -451,6 +489,27 @@ async def make_ledger(text: str = Form(""), context: str = Form(""), tone: str =
     return out
 
 
+def _as_jpeg(raw: bytes) -> bytes | None:
+    """Phones send PNG screenshots and HEIC photos, often mislabelled. Normalise to a JPEG the model accepts."""
+    import io
+    from PIL import Image
+    try:
+        import pillow_heif  # type: ignore
+        pillow_heif.register_heif_opener()
+    except Exception:
+        pass
+    try:
+        im = Image.open(io.BytesIO(raw))
+        im = im.convert("RGB")
+        im.thumbnail((1800, 1800))
+        out = io.BytesIO()
+        im.save(out, "JPEG", quality=85)
+        return out.getvalue()
+    except Exception as e:
+        print("image decode failed:", repr(e)[:120])
+        return None
+
+
 @app.post("/moment")
 async def rate_moment(video: UploadFile = File(...), note: str = Form(""), tone: str = Form("real")):
     """Rate a Clip: anyone's moment, scored for aura beat by beat. Behaviour only. The clip is deleted right after."""
@@ -471,11 +530,11 @@ async def read_profile(shots: list[UploadFile] = File(...), handle: str = Form("
     """Profile Read: screenshots of an Instagram profile, read the way a stranger would."""
     imgs = []
     for f in shots[:6]:
-        b = await f.read()
-        mt = f.content_type if f.content_type in ("image/jpeg", "image/png", "image/webp", "image/gif") else "image/jpeg"
-        imgs.append((b, mt))
+        jpg = _as_jpeg(await f.read())
+        if jpg:
+            imgs.append((jpg, "image/jpeg"))
     if not imgs:
-        raise HTTPException(422, "Add at least one screenshot of the profile.")
+        raise HTTPException(422, "Couldn't open those images. Try screenshots of the profile instead.")
     out = await vision.read_profile(imgs, handle, tone)
     if out.get("declined"):
         raise HTTPException(422, out.get("reason") or "Poise won't read that one.")

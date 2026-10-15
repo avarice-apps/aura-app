@@ -11,3 +11,4 @@ opencv-python-headless
 scikit-learn
 joblib
 scipy
+pillow-heif>=0.18

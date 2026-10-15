@@ -56,7 +56,7 @@ export default function Welcome() {
   const drift = useSharedValue(0);
   const sweep = useSharedValue(0);
 
-  const stageH = Math.min(height * 0.56, width * 1.25);
+  const stageH = Math.min(height * (height < 720 ? 0.46 : 0.56), width * 1.25);
 
   useEffect(() => {
     drawIn.value = withDelay(80, withTiming(1, { duration: 1400, easing: Easing.out(Easing.cubic) }));

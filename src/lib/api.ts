@@ -305,7 +305,17 @@ export async function liveState(sessionId: string): Promise<{ done: boolean; lea
 }
 
 export async function liveFinish(sessionId: string, conversationId: string): Promise<Evaluation & { scriptAudio: AudioSrc }> {
-  const e = await postJSON<Evaluation & { script_audio?: string }>(`/live/${sessionId}/finish`, { conversation_id: conversationId });
+  // The read can take a while (recording analysis + evaluation). The server answers within ~25s,
+  // or says it's still working; then poll until it's ready.
+  let e = await postJSON<Evaluation & { script_audio?: string; pending?: boolean }>(`/live/${sessionId}/finish`, { conversation_id: conversationId });
+  const until = Date.now() + 180000;
+  while (e.pending && Date.now() < until) {
+    await sleep(2500);
+    const r = await fetch(`${API_URL}/live/${sessionId}/result`);
+    if (!r.ok) throw new Error((await r.json().catch(() => ({})))?.detail ?? 'Poise could not read that one.');
+    e = await r.json();
+  }
+  if (e.pending) throw new Error('Poise is taking too long. Try the read again.');
   return { ...e, scriptAudio: e.script_audio };
 }
 

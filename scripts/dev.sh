@@ -20,6 +20,12 @@ fi
 command -v cloudflared >/dev/null || die "cloudflared not installed. Run: brew install cloudflared"
 [ -f "$ROOT/server/.env" ] || die "Missing server/.env (your API keys). Move aura.env there: mv ~/Downloads/aura.env $ROOT/server/.env"
 [ -d "$ROOT/server/.venv" ] || die "Server not set up. Run: cd $ROOT/server && python3.12 -m venv .venv && source .venv/bin/activate && pip install -r requirements.txt"
+# Refresh server packages when requirements.txt changed since the last install.
+if [ "$ROOT/server/requirements.txt" -nt "$ROOT/server/.venv/.installed" ]; then
+  say "Updating server packages (only when they change)"
+  ("$ROOT/server/.venv/bin/pip" install -q -r "$ROOT/server/requirements.txt" && touch "$ROOT/server/.venv/.installed") || die "Server package install failed. Paste the error to Claude."
+fi
+command -v ffmpeg >/dev/null || die "ffmpeg not installed (needed to read calls and clips). Run: brew install ffmpeg"
 [ -f "$ROOT/server/models/face_landmarker.task" ] || {
   say "Downloading face and posture models (one time)"
   mkdir -p "$ROOT/server/models"

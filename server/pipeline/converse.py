@@ -362,16 +362,16 @@ def readable(text: str, primary: str) -> list[tuple[str, str]]:
     return parts
 
 
-def _beat_block(s: dict, n_user: int) -> str:
+def _beat_block(s: dict, n_user: int) -> tuple[str, int]:
+    """The beat instruction for this reply, and the beat index to store if the reply completes."""
     beats = s["spec"].get("beats") or []
     first, gap = (1, 2) if s["pressure"] >= 3 else (2, 2)
     i = s.get("beat", 0)
     if i < len(beats) and n_user >= first + gap * i:
-        s["beat"] = i + 1
-        return f"WHAT HAPPENS NOW (work it into this reply, through dialogue only, reacting to what he just said first): {beats[i]}"
+        return f"WHAT HAPPENS NOW (work it into this reply, through dialogue only, reacting to what he just said first): {beats[i]}", i + 1
     if i < len(beats):
-        return f"Coming up soon (do not force it yet): {beats[i]}"
-    return "The written beats are used up. Keep escalating the way real life would: harder questions, someone else's reaction, a decision point."
+        return f"Coming up soon (do not force it yet): {beats[i]}", i
+    return "The written beats are used up. Keep escalating the way real life would: harder questions, someone else's reaction, a decision point.", i
 
 
 FILLER_RE = re.compile(r"\b(um+|uh+|er+|ah+|like|you know|sort of|kind of|i mean|basically|literally|actually)\b", re.I)
@@ -391,7 +391,7 @@ def text_facts(text: str) -> dict:
     }
 
 
-def _live_system(s: dict, n_user: int, tone_txt: str) -> str:
+def _live_system(s: dict, n_user: int, tone_txt: str) -> tuple[str, int]:
     spec = s["spec"]
     c = char_of(spec)
     i0, t0 = start_state(c)
@@ -403,10 +403,10 @@ def _live_system(s: dict, n_user: int, tone_txt: str) -> str:
         others = "\n".join(f"- {k}: {v}. ({sketch(k)})" for k, v in roles.items() if k in EXTRAS or k in cast_by_name)
     else:
         others = "\n".join(f"- {k}: {e['sketch']}. Only if the scene calls for someone else; give them a role that fits the setting." for k, e in EXTRAS.items())
-    beat = _beat_block(s, n_user)
+    beat, nxt = _beat_block(s, n_user)
     if n_user >= 40:
         beat = "The scene has run long. Bring it to a natural close in this reply and set leaving to true."
-    return LIVE_SYSTEM.format(name=c["name"], style=c["style"], behaviour=c["behaviour"], setting=spec["setting"], others=others, i0=i0, t0=t0, pressure=s["pressure"], tone=tone_txt, beat=beat)
+    return LIVE_SYSTEM.format(name=c["name"], style=c["style"], behaviour=c["behaviour"], setting=spec["setting"], others=others, i0=i0, t0=t0, pressure=s["pressure"], tone=tone_txt, beat=beat), nxt
 
 
 async def stream_turn(session_id: str, user_text: str):
@@ -414,18 +414,21 @@ async def stream_turn(session_id: str, user_text: str):
     s = SESSIONS.get(session_id)
     if not s:
         raise KeyError("session expired")
-    if s.get("closed"):
-        return
-    s["turns"].append({"role": "user", "text": user_text, "facts": text_facts(user_text)})
-    n_user = sum(1 for t in s["turns"] if t["role"] == "user")
+    if s.get("closed") or s.get("done"):
+        return  # hung up, or they already walked off
+    # Nothing is committed until the reply finishes: if ElevenLabs cancels this request because he kept
+    # talking, the session is left exactly as it was and the retry starts clean.
+    user_turn = {"role": "user", "text": user_text, "facts": text_facts(user_text)}
+    turns = s["turns"] + [user_turn]
+    n_user = sum(1 for t in turns if t["role"] == "user")
     spec = s["spec"]
     c = char_of(spec)
     i0, t0 = start_state(c)
     tone_txt = TONE_CHAR.get(s.get("tone", "real"), TONE_CHAR["real"])
     beat0 = s.get("beat", 0)
-    base = _live_system(s, n_user, tone_txt)
+    base, beat1 = _live_system(s, n_user, tone_txt)
     convo = [{"role": "user", "content": "[The scene begins.]"}]
-    for t in s["turns"]:
+    for t in turns:
         if t["role"] == "char":
             convo.append({"role": "assistant", "content": f'{t["text"]}\n###{json.dumps({"interest": t.get("interest", i0), "trust": t.get("trust", t0), "thought": t.get("thought", ""), "leaving": False})}'})
         elif not t["text"].strip():
@@ -469,7 +472,8 @@ async def stream_turn(session_id: str, user_text: str):
             state = {"interest": clamp(o.get("interest"), i0), "trust": clamp(o.get("trust"), t0), "thought": str(o.get("thought", ""))[:140], "leaving": bool(o.get("leaving"))}
         except Exception:
             pass
-    s["turns"].append({"role": "char", "text": spoken, **state, "beat_used": s.get("beat", 0) > beat0})
+    s["turns"].extend([user_turn, {"role": "char", "text": spoken, **state, "beat_before": beat0, "at": time.time()}])
+    s["beat"] = beat1
     if state["leaving"]:
         s["done"] = True
 
@@ -637,7 +641,7 @@ async def evaluate(session_id: str) -> dict:
             said = " / ".join(f'{who}: "{w}"' for who, w in readable(t["text"], prim)) or f'{prim}: "{t["text"]}"'
             transcript.append(f'{said}  [{prim}\'s inner state after this: interest {t.get("interest","?")}, trust {t.get("trust","?")}; private thought: {t.get("thought","")}{"; LEAVES" if t.get("leaving") else ""}]')
     prev_block = "none"
-    if s.get("attempt_of") and s["attempt_of"] in SESSIONS and SESSIONS[s["attempt_of"]].get("evaluation"):
+    if s.get("attempt_of") and s["attempt_of"] in SESSIONS and (SESSIONS[s["attempt_of"]].get("evaluation") or {}).get("change"):
         p = SESSIONS[s["attempt_of"]]
         prev_block = json.dumps({"counts": _counts(p["turns"]), "change_given": p["evaluation"]["change"]["text"], "user_turns": [t["text"] for t in p["turns"] if t["role"] == "user"]})
     total_words = sum((t.get("facts") or {}).get("word_count", 0) for t in s["turns"] if t["role"] == "user")
@@ -666,8 +670,10 @@ Previous attempt: {prev_block}"""
             return "effort must be real, half or trolling"
         if not isinstance((o.get("landed") or {}).get("score"), (int, float)):
             return "missing landed score"
-        if not o.get("change", {}).get("text"):
+        if not isinstance(o.get("change"), dict) or not o["change"].get("text"):
             return "missing change"
+        if not isinstance(o.get("awareness"), dict):
+            return "missing awareness"
         if "!" in o.get("script", "") and s.get("tone") != "unfiltered":
             return "exclamation mark"
         if len(o.get("alternatives") or []) != 2:
@@ -679,8 +685,8 @@ Previous attempt: {prev_block}"""
     landed = max(3, min(97, int(out["landed"]["score"])))
     rating = round(landed * 0.35 + axes["awareness"] * 0.2 + axes["voice"] * 0.15 + axes["command"] * 0.15 + axes["composure"] * 0.15)
     # Caps: delivery can't rescue a conversation that didn't land or wasn't real.
-    user_turns = [t for t in s["turns"] if t["role"] == "user"]
-    avg_words = total_words / max(1, len(user_turns))
+    spoken_turns = [t for t in s["turns"] if t["role"] == "user" and not (t.get("facts") or {}).get("silent") and t["text"].strip()]
+    avg_words = total_words / max(1, len(spoken_turns))
     chars = [t for t in s["turns"] if t["role"] == "char" and "interest" in t]
     final_interest = chars[-1]["interest"] if chars else 50
     caps = {"trolling": 18, "half": 42}
@@ -688,12 +694,13 @@ Previous attempt: {prev_block}"""
         rating = min(rating, caps[out["effort"]])
     if avg_words < 5:
         rating = min(rating, 40)
-    if final_interest < 25 or any(t.get("leaving") for t in chars):
+    walked_off = bool(chars) and chars[-1].get("leaving") and final_interest < 35
+    if final_interest < 25 or walked_off:
         rating = min(rating, 45)
     rating = min(rating, landed + 15)
     axes["landed"] = landed
     out.update({"rating": rating, "axes": axes, "counts": _counts(s["turns"]), "turns": [{"role": t["role"], "text": t["text"]} for t in s["turns"]], "trace": trace(session_id), "character": char_of(s["spec"])["name"]})
-    if s.get("attempt_of") and s["attempt_of"] in SESSIONS and SESSIONS[s["attempt_of"]].get("evaluation"):
+    if s.get("attempt_of") and s["attempt_of"] in SESSIONS and (SESSIONS[s["attempt_of"]].get("evaluation") or {}).get("rating") is not None:
         prev = SESSIONS[s["attempt_of"]]["evaluation"]
         out["delta"] = rating - prev["rating"]
         out["prev_counts"] = prev["counts"]
