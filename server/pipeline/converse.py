@@ -90,7 +90,7 @@ def _client():
     return anthropic.AsyncAnthropic()
 
 
-async def _json_call(model: str, system: str, user, max_tokens: int = 3000, tries: int = 3, check=None, allow_slang: bool = False) -> dict:
+async def _json_call(model: str, system: str, user, max_tokens: int = 3000, tries: int = 3, check=None, allow_slang: bool = False, think: bool = True) -> dict:
     """`user` is a string, or a list of content blocks (text and images) for vision calls."""
     err = None
     for _ in range(tries):
@@ -100,7 +100,9 @@ async def _json_call(model: str, system: str, user, max_tokens: int = 3000, trie
         else:
             msg = user if not err else f"{user}\n\n{fix}"
         # Thinking is allowed for evaluation-quality calls; leave headroom so the JSON answer always fits.
-        r = await _client().messages.create(model=model, max_tokens=max_tokens + 6000, system=system, messages=[{"role": "user", "content": msg}])
+        # think=False: no reasoning pass. Same verdicts in testing, about half the wait (the read after a call).
+        extra = {} if think else {"thinking": {"type": "between_tools"}}
+        r = await _client().messages.create(model=model, max_tokens=max_tokens + (6000 if think else 0), system=system, messages=[{"role": "user", "content": msg}], **extra)
         raw = "".join(b.text for b in r.content if getattr(b, "type", "") == "text")
         m = re.search(r"\{.*\}", raw, re.S)
         try:
@@ -684,7 +686,7 @@ Previous attempt: {prev_block}"""
             return "need exactly two alternatives"
         return None
 
-    out = await _json_call(M_EVAL, EVAL_SYSTEM, user, max_tokens=2500, check=check, allow_slang=s.get("tone") == "unfiltered")
+    out = await _json_call(M_EVAL, EVAL_SYSTEM, user, max_tokens=2500, check=check, allow_slang=s.get("tone") == "unfiltered", think=False)
     axes["awareness"] = max(3, min(97, int(out.get("awareness", {}).get("score", 50))))
     landed = max(3, min(97, int(out["landed"]["score"])))
     rating = round(landed * 0.35 + axes["awareness"] * 0.2 + axes["voice"] * 0.15 + axes["command"] * 0.15 + axes["composure"] * 0.15)
@@ -757,7 +759,7 @@ async def ledger(story: str, context: str = "", tone: str = "real") -> dict:
         return None
 
     sys_ = LEDGER_SYSTEM + ("\nThis user chose UNFILTERED: be brutal and funny like the best friend reading the receipt out loud. Swear when it's earned, call a fumble a fumble ('you fumbled so hard'), slang welcome (aura, cooked, fumbled, rizz). Roast what he did, never his looks or identity. Still specific." if tone == "unfiltered" else "")
-    out = await _json_call(M_EVAL, sys_, f"{context}\nStory: {story}".strip(), max_tokens=1200, check=check, allow_slang=tone == "unfiltered")
+    out = await _json_call(M_EVAL, sys_, f"{context}\nStory: {story}".strip(), max_tokens=1200, check=check, allow_slang=tone == "unfiltered", think=False)
     out["receipt_no"] = f"{uuid.uuid4().int % 10000:04d}"
     return out
 

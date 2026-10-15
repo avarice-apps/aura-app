@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, ScrollView, Pressable, Text as RNText } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useSharedValue, withTiming, withRepeat, Easing, cancelAnimation } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
 import { ConversationProvider, useConversation } from '@elevenlabs/react-native';
 import { Body, Muted, Tag } from '@/ui';
 import { Mark } from '@/components/Mark';
@@ -39,7 +40,22 @@ export function splitSpeakers(text: string, primary: string): { who: string; tex
  * several voices); every line comes from our scene engine on the server. It keeps going until you end it,
  * or until the person you're talking to walks off. Poise reads it back after.
  */
-export function LiveConversation(props: { args: StartArgs; onDone: (r: ConversationDone) => void; onError?: (e: string) => void; label?: string }) {
+type LiveProps = {
+  args: StartArgs;
+  onDone: (r: ConversationDone) => void;
+  onError?: (e: string) => void;
+  label?: string;
+  /** Hang up automatically after this many seconds (onboarding). */
+  timeLimit?: number;
+  /** Fired the moment the call ends, before the read is back. */
+  onEnded?: () => void;
+  /** Where "Leave" goes if the read fails. Defaults to back. */
+  onLeave?: () => void;
+  /** The call happened but the read failed (the screen shows retry and leave). */
+  onReadFailed?: (message: string) => void;
+};
+
+export function LiveConversation(props: LiveProps) {
   return (
     <ConversationProvider>
       <Live {...props} />
@@ -47,7 +63,7 @@ export function LiveConversation(props: { args: StartArgs; onDone: (r: Conversat
   );
 }
 
-function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: ConversationDone) => void; onError?: (e: string) => void; label?: string }) {
+function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onReadFailed }: LiveProps) {
   const t = useTheme();
   const [phase, setPhase] = useState<Phase>('connecting');
   const [start, setStart] = useState<LiveStart | null>(null);
@@ -187,6 +203,10 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
     setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 60);
   }, [msgs.length]);
 
+  useEffect(() => {
+    if (timeLimit && phase === 'live' && secs >= timeLimit) act.current.finish();
+  }, [timeLimit, phase, secs]);
+
   function fail(m: string) {
     setErr(m);
     setPhase('error');
@@ -197,14 +217,27 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
     if (!startRef.current) return;
     setErr('');
     setPhase('evaluating');
+    let e;
     try {
-      const e = await liveFinish(startRef.current.session_id, id);
-      play('reveal');
-      onDone({ sessionId: startRef.current.session_id, evaluation: e, start: startRef.current });
-    } catch (e: any) {
-      setErr(e?.message ?? 'Poise could not read that one.');
+      e = await liveFinish(startRef.current.session_id, id);
+    } catch (x: any) {
+      const m = x?.message ?? 'Poise could not read that one.';
+      setErr(m);
       setPhase('error');
       setRetryId(id);
+      try {
+        onReadFailed?.(m);
+      } catch {}
+      return;
+    }
+    play('reveal');
+    try {
+      onDone({ sessionId: startRef.current.session_id, evaluation: e, start: startRef.current });
+    } catch (x: any) {
+      console.warn('onDone failed', x);
+      setErr('Something went wrong showing your read.');
+      setPhase('error');
+      setRetryId(null);
     }
   }
 
@@ -222,6 +255,9 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
       conv.endSession();
     } catch {}
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    try {
+      onEnded?.();
+    } catch {}
     await readBack(id);
   }
 
@@ -232,7 +268,13 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
   const speaking = conv.isSpeaking;
   const shared = phase === 'live' ? energy : idle;
   const name = start?.character.name ?? '';
-  const clock = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
+  const shown = timeLimit ? Math.max(0, timeLimit - secs) : secs;
+  const clock = `${Math.floor(shown / 60)}:${String(shown % 60).padStart(2, '0')}`;
+  const leave = () => {
+    if (onLeave) onLeave();
+    else if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)');
+  };
   const status =
     phase === 'connecting'
       ? 'Connecting'
@@ -260,7 +302,7 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
             </Body>
             <Muted small numberOfLines={1}>{start.character.style}</Muted>
           </View>
-          {phase === 'live' ? <Tag label={clock} tone="accent" /> : <Tag label="Live" tone="accent" />}
+          {phase === 'live' ? <Tag label={clock} tone={timeLimit && shown <= 10 ? 'inverse' : 'accent'} /> : <Tag label="Live" tone="accent" />}
         </Animated.View>
       )}
       {start && (
@@ -293,10 +335,17 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
           <Pressable onPress={finish} hitSlop={10} style={{ paddingHorizontal: 20, height: 40, borderRadius: 20, backgroundColor: turns > 0 ? t.ink : t.card, borderWidth: turns > 0 ? 0 : 1, borderColor: t.line, justifyContent: 'center' }}>
             <RNText style={{ fontFamily: font.medium, fontSize: 14, color: turns > 0 ? t.bg : t.ink2 }}>{turns > 0 ? 'End call and get my read' : 'Hang up'}</RNText>
           </Pressable>
-        ) : phase === 'error' && retryId !== null ? (
-          <Pressable onPress={() => readBack(retryId)} hitSlop={10} style={{ paddingHorizontal: 20, height: 40, borderRadius: 20, backgroundColor: t.accent, justifyContent: 'center' }}>
-            <RNText style={{ fontFamily: font.medium, fontSize: 14, color: t.onAccent }}>Try the read again</RNText>
-          </Pressable>
+        ) : phase === 'error' ? (
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            {retryId !== null ? (
+              <Pressable onPress={() => readBack(retryId)} hitSlop={10} style={{ paddingHorizontal: 20, height: 40, borderRadius: 20, backgroundColor: t.accent, justifyContent: 'center' }}>
+                <RNText style={{ fontFamily: font.medium, fontSize: 14, color: t.onAccent }}>Try the read again</RNText>
+              </Pressable>
+            ) : null}
+            <Pressable onPress={leave} hitSlop={10} style={{ paddingHorizontal: 20, height: 40, borderRadius: 20, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, justifyContent: 'center' }}>
+              <RNText style={{ fontFamily: font.medium, fontSize: 14, color: t.ink }}>Leave</RNText>
+            </Pressable>
+          </View>
         ) : (
           <View style={{ height: 40 }} />
         )}

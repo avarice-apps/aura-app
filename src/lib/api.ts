@@ -316,7 +316,7 @@ export async function liveFinish(sessionId: string, conversationId: string): Pro
   let e = await postJSON<Evaluation & { script_audio?: string; pending?: boolean }>(`/live/${sessionId}/finish`, { conversation_id: conversationId });
   const until = Date.now() + 180000;
   while (e.pending && Date.now() < until) {
-    await sleep(2500);
+    await sleep(1000);
     const r = await fetch(`${API_URL}/live/${sessionId}/result`);
     if (!r.ok) throw new Error((await r.json().catch(() => ({})))?.detail ?? 'Poise could not read that one.');
     e = await r.json();

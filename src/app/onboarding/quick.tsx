@@ -18,7 +18,7 @@ export default function Quick() {
   return (
     <Screen edges={['top', 'bottom']}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 24 }}>
-        <Segments total={6} done={2} />
+        <Segments total={5} done={2} />
         <Animated.View entering={FadeInDown.duration(400)} style={{ marginTop: 22, marginBottom: 12 }}>
           <Label>Read the room · 12 seconds</Label>
         </Animated.View>

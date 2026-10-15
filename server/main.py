@@ -349,8 +349,14 @@ async def live_state(sid: str):
 async def _read_back(sid: str, cid: str | None, voice: bool) -> dict:
     s = converse.SESSIONS[sid]
     if cid:
+        # The recording takes ElevenLabs a few seconds to finalise. Give the voice measurement a short window,
+        # then read the call anyway (voice axes stay neutral without it). The analysis keeps running in the
+        # background so the recording is still deleted.
+        analysis = asyncio.create_task(live.analyse_call(sid, cid))
         try:
-            await live.analyse_call(sid, cid)
+            await asyncio.wait_for(asyncio.shield(analysis), timeout=float(os.environ.get("KLEOS_AUDIO_WAIT", "6")))
+        except asyncio.TimeoutError:
+            print("live analysis still running; reading without voice facts")
         except KeyError:
             raise
         except Exception as e:

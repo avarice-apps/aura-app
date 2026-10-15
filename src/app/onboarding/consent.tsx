@@ -17,7 +17,7 @@ export default function Consent() {
   return (
     <Screen edges={['top', 'bottom']}>
       <View style={{ paddingHorizontal: 20, paddingTop: 12, flex: 1 }}>
-        <Segments total={6} done={3} />
+        <Segments total={5} done={3} />
         <Animated.View entering={FadeInDown.duration(500)} style={{ marginTop: 26, gap: 8 }}>
           <Title size={30}>Before you speak.</Title>
           <Muted>You’ll talk to a character for about thirty seconds. Voice only, no camera.</Muted>

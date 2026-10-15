@@ -317,11 +317,16 @@ export function liveAvailable() {
  * The conversation everyone uses. Live full-duplex voice when the build supports it;
  * otherwise the turn-based version (Expo Go, offline demo).
  */
-export function Conversation(props: { args: StartArgs; onDone: (r: ConversationDone) => void; onError?: (e: string) => void; label?: string; metered?: boolean }) {
+export function Conversation(props: { args: StartArgs; onDone: (r: ConversationDone) => void; onError?: (e: string) => void; label?: string; metered?: boolean; timeLimit?: number; onEnded?: () => void; onLeave?: () => void; onReadFailed?: (m: string) => void }) {
   const kind = props.args.daily_id ? 'daily' : props.args.floor_id ? 'floor' : props.args.room_id ? 'quest' : props.args.lesson ? 'lesson' : props.args.goal ? 'onboarding' : 'other';
+  // Capture the caller's handler first: `props` is reassigned below, and reading props.onDone at call time
+  // would call this wrapper again, forever ("Maximum call stack size exceeded").
+  const userDone = props.onDone;
   const onDone = (r: ConversationDone) => {
-    track('call_finished', { kind, rating: r.evaluation?.rating ?? null, insufficient: !!r.evaluation?.insufficient, effort: (r.evaluation as any)?.effort ?? null });
-    props.onDone(r);
+    try {
+      track('call_finished', { kind, rating: r.evaluation?.rating ?? null, insufficient: !!r.evaluation?.insufficient, effort: (r.evaluation as any)?.effort ?? null });
+    } catch {}
+    userDone(r);
   };
   const userError = props.onError;
   // A call that never got going (mic denied, server down) gives the free call back.

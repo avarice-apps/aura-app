@@ -24,7 +24,7 @@ export default function GoalScreen() {
   return (
     <Screen edges={['top', 'bottom']}>
       <View style={{ paddingHorizontal: 20, paddingTop: 12, flex: 1 }}>
-        <Segments total={6} done={1} />
+        <Segments total={5} done={1} />
         <Animated.View entering={FadeInDown.duration(500)} style={{ marginTop: 26, gap: 8 }}>
           <Title size={30}>Where do you want to come across better?</Title>
           <Muted>Pick one. Your first conversation and your first week are built around it.</Muted>

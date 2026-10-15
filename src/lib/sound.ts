@@ -9,6 +9,7 @@ const SOURCES = {
   tick: require('../../assets/sounds/tick.wav'),
   reveal: require('../../assets/sounds/reveal.wav'),
   cleared: require('../../assets/sounds/cleared.wav'),
+  cut: require('../../assets/sounds/cut.wav'),
 } as const;
 
 export type SoundName = keyof typeof SOURCES;
@@ -27,7 +28,7 @@ export async function initSounds() {
   (Object.keys(SOURCES) as SoundName[]).forEach((k) => {
     try {
       const p = createAudioPlayer(SOURCES[k]);
-      p.volume = 0.22;
+      p.volume = k === 'cut' ? 0.6 : 0.22;
       players[k] = p;
     } catch {}
   });
