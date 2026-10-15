@@ -87,6 +87,8 @@ export type ScanResult = {
   best_moment: string;
   roast: string;
   prompt?: string;
+  /** Server is rendering the rated video for this take (kept up to two hours). */
+  video_id?: string;
   createdAt?: string;
 };
 
@@ -109,6 +111,10 @@ export type Moment = {
 export type ProfileRead = {
   score: number;
   tier: string;
+  /** The aesthetic they're going for, e.g. 'downtown film'. */
+  lane?: string;
+  /** The share-card line, <= 9 words. */
+  verdict?: string;
   first_impression: string;
   parts: { part: string; score: number; note: string; fix: string }[];
   bio_rewrite?: string | null;

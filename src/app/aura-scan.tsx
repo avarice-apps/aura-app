@@ -72,7 +72,7 @@ export default function ScanTab() {
 
         <Button label={mode === 'party' ? 'Start the round' : 'Scan me'} style={{ marginTop: 14 }} onPress={start} disabled={mode === 'party' && names.filter((n) => n.trim()).length < 2} />
 
-        <Muted small align="center" style={{ marginTop: 6 }}>Rates the take, not the person. Clips are deleted after they’re read.</Muted>
+        <Muted small align="center" style={{ marginTop: 6 }}>Rates the take, not the person. The take is deleted once it’s read; the rated video you can save is gone from our server within two hours.</Muted>
 
 
         {scans.length > 0 && (

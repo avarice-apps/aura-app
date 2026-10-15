@@ -286,6 +286,7 @@ export async function scan(a: { videoUri: string; prompt: string; consent: boole
   form.append('subject_consent', a.consent ? '1' : '0');
   form.append('is_self', a.isSelf ? '1' : '0');
   form.append('name', a.name);
+  form.append('render', '1'); // the rated video renders in the background while the card shows
   const r = await postForm<ScanResult>('/scan', form);
   return { ...r, prompt: a.prompt };
 }
@@ -397,14 +398,16 @@ export async function readProfile(a: { uris: string[]; handle?: string }): Promi
     return {
       score: 47,
       tier: 'LinkedIn energy',
+      lane: 'quiet luxury',
+      verdict: 'Expensive taste, nobody home.',
       first_impression: 'Hustle bio, no face, and a grid that could be anyone’s.',
       parts: [
         { part: 'Profile picture', score: 52, note: 'Too far away to read your face or your vibe.', fix: 'Shoulders up, natural light, not a mirror.' },
         { part: 'Bio', score: 34, note: '“Grind in silence” is a quote, not a person.', fix: 'Say one specific thing you do or like.' },
         { part: 'Grid', score: 61, note: 'Cohesive colours, but no people and no story.', fix: 'Add two posts with friends in them.' },
       ],
-      bio_rewrite: 'Puerto Rico → Williams. Building things. Overthinking playlists.',
-      caption_rewrite: { before: 'Grateful 🙏✨', after: 'Third attempt at this view. Worth it.' },
+      bio_rewrite: 'San Juan / NYC',
+      caption_rewrite: { before: 'Grateful 🙏✨', after: 'third try' },
       fixes: ['Replace the quote in your bio with one real detail.', 'Use a closer, warmer profile photo.', 'Post one photo with people in it.'],
       song: { title: 'Location', artist: 'Khalid', why: 'Chill, a little guarded, wants to be found.' },
     };
@@ -489,6 +492,30 @@ export async function makeClip(sessionId: string): Promise<string> {
   const dest = new File(dir, `kleos-${sessionId}.mp4`);
   if (dest.exists) dest.delete();
   const f = await File.downloadFileAsync(url, dest);
+  return f.uri;
+}
+
+/**
+ * The rated Aura Scan video (the take, scan overlay, readouts, score at the end). It renders on the server while
+ * the card is on screen; wait for it, then download it for the share sheet (which offers Save Video).
+ */
+export async function saveScanVideo(videoId: string, onWait?: () => void): Promise<string> {
+  const deadline = Date.now() + 90000;
+  for (;;) {
+    const r = await fetch(`${API_URL}/scan/video/${videoId}/status`);
+    const st = r.ok ? await r.json() : { expired: true };
+    if (st.ready) break;
+    if (st.failed) throw new Error('Couldn’t make that video. The card still saves.');
+    if (st.expired) throw new Error('That video has expired. Videos are kept for two hours.');
+    if (Date.now() > deadline) throw new Error('The video is taking too long. Try again in a minute.');
+    onWait?.();
+    await sleep(1500);
+  }
+  const dir = new Directory(Paths.cache, 'scans');
+  if (!dir.exists) dir.create();
+  const dest = new File(dir, `kleos-aura-scan-${videoId}.mp4`);
+  if (dest.exists) return dest.uri;
+  const f = await File.downloadFileAsync(`${API_URL}/scan/video/${videoId}`, dest);
   return f.uri;
 }
 

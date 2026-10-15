@@ -8,7 +8,7 @@ import { Screen, Title, Body, Muted, Label, Button, IconButton, Icon, ICON, Row,
 import { font, useTheme } from '@/theme';
 import { useStore } from '@/state/store';
 import { useScan } from '@/state/scanSession';
-import { scan as runScan } from '@/lib/api';
+import { scan as runScan, saveScanVideo } from '@/lib/api';
 import { TIER_LINE } from '@/lib/scanPrompts';
 import type { ScanResult } from '@/lib/types';
 import { play } from '@/lib/sound';
@@ -25,6 +25,8 @@ export default function ScanResultScreen() {
   const [err, setErr] = useState('');
   const [board, setBoard] = useState(false);
   const shot = useRef<any>(null);
+  const [vid, setVid] = useState<'idle' | 'making' | 'error'>('idle');
+  const [vidNote, setVidNote] = useState('');
   const who = scan.players[scan.current];
   const isSelf = scan.mode === 'solo' || (scan.mode === 'upload' && scan.players[0] === 'Me');
 
@@ -53,6 +55,22 @@ export default function ScanResultScreen() {
       const uri = await (shot.current as any)?.capture?.();
       if (uri && (await Sharing.isAvailableAsync())) await Sharing.shareAsync(uri);
     } catch {}
+  }
+
+  async function saveVideo() {
+    if (!r?.video_id || vid === 'making') return;
+    setVid('making');
+    setVidNote('Finishing your video. A few seconds.');
+    try {
+      const uri = await saveScanVideo(r.video_id);
+      setVid('idle');
+      setVidNote('');
+      play('cleared');
+      if (await Sharing.isAvailableAsync()) await Sharing.shareAsync(uri, { mimeType: 'video/mp4', UTI: 'public.mpeg-4', dialogTitle: 'Your Aura Scan' });
+    } catch (e: any) {
+      setVid('error');
+      setVidNote(e?.message ?? 'Couldn’t make the video.');
+    }
   }
 
   function next() {
@@ -106,7 +124,7 @@ export default function ScanResultScreen() {
                 <Statue name="head" height={180} />
               </Animated.View>
               <Body strong>Reading {who}</Body>
-              <Muted small align="center">Voice, pace, posture, composure. The clip is deleted the moment this is done.</Muted>
+              <Muted small align="center">Voice, pace, posture, composure. A few seconds.</Muted>
             </>
           )}
         </View>
@@ -172,6 +190,10 @@ export default function ScanResultScreen() {
       </ScrollView>
       <View style={{ paddingHorizontal: 20, paddingBottom: 10, gap: 8 }}>
         {scan.mode === 'party' ? <Button label={scan.current + 1 < scan.players.length ? `Next: ${scan.players[scan.current + 1]}` : 'See the leaderboard'} sound="select" onPress={next} /> : <Button label="Done" onPress={() => router.dismissAll()} />}
+        {r.video_id ? (
+          <Button label={vid === 'making' ? 'Making your video' : 'Save the video'} variant="secondary" disabled={vid === 'making'} onPress={saveVideo} icon={<Icon d={ICON.share} size={16} color={t.ink} />} />
+        ) : null}
+        {vidNote ? <Muted small align="center" color={vid === 'error' ? t.accent : undefined}>{vidNote}</Muted> : null}
         <Button label="Share the card" variant="ghost" onPress={share} icon={<Icon d={ICON.share} size={16} color={t.ink} />} />
       </View>
     </Screen>

@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 import re
+import secrets
 import shutil
 import subprocess
 import tempfile
@@ -306,6 +307,37 @@ async def _agent_id() -> str:
     if not _LIVE_AGENT.get("id"):
         _LIVE_AGENT["id"] = await live.ensure_agent(PUBLIC_URL)
     return _LIVE_AGENT["id"]
+
+
+def _warm_analysers() -> None:
+    """First read after a deploy was ~15s slower: librosa/numba compile and the face model load on first use.
+    Do that once at startup on a two-second synthetic clip, so the first real user doesn't pay for it."""
+    tmp = tempfile.mkdtemp(prefix="kleos_warm_")
+    try:
+        vid = os.path.join(tmp, "w.mp4")
+        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-f", "lavfi", "-i", "testsrc2=s=320x568:r=15:d=2", "-f", "lavfi", "-i", "sine=f=180:d=2",
+                        "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "aac", "-shortest", vid], check=True, timeout=60)
+        wav = audio.extract_wav(vid)
+        dg = {"results": {"channels": [{"alternatives": [{"transcript": "warm up the reader now", "words": [
+            {"word": w, "punctuated_word": w, "start": 0.2 + i * 0.3, "end": 0.4 + i * 0.3, "confidence": 0.99} for i, w in enumerate("warm up the reader now".split())]}]}]}}
+        try:
+            audio.analyse(wav, dg)
+        except Exception as e:
+            print("warm audio:", repr(e)[:120])
+        try:
+            face.analyse(vid, 6.0, True)
+        except Exception as e:
+            print("warm face:", repr(e)[:120])
+        print("analysers warm")
+    except Exception as e:
+        print("warm-up skipped:", repr(e)[:120])
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+@app.on_event("startup")
+async def _warm_startup():
+    asyncio.get_running_loop().run_in_executor(None, _warm_analysers)  # background; never delays start
 
 
 @app.on_event("startup")
@@ -879,25 +911,69 @@ async def read_profile(shots: list[UploadFile] = File(...), handle: str = Form("
 
 
 @app.post("/scan")
-async def scan(video: UploadFile = File(...), prompt_text: str = Form(...), subject_consent: str = Form("0"), is_self: str = Form("0"), name: str = Form("")):
-    """Back-camera Aura Scan / uploads. Consent required. Others get delivery-only mode (no face mesh). Clip deleted immediately."""
+async def scan(video: UploadFile = File(...), prompt_text: str = Form(...), subject_consent: str = Form("0"), is_self: str = Form("0"), name: str = Form(""), render: str = Form("0")):
+    """Back-camera Aura Scan / uploads. Consent required. Others get delivery-only mode (no face mesh).
+    The take is deleted right after the read, unless render=1: then it is kept only until the rated video is made
+    (seconds), and that video is deleted within two hours."""
     if subject_consent != "1":
         raise HTTPException(403, "The person on camera has to confirm they're in and 18+.")
     path = await _save(video, ".mp4")
+    keep = render == "1"
     try:
         v, p = await measure(path, with_face=True, face_mesh=(is_self == "1"))
-    finally:
+    except Exception:
         os.remove(path)
+        raise
     if v["word_count"] < 4:
-        raise HTTPException(422, "Not enough speech to read.")
+        os.remove(path)
+        raise HTTPException(422, "Not enough speech to read. Say the prompt out loud, then answer it.")
+    if keep:
+        clips.gc()
+        vid = secrets.token_hex(6)
+        shutil.move(path, clips.scan_src(vid))
+    else:
+        os.remove(path)
     vf = audio.VoiceFacts(**v)
     pf = face.PresenceFacts(**p)
     axes = {"delivery": rubric.voice_score(vf), "composure": rubric.composure_score(vf), "command": rubric.command_score(vf), "posture": rubric.presence_score(pf) if pf.available or p.get("frames_analysed") else 50}
     score = round(sum(axes.values()) / len(axes))
     tiers = [(90, "Gravity"), (75, "Magnetic"), (60, "Composed"), (45, "Present"), (30, "Faint"), (0, "Static")]
     tier = next(t for m, t in tiers if score >= m)
-    card = await converse._json_call(converse.M_EVAL, """You write the playful result card for an 'Aura Scan' party game. Return JSON: {"archetype": "The ..." (2-3 words, fun, flattering-ish, never about looks), "best_moment": str (<= 12 words, cites a quote from the transcript), "roast": str (<= 14 words, affectionate, about delivery only, never looks/body/identity)}. No slang like alpha/sigma/mog/rizz.""", json.dumps({"prompt": prompt_text, "transcript": v["transcript"], "fillers": v["filler_count"], "hedges": v["hedge_count"], "wpm": v["wpm"], "score": score}), max_tokens=400)
-    return {"score": score, "tier": tier, "axes": axes, "name": name, "transcript": v["transcript"], "counts": {"fillers": v["filler_count"], "hedges": v["hedge_count"], "wpm": v["wpm"]}, **card}
+    card = await converse._json_call(converse.M_EVAL, """You write the playful result card for an 'Aura Scan' party game. Return JSON: {"archetype": "The ..." (2-3 words, fun, flattering-ish, never about looks), "best_moment": str (<= 12 words, cites a quote from the transcript), "roast": str (<= 14 words, affectionate, about delivery only, never looks/body/identity)}. No slang like alpha/sigma/mog/rizz. Swearing in the take is normal: quote it as said if it was the moment, never mark it down or comment on language.""", json.dumps({"prompt": prompt_text, "transcript": v["transcript"], "fillers": v["filler_count"], "hedges": v["hedge_count"], "wpm": v["wpm"], "score": score}), max_tokens=400, think=False)
+    out = {"score": score, "tier": tier, "axes": axes, "name": name, "transcript": v["transcript"], "counts": {"fillers": v["filler_count"], "hedges": v["hedge_count"], "wpm": v["wpm"]}, **card}
+    if keep:
+        out["video_id"] = vid
+        task = asyncio.create_task(clips.make_scan(vid, {**out, "prompt": prompt_text}))
+        _BG.add(task)  # keep a reference so the render isn't garbage-collected mid-way
+        task.add_done_callback(_BG.discard)
+    return out
+
+
+_BG: set = set()
+
+
+@app.get("/scan/video/{vid}/status")
+async def scan_video_status(vid: str):
+    if not re.fullmatch(r"[0-9a-f]{12}", vid):
+        return {"expired": True}
+    out = clips.scan_out(vid)
+    return {"ready": os.path.exists(out), "failed": os.path.exists(out + ".failed"),
+            "expired": not (os.path.exists(out) or os.path.exists(out + ".failed") or os.path.exists(clips.scan_src(vid)))}
+
+
+@app.get("/scan/video/{vid}")
+async def scan_video(vid: str):
+    """The rated Aura Scan video: 200 with the file when ready, 202 while it renders."""
+    if not re.fullmatch(r"[0-9a-f]{12}", vid):
+        raise HTTPException(404, "No video.")
+    out = clips.scan_out(vid)
+    if os.path.exists(out):
+        return FileResponse(out, media_type="video/mp4", filename="kleos-aura-scan.mp4")
+    if os.path.exists(out + ".failed"):
+        raise HTTPException(500, "Couldn't make that video. The card still saves.")
+    if os.path.exists(clips.scan_src(vid)):
+        return JSONResponse({"pending": True}, status_code=202)
+    raise HTTPException(404, "That video has expired. Videos are kept for two hours.")
 
 
 # ---------------------------------------------------------------- situations: "what everyone picked"

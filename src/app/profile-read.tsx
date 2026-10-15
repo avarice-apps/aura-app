@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
-import { View, ScrollView, TextInput, Share, Linking, Text as RNText } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { View, ScrollView, TextInput, Share, Linking, StyleSheet, Text as RNText } from 'react-native';
+import ViewShot from 'react-native-view-shot';
+import * as Sharing from 'expo-sharing';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Screen, Body, Muted, Label, Button, IconButton, Icon, ICON, Card, ArtCard, OnBlue, Row, Bar } from '@/ui';
-import { font, useTheme } from '@/theme';
+import { font, useTheme, ART } from '@/theme';
 import { useStore } from '@/state/store';
 import { readProfile } from '@/lib/api';
 import type { ProfileRead } from '@/lib/types';
@@ -87,24 +90,35 @@ export default function ProfileReadScreen() {
             <Muted small align="center">Rates choices and presentation, never your face or body. Screenshots aren’t stored.</Muted>
           </View>
         ) : (
-          <Result r={r} onAgain={() => { setR(null); setUris([]); }} />
+          <Result r={r} handle={handle.trim()} onAgain={() => { setR(null); setUris([]); }} />
         )}
       </ScrollView>
     </Screen>
   );
 }
 
-function Result({ r, onAgain }: { r: ProfileRead; onAgain: () => void }) {
+function Result({ r, handle, onAgain }: { r: ProfileRead; handle: string; onAgain: () => void }) {
   const t = useTheme();
+  const shot = useRef<any>(null);
+  async function shareCard() {
+    track('share', { what: 'profile_card' });
+    try {
+      const uri = await shot.current?.capture?.();
+      if (uri && (await Sharing.isAvailableAsync())) {
+        await Sharing.shareAsync(uri, { mimeType: 'image/png', UTI: 'public.png', dialogTitle: 'Your profile read' });
+        return;
+      }
+    } catch {}
+    Share.share({ message: `My Instagram aura: ${r.score} (${r.tier}). “${r.verdict || r.first_impression}” Read by Kleos.` });
+  }
   return (
     <View style={{ gap: 12, marginTop: 10 }}>
       <Animated.View entering={FadeInDown.duration(450)}>
-        <ArtCard art="lisa" height={300} focus="top">
-          <OnBlue kicker="Profile aura" sub={r.first_impression}>
-            {`${r.score} · ${r.tier}`}
-          </OnBlue>
-        </ArtCard>
+        <ViewShot ref={shot} options={{ format: 'png', quality: 1 }}>
+          <ProfileCard r={r} handle={handle} />
+        </ViewShot>
       </Animated.View>
+      <Body small color={t.ink2}>{r.first_impression}</Body>
       <Card style={{ paddingVertical: 4 }}>
         {r.parts.map((p, i) => (
           <View key={p.part} style={{ paddingVertical: 12, gap: 6, borderTopWidth: i ? 1 : 0, borderColor: t.cardAlt }}>
@@ -147,8 +161,52 @@ function Result({ r, onAgain }: { r: ProfileRead; onAgain: () => void }) {
           <RNText style={{ fontFamily: font.regular, fontSize: 14, color: 'rgba(255,255,255,0.86)' }}>{r.song.artist} · {r.song.why}</RNText>
         </View>
       ) : null}
-      <Button label="Share my score" onPress={() => Share.share({ message: `My Instagram aura: ${r.score} (${r.tier}). “${r.first_impression}” Read by Kleos.` })} />
+      <Button label="Share the card" onPress={shareCard} icon={<Icon d={ICON.share} size={16} color="#fff" />} />
       <Button label="Read again" variant="secondary" onPress={onAgain} />
+    </View>
+  );
+}
+
+
+const BLUE = '#1608F2';
+const W = 'rgba(255,255,255,';
+
+/** The share card: built to be screenshotted into a story. Fixed brand colours, so it looks the same in dark mode. */
+function ProfileCard({ r, handle }: { r: ProfileRead; handle: string }) {
+  const parts = (r.parts ?? []).slice(0, 4);
+  return (
+    <View style={{ aspectRatio: 4 / 5, borderRadius: 26, overflow: 'hidden', backgroundColor: BLUE }}>
+      <Image source={ART.lisa} style={[StyleSheet.absoluteFill, { bottom: '38%' }]} contentFit="cover" contentPosition={{ top: '22%', left: '50%' }} />
+      <LinearGradient pointerEvents="none" colors={['rgba(22,8,242,0.15)', 'rgba(22,8,242,0.55)', BLUE]} locations={[0, 0.38, 0.62]} style={StyleSheet.absoluteFill} />
+      <View style={{ flex: 1, padding: 20, justifyContent: 'space-between' }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <RNText style={{ fontFamily: font.mono, fontSize: 10, letterSpacing: 1.6, color: '#FFF' }}>KLEOS · PROFILE READ</RNText>
+          {handle ? <RNText style={{ fontFamily: font.mono, fontSize: 10, letterSpacing: 1.2, color: `${W}0.8)` }}>{(handle.startsWith('@') ? handle : `@${handle}`).toUpperCase().slice(0, 24)}</RNText> : null}
+        </View>
+        <View style={{ gap: 10 }}>
+          {r.lane ? <RNText style={{ fontFamily: font.mono, fontSize: 10.5, letterSpacing: 1.6, color: `${W}0.78)` }}>{r.lane.toUpperCase()}</RNText> : null}
+          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 12 }}>
+            <RNText style={{ fontFamily: font.serif, fontSize: 92, lineHeight: 92, color: '#FFF' }}>{r.score}</RNText>
+            <RNText style={{ fontFamily: font.serif, fontSize: 28, lineHeight: 34, color: '#FFF', flex: 1, paddingBottom: 8 }} numberOfLines={2}>{r.tier}</RNText>
+          </View>
+          <RNText style={{ fontFamily: font.serifItalic, fontSize: 21, lineHeight: 26, color: '#FFF' }} numberOfLines={3}>{`“${r.verdict || r.first_impression}”`}</RNText>
+          <View style={{ gap: 7, marginTop: 4 }}>
+            {parts.map((p) => (
+              <View key={p.part} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <RNText style={{ fontFamily: font.mono, fontSize: 9.5, letterSpacing: 1.2, color: `${W}0.82)`, width: 104 }} numberOfLines={1}>{p.part.toUpperCase()}</RNText>
+                <View style={{ flex: 1, height: 3, borderRadius: 2, backgroundColor: `${W}0.22)`, overflow: 'hidden' }}>
+                  <View style={{ width: `${Math.max(0, Math.min(100, p.score))}%`, height: 3, backgroundColor: '#FFF' }} />
+                </View>
+                <RNText style={{ fontFamily: font.mono, fontSize: 10, color: '#FFF', width: 22, textAlign: 'right' }}>{p.score}</RNText>
+              </View>
+            ))}
+          </View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 6 }}>
+            {r.song ? <RNText style={{ fontFamily: font.mono, fontSize: 9.5, letterSpacing: 1.1, color: `${W}0.75)`, flex: 1 }} numberOfLines={1}>{`SOUNDS LIKE · ${r.song.title} — ${r.song.artist}`.toUpperCase()}</RNText> : <View style={{ flex: 1 }} />}
+            <RNText style={{ fontFamily: font.mono, fontSize: 9.5, letterSpacing: 1.1, color: `${W}0.75)`, marginLeft: 10 }}>JOINKLEOS.COM</RNText>
+          </View>
+        </View>
+      </View>
     </View>
   );
 }
