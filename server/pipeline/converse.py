@@ -538,7 +538,9 @@ async def stream_turn(session_id: str, user_text: str):
     if not s:
         raise KeyError("session expired")
     if s.get("closed") or s.get("done"):
-        return  # hung up, or they already walked off
+        # Hung up, or they already walked off. Still answer: an empty reply makes ElevenLabs fail the call.
+        yield "Okay."
+        return
     # Smart pauses: if he stopped mid-thought, answer like a listener ("Mm-hm.") and wait for the rest.
     # The fragment is held and joined to what he says next; silence after it means he was done.
     pending = s.pop("pending_user", "")

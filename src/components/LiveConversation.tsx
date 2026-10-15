@@ -9,16 +9,20 @@ import { File } from 'expo-file-system';
 import { Body, Muted, Tag, Icon, ICON } from '@/ui';
 import { Mark } from '@/components/Mark';
 import { font, useTheme } from '@/theme';
-import { liveStart, liveFinish, liveState, uploadFrames, StartArgs, LiveStart } from '@/lib/api';
+import { liveStart, liveFinish, liveState, uploadFrames, reportMic, StartArgs, LiveStart } from '@/lib/api';
 import { useStore } from '@/state/store';
 import type { ConversationDone } from '@/components/Conversation';
-import { prepareMic } from '@/lib/voice';
+import { requestMic, stopSpeaking } from '@/lib/voice';
+import { prepareLiveAudio, endLiveAudio, reviveMic, micState } from '@/lib/liveAudio';
 import { play } from '@/lib/sound';
 
 type Msg = { who: string; mine: boolean; text: string };
 type Phase = 'connecting' | 'live' | 'evaluating' | 'error';
 
 const SPEAKER = /<([A-Z][a-zA-Z]+)>([\s\S]*?)<\/\1>/g;
+/** Input level that means the mic is delivering nothing at all (a quiet room still reads above this). */
+const DEAD = 0.004;
+
 const CUE = /\[(?:laughs|laughing|sighs|whispers|excited|slow|chuckles|pause|scoffs|gasps)[^\]]*\]\s*/gi;
 
 /** Split a reply like "Hey. <Sasha>Who's this?</Sasha>" into one caption per speaker, voice cues removed. */
@@ -93,6 +97,8 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
   const cam = useRef<CameraView>(null);
   const frames = useRef<string[]>([]);
   const heard = useRef(0); // loudest mic level so far; stays ~0 if the mic is blocked
+  const listenMs = useRef(0); // time the line was open for him (the other side not talking)
+  const revived = useRef(false);
 
   // Callbacks below run long after this render; they reach the latest finish/fail through this ref.
   const act = useRef({ finish: () => {}, fail: (_m: string) => {} });
@@ -167,7 +173,19 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
     if (phase !== 'live') return;
     const id = setInterval(() => {
       try {
-        if (!conv.isSpeaking) heard.current = Math.max(heard.current, conv.getInputVolume() || 0);
+        if (!conv.isSpeaking) {
+          heard.current = Math.max(heard.current, conv.getInputVolume() || 0);
+          listenMs.current += 90;
+          // Four seconds of open line and not a flicker from the mic: kick it once, and report what the engine saw.
+          if (!revived.current && listenMs.current >= 4000 && heard.current < DEAD && startRef.current) {
+            revived.current = true;
+            const sid = startRef.current.session_id;
+            const before = micState();
+            reviveMic(conv.setMuted).then(() =>
+              setTimeout(() => reportMic(sid, { before, after: micState(), heardAfter: heard.current }), 3000),
+            );
+          }
+        }
         const v = conv.isSpeaking ? conv.getOutputVolume() : conv.getInputVolume();
         energy.value = withTiming(Math.min(1, (v || 0) * 2.2), { duration: 90 });
       } catch {}
@@ -215,7 +233,9 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
     let alive = true;
     (async () => {
       try {
-        if (!(await prepareMic())) throw new Error('Kleos needs the microphone. Turn it on in Settings.');
+        stopSpeaking();
+        if (!(await requestMic())) throw new Error('Kleos needs the microphone. Turn it on in Settings › Kleos.');
+        await prepareLiveAudio();
         const s = await liveStart(args);
         if (!alive) return;
         startRef.current = s;
@@ -231,6 +251,7 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
       try {
         conv.endSession();
       } catch {}
+      endLiveAudio();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -290,6 +311,7 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
     try {
       conv.endSession();
     } catch {}
+    endLiveAudio();
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     try {
       onEnded?.();
@@ -331,8 +353,8 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
           : 'Call ended. Poise is reading it back'
         : phase === 'error'
           ? err
-          : turns === 0 && secs >= 10 && heard.current < 0.02
-            ? 'I can’t hear you. Is screen recording using the mic?'
+          : turns === 0 && listenMs.current >= 9000 && heard.current < DEAD
+            ? 'Kleos can’t hear your mic. Check Settings › Kleos › Microphone.'
             : leaving
             ? `${name} is leaving`
             : speaking

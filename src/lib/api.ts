@@ -343,6 +343,11 @@ export async function liveState(sessionId: string): Promise<{ done: boolean; lea
   return r.json();
 }
 
+/** A call where the mic delivered nothing: what the native audio engine reported, for the server log. */
+export function reportMic(sessionId: string, diag: Record<string, unknown>) {
+  fetch(`${API_URL}/live/${sessionId}/mic`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(diag) }).catch(() => {});
+}
+
 export async function liveFinish(sessionId: string, conversationId: string): Promise<Evaluation & { scriptAudio: AudioSrc }> {
   // The read can take a while (recording analysis + evaluation). The server answers within ~25s,
   // or says it's still working; then poll until it's ready.

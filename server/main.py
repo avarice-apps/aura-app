@@ -387,6 +387,17 @@ async def _read_back(sid: str, cid: str | None, voice: bool) -> dict:
     return out
 
 
+@app.post("/live/{sid}/mic")
+async def live_mic(sid: str, request: Request):
+    """The app heard nothing from the mic for several seconds and tried to revive it. Log what the engine reported."""
+    try:
+        b = await request.json()
+    except Exception:
+        b = {}
+    print("mic diag", sid, json.dumps(b)[:1500])
+    return {"ok": True}
+
+
 @app.post("/live/{sid}/finish")
 async def live_finish(sid: str, request: Request, voice: bool = True):
     """After hang-up: measure the recording, then Poise evaluates. Runs as a job so slow reads never

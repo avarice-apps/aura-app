@@ -27,7 +27,7 @@ export async function initSounds() {
   } catch {}
   (Object.keys(SOURCES) as SoundName[]).forEach((k) => {
     try {
-      const p = createAudioPlayer(SOURCES[k]);
+      const p = createAudioPlayer(SOURCES[k], { keepAudioSessionActive: true }); // never deactivate the session under a live call
       p.volume = k === 'cut' ? 0.6 : 0.22;
       players[k] = p;
     } catch {}

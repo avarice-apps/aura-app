@@ -20,7 +20,9 @@ export async function speak(src: AudioSrc, opts: { onStart?: () => void; maxMs?:
       } catch {}
       resolve();
     };
-    const p = createAudioPlayer(typeof src === 'string' ? { uri: src } : src);
+    // keepAudioSessionActive: expo-audio otherwise deactivates the shared iOS session when a line ends,
+    // which can cut the mic out from under a live call.
+    const p = createAudioPlayer(typeof src === 'string' ? { uri: src } : src, { keepAudioSessionActive: true });
     current = p;
     const sub = p.addListener('playbackStatusUpdate', (s) => {
       if (s.didJustFinish) finish();
@@ -37,6 +39,12 @@ export function stopSpeaking() {
     current?.remove();
   } catch {}
   current = null;
+}
+
+/** Live calls: permission only. The call's audio engine owns the session (lib/liveAudio). */
+export async function requestMic(): Promise<boolean> {
+  const p = await requestRecordingPermissionsAsync();
+  return p.granted;
 }
 
 export async function prepareMic(): Promise<boolean> {
