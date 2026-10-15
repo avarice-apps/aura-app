@@ -70,7 +70,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "dev": "bash scripts/dev.sh",
-    "build": "bash scripts/dev.sh build"
+    "build": "bash scripts/dev.sh build",
+    "phone": "bash scripts/phone.sh"
   },
   "private": true
 }

@@ -8,4 +8,6 @@ export const OFFLINE = !API_URL;
 export const RC_IOS_KEY: string = real(process.env.EXPO_PUBLIC_RC_IOS_KEY);
 export const POSTHOG_KEY: string = real(process.env.EXPO_PUBLIC_POSTHOG_KEY);
 export const POSTHOG_HOST: string = process.env.EXPO_PUBLIC_POSTHOG_HOST ?? 'https://us.i.posthog.com';
+// Phone test builds (npm run phone) unlock tiers locally. Never applies once a RevenueCat key is set, so store builds can't.
+export const TEST_UNLOCK: boolean = process.env.EXPO_PUBLIC_TEST_UNLOCK === '1' && !RC_IOS_KEY;
 export const LEGAL_URL: string = process.env.EXPO_PUBLIC_LEGAL_URL ?? (API_URL ? API_URL : 'https://kleos.app');

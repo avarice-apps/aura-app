@@ -1,6 +1,6 @@
 import { Platform } from 'react-native';
 import { useStore } from '@/state/store';
-import { RC_IOS_KEY } from './config';
+import { RC_IOS_KEY, TEST_UNLOCK } from './config';
 import { track, setPlanProperty } from './analytics';
 import type { Tier } from './plan';
 
@@ -89,8 +89,8 @@ export async function loadProducts(): Promise<Product[]> {
 export async function buy(p: Product): Promise<boolean> {
   track('purchase_started', { product: p.id });
   if (!ready || !p.pkg) {
-    if (__DEV__) {
-      // Development builds without RevenueCat: unlock locally so every screen can be tested.
+    if (__DEV__ || TEST_UNLOCK) {
+      // Development and phone-test builds without RevenueCat: unlock locally so every screen can be tested.
       useStore.getState().set({ plan: p.tier });
       track('purchase_dev_unlock', { product: p.id });
       return true;
