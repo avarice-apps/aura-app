@@ -7,6 +7,7 @@ Design rules (from review round 2):
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import os
 import re
@@ -22,6 +23,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
 LIVE = json.load(open(os.path.join(ROOT, "content", "live.json")))
 CAST = {c["id"]: c for c in LIVE["cast"]}
 ROOMS = {r["id"]: r for r in LIVE["rooms"]}
+try:
+    with open(os.path.join(os.path.dirname(__file__), "..", "..", "content", "quests.json")) as _f:
+        QUESTS = {q["id"]: q for q in json.load(_f)["quests"]}
+except FileNotFoundError:
+    QUESTS = {}
+ROOMS.update(QUESTS)
 
 M_CHAR = os.environ.get("AURA_CHAR_MODEL", "claude-haiku-5-5")
 M_EVAL = os.environ.get("AURA_EVAL_MODEL", "claude-sonnet-5-5")
@@ -50,7 +57,7 @@ def _client():
     return anthropic.AsyncAnthropic()
 
 
-async def _json_call(model: str, system: str, user: str, max_tokens: int = 3000, tries: int = 3, check=None) -> dict:
+async def _json_call(model: str, system: str, user: str, max_tokens: int = 3000, tries: int = 3, check=None, allow_slang: bool = False) -> dict:
     err = None
     for _ in range(tries):
         msg = user if not err else f"{user}\n\nYour previous output failed a check: {err}. Return only valid JSON."
@@ -62,7 +69,7 @@ async def _json_call(model: str, system: str, user: str, max_tokens: int = 3000,
         except Exception:
             err = "invalid JSON"
             continue
-        if BANNED.search(json.dumps(out)):
+        if not allow_slang and BANNED.search(json.dumps(out)):
             err = "banned word"
             continue
         if check:
@@ -75,7 +82,7 @@ async def _json_call(model: str, system: str, user: str, max_tokens: int = 3000,
 
 # ---------------------------------------------------------------- sessions
 
-def start(*, room_id: str | None = None, goal: str | None = None, lesson: dict | None = None, pressure: int = 1, max_turns: int | None = None, attempt_of: str | None = None) -> dict:
+def start(*, room_id: str | None = None, goal: str | None = None, lesson: dict | None = None, pressure: int = 1, max_turns: int | None = None, attempt_of: str | None = None, tone: str = "real") -> dict:
     """Create a session. Exactly one of room_id / goal (onboarding) / lesson (generated) / attempt_of."""
     _gc()
     if attempt_of:
@@ -85,6 +92,7 @@ def start(*, room_id: str | None = None, goal: str | None = None, lesson: dict |
         spec = dict(prev["spec"])
         pressure = prev["pressure"]
         max_turns = prev["max_turns"]
+        tone = prev.get("tone", tone)
     elif goal:
         g = ONBOARDING[goal]
         spec = {"character": g["character"], "setting": g["setting"], "opener": g["opener"], "goal": g["goal"], "twist": None, "focus": {"dates": "dates", "work": "work", "rooms": "rooms", "ground": "ground"}.get(goal, "intro")}
@@ -103,6 +111,7 @@ def start(*, room_id: str | None = None, goal: str | None = None, lesson: dict |
         "pressure": max(1, min(3, pressure)),
         "max_turns": max_turns or (2 if goal else 3),
         "attempt_of": attempt_of,
+        "tone": "unfiltered" if tone == "unfiltered" else "real",
         "turns": [{"role": "char", "text": spec["opener"]}],
     }
     c = CAST[spec["character"]]
@@ -164,7 +173,41 @@ How to reply:
 - Twist available on your second reply if pressure allows: {twist}
 - Never sexual, never cruel, never pressure him. If he is hostile, react like a reasonable person (cool, brief).
 
+{tone}
+
 Return ONLY JSON: {{"reply": str, "interest": int, "trust": int, "thought": str (your private reaction in <= 14 words, first person, honest, e.g. "He finally said something real. Now I'm curious.")}}"""
+
+TONE_CHAR = {
+    "real": "Tone: everyday and realistic. Mild language only.",
+    "unfiltered": (
+        "Tone: UNFILTERED. Everyone here is an adult (18+). Talk like a real person in their twenties off the clock: "
+        "swear naturally when it fits, banter, tease, roast him if he earns it, be blunt and funny, use current slang if it's natural for you. "
+        "You can talk frankly about dating, hookups and sex the way friends do over drinks. Keep it conversational: never describe sex acts, never role-play anything sexual. "
+        "If he gets creepy, pushes after a no, or is disrespectful, react like a real person would: shut it down, get cold, or walk off. "
+        "No slurs, nothing demeaning about anyone's identity."
+    ),
+}
+
+def _parse_char(raw: str, i0: int, t0: int) -> dict:
+    """Robust parse of the character's JSON. Never lets raw JSON or an empty line reach the user."""
+    txt = re.sub(r"^```(?:json)?|```$", "", raw.strip(), flags=re.M).strip()
+    m = re.search(r"\{.*\}", txt, re.S)
+    if m:
+        try:
+            o = json.loads(m.group(0))
+            if isinstance(o, dict) and str(o.get("reply", "")).strip():
+                return o
+        except Exception:
+            pass
+    rm = re.search(r'"reply"\s*:\s*"((?:[^"\\]|\\.)*)"', txt)
+    if rm:
+        num = lambda k, d: int(n.group(1)) if (n := re.search(rf'"{k}"\s*:\s*(\d+)', txt)) else d
+        th = re.search(r'"thought"\s*:\s*"((?:[^"\\]|\\.)*)"', txt)
+        return {"reply": json.loads(f'"{rm.group(1)}"'), "interest": num("interest", i0), "trust": num("trust", t0), "thought": json.loads(f'"{th.group(1)}"') if th else ""}
+    if txt and not txt.startswith("{"):
+        return {"reply": txt.strip('"'), "interest": i0, "trust": t0, "thought": ""}
+    return {}
+
 
 START_STATE = {"mara": (60, 55), "theo": (45, 35), "dev": (65, 50), "julian": (40, 45), "ines": (35, 50), "kai": (45, 45)}
 
@@ -179,30 +222,49 @@ async def turn(session_id: str, user_text: str, facts: dict) -> dict:
     spec = s["spec"]
     c = CAST[spec["character"]]
     i0, t0 = START_STATE.get(c["id"], (50, 50))
-    system = CHAR_SYSTEM.format(name=c["name"], style=c["style"], behaviour=c["behaviour"], setting=spec["setting"], pressure=s["pressure"], twist=spec.get("twist") or "none", i0=i0, t0=t0)
-    convo = []
+    system = CHAR_SYSTEM.format(name=c["name"], style=c["style"], behaviour=c["behaviour"], setting=spec["setting"], pressure=s["pressure"], twist=spec.get("twist") or "none", i0=i0, t0=t0, tone=TONE_CHAR.get(s.get("tone", "real"), TONE_CHAR["real"]))
+    convo = [{"role": "user", "content": "[The scene begins.]"}]
     for t in s["turns"]:
         if t["role"] == "char":
             convo.append({"role": "assistant", "content": json.dumps({"reply": t["text"], "interest": t.get("interest", i0), "trust": t.get("trust", t0), "thought": t.get("thought", "")})})
         else:
-            convo.append({"role": "user", "content": f'{t["text"]}\n\n[delivery: {_delivery_plain(t.get("facts", {}))}]'})
+            cut = "\n[You cut him off mid-sentence because he was going on too long. Start your reply by interrupting naturally.]" if (t.get("facts") or {}).get("interrupted") else ""
+            convo.append({"role": "user", "content": f'{t["text"]}\n\n[delivery: {_delivery_plain(t.get("facts", {}))}]{cut}'})
     if done:
         convo[-1]["content"] += "\n\n[Last exchange. Reply with one natural sentence that closes or continues the moment.]"
     out = None
-    for _ in range(2):
+    for attempt in range(3):
         r = await _client().messages.create(model=M_CHAR, max_tokens=300, system=system, messages=convo)
-        raw = "".join(b.text for b in r.content if getattr(b, "type", "") == "text")
-        m = re.search(r"\{.*\}", raw, re.S)
-        try:
-            out = json.loads(m.group(0))
+        raw = "".join(b.text for b in r.content if getattr(b, "type", "") == "text").strip()
+        out = _parse_char(raw, i0, t0)
+        if out.get("reply"):
             break
-        except Exception:
-            out = {"reply": raw.strip().strip('"'), "interest": i0, "trust": t0, "thought": ""}
+    if not out or not out.get("reply"):
+        out = {"reply": "Sorry, say that again?", "interest": i0, "trust": t0, "thought": ""}
     clamp = lambda v, d: max(0, min(100, int(v))) if isinstance(v, (int, float)) else d
     reply = re.sub(r"^\*.*?\*\s*", "", str(out.get("reply", "")).strip().strip('"'))
     st = {"interest": clamp(out.get("interest"), i0), "trust": clamp(out.get("trust"), t0), "thought": str(out.get("thought", ""))[:140]}
     s["turns"].append({"role": "char", "text": reply, **st})
     return {"reply": reply, "done": done, "turn": n_user, "voice": c["voice"], **st}
+
+
+def attach_deep(session_id: str, turn_index: int, task) -> None:
+    """Register a background analysis task for a user turn; its result merges into that turn's facts."""
+    s = SESSIONS.get(session_id)
+    if not s:
+        return
+    t = s["turns"][turn_index]
+
+    async def merge():
+        deep = await task
+        t["facts"] = {**deep, **{k: v for k, v in t["facts"].items() if k in ("interrupted", "presence")}}
+
+    t["pending"] = asyncio.ensure_future(merge())
+
+
+def last_user_index(session_id: str) -> int:
+    s = SESSIONS[session_id]
+    return max(i for i, t in enumerate(s["turns"]) if t["role"] == "user")
 
 
 def trace(session_id: str) -> list[dict]:
@@ -305,6 +367,12 @@ async def evaluate(session_id: str) -> dict:
     s = SESSIONS.get(session_id)
     if not s:
         raise KeyError("session expired")
+    # Deep voice analysis runs in the background during the conversation; make sure it has landed.
+    pending = [t["pending"] for t in s["turns"] if t.get("pending")]
+    if pending:
+        await asyncio.gather(*pending, return_exceptions=True)
+        for t in s["turns"]:
+            t.pop("pending", None)
     vf = _merge_facts(s["turns"])
     axes = {"voice": rubric.voice_score(vf), "command": rubric.command_score(vf), "composure": rubric.composure_score(vf)}
     transcript = []
@@ -333,7 +401,9 @@ async def evaluate(session_id: str) -> dict:
         s["evaluation"] = out
         return out
     focus = RUBRIC_FOCUS.get(s["spec"].get("focus") or s["spec"].get("unit") or s["spec"].get("goal_key") or "", RUBRIC_FOCUS["intro"])
-    user = f"""Scene: {s['spec']['setting']}
+    poise_tone = "Voice for this user: UNFILTERED. Be funny, dry and a little savage, like the honest friend at the bar. Light swearing is fine. Slang like rizz or aura is fine if it lands. Jokes target the answer, never the person. The analysis stays exact and the one change stays specific." if s.get("tone") == "unfiltered" else "Voice: plain, precise, a little dry."
+    user = f"""{poise_tone}
+Scene: {s['spec']['setting']}
 Goal: {s['spec']['goal']}
 What matters most here: {focus}
 Pressure: {s['pressure']}
@@ -348,13 +418,13 @@ Previous attempt: {prev_block}"""
             return "need exactly two strengths"
         if not o.get("change", {}).get("text"):
             return "missing change"
-        if "!" in o.get("script", ""):
+        if "!" in o.get("script", "") and s.get("tone") != "unfiltered":
             return "exclamation mark"
         if len(o.get("alternatives") or []) != 2:
             return "need exactly two alternatives"
         return None
 
-    out = await _json_call(M_EVAL, EVAL_SYSTEM, user, max_tokens=2500, check=check)
+    out = await _json_call(M_EVAL, EVAL_SYSTEM, user, max_tokens=2500, check=check, allow_slang=s.get("tone") == "unfiltered")
     axes["awareness"] = max(5, min(97, int(out.get("awareness", {}).get("score", 50))))
     rating = round(axes["voice"] * 0.3 + axes["command"] * 0.3 + axes["composure"] * 0.2 + axes["awareness"] * 0.2)
     out.update({"rating": rating, "axes": axes, "counts": _counts(s["turns"]), "turns": [{"role": t["role"], "text": t["text"]} for t in s["turns"]], "trace": trace(session_id), "character": CAST[s["spec"]["character"]]["name"]})
@@ -374,13 +444,14 @@ LESSON_SYSTEM = """You design one 3-minute practice conversation for Aura. Retur
 Rules: scenes are realistic for adults 18-30 in cities: work, friends, dates, family, service, travel. Never sexual, never cruel. Vary settings; avoid ones in 'avoid'. Choose the character whose style best tests the goal."""
 
 
-async def generate_lesson(*, unit: str, objective: str, weak: list[str], avoid: list[str], pressure: int, unit_id: str = "") -> dict:
+async def generate_lesson(*, unit: str, objective: str, weak: list[str], avoid: list[str], pressure: int, unit_id: str = "", tone: str = "real") -> dict:
     user = json.dumps({"unit": unit, "objective": objective, "his recurring weak spots": weak, "avoid settings": avoid, "pressure": pressure})
 
     def check(o):
         return None if o.get("character") in CAST and o.get("opener") else "bad character or missing opener"
 
-    out = await _json_call(M_EVAL, LESSON_SYSTEM, user, max_tokens=800, check=check)
+    sys_ = LESSON_SYSTEM if tone != "unfiltered" else LESSON_SYSTEM.replace("Never sexual, never cruel.", "UNFILTERED mode (adults): make it messier, funnier and more real: bars, side quests, awkward dates, roasts, money fights, hookup aftermath. Frank adult topics are fine; never explicit, never cruel.")
+    out = await _json_call(M_EVAL, sys_, user, max_tokens=800, check=check, allow_slang=tone == "unfiltered")
     out["focus"] = unit_id if unit_id in RUBRIC_FOCUS else "intro"
     return out
 
@@ -398,12 +469,13 @@ Return only JSON:
 Points are on the playful meme scale: small beats +-10..40, big ones +-80..250. total = sum. Be fair: credit what he did well. Never judge looks, never encourage anything manipulative or disrespectful. No slang (alpha, sigma, mog, rizz). If the story involves harm, distress or danger, set lines to [] and use headline to respond kindly and suggest real support."""
 
 
-async def ledger(story: str, context: str = "") -> dict:
+async def ledger(story: str, context: str = "", tone: str = "real") -> dict:
     def check(o):
         if o.get("lines") and abs(sum(int(l["points"]) for l in o["lines"]) - int(o.get("total", 0))) > 1:
             return "total must equal the sum of points"
         return None
 
-    out = await _json_call(M_EVAL, LEDGER_SYSTEM, f"{context}\nStory: {story}".strip(), max_tokens=1200, check=check)
+    sys_ = LEDGER_SYSTEM + ("\nThis user chose UNFILTERED: be funny and savage like a best friend reading the receipt, light swearing and slang (rizz, aura, cooked) welcome; still fair and specific." if tone == "unfiltered" else "")
+    out = await _json_call(M_EVAL, sys_, f"{context}\nStory: {story}".strip(), max_tokens=1200, check=check, allow_slang=tone == "unfiltered")
     out["receipt_no"] = f"{uuid.uuid4().int % 10000:04d}"
     return out

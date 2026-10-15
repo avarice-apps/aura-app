@@ -20,3 +20,4 @@ server/**/__pycache__/
 
 !assets/demo/*.mp3
 server/data/
+.dev-logs/

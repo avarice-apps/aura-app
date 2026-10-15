@@ -24,3 +24,22 @@ async def speak(text: str, voice_id: str | None = None) -> bytes:
         )
     r.raise_for_status()
     return r.content
+
+
+async def stream(text: str, voice_id: str | None = None, fast: bool = False):
+    """Yield mp3 chunks as ElevenLabs produces them. fast=True uses the low-latency Flash model (characters)."""
+    key = os.environ["ELEVENLABS_API_KEY"]
+    vid = voice_id or VOICE_ID
+    model = "eleven_flash_v2_5" if fast else "eleven_multilingual_v2"
+    async with httpx.AsyncClient(timeout=60) as client:
+        async with client.stream(
+            "POST",
+            f"https://api.elevenlabs.io/v1/text-to-speech/{vid}/stream",
+            params={"output_format": "mp3_44100_128"},
+            headers={"xi-api-key": key, "Content-Type": "application/json"},
+            json={"text": text, "model_id": model, "voice_settings": {"stability": 0.5, "similarity_boost": 0.8, "style": 0.3, "use_speaker_boost": True}},
+        ) as r:
+            r.raise_for_status()
+            async for chunk in r.aiter_bytes():
+                if chunk:
+                    yield chunk

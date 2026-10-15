@@ -147,7 +147,7 @@ export async function startSession(a: StartArgs): Promise<SessionStart & { opene
   return { ...r, openerAudio: r.opener_audio };
 }
 
-export async function sendTurn(sessionId: string, uri: string): Promise<TurnResult & { replyAudio: AudioSrc }> {
+export async function sendTurn(sessionId: string, uri: string, interrupted = false): Promise<TurnResult & { replyAudio: AudioSrc }> {
   if (OFFLINE) {
     demo.turns += 1;
     await sleep(1400);
@@ -167,6 +167,7 @@ export async function sendTurn(sessionId: string, uri: string): Promise<TurnResu
   }
   const form = new FormData();
   form.append('audio', fileField(uri, 'turn.m4a', 'audio/m4a'));
+  form.append('interrupted', interrupted ? '1' : '0');
   const r = await postForm<TurnResult>(`/session/${sessionId}/turn`, form);
   return { ...r, replyAudio: r.reply_audio };
 }

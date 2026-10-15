@@ -15,7 +15,7 @@ import time
 import uuid
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import JSONResponse, Response, HTMLResponse, FileResponse
+from fastapi.responses import JSONResponse, Response, HTMLResponse, FileResponse, StreamingResponse
 from fastapi import Request
 
 from pipeline import audio, face, rubric, poise, tts, converse
@@ -154,15 +154,23 @@ async def silence(video: UploadFile = File(...)):
 
 
 @app.get("/tts")
-async def tts_get(text: str, voice_id: str | None = None):
-    h = hashlib.sha1(f"{voice_id}|{text}".encode()).hexdigest()[:16]
+async def tts_get(text: str, voice_id: str | None = None, fast: int = 0):
+    """Cached after first play. First play streams straight from ElevenLabs so audio starts in well under a second."""
+    h = hashlib.sha1(f"{voice_id}|{fast}|{text}".encode()).hexdigest()[:16]
     p = os.path.join(AUDIO_DIR, f"tts_{h}.mp3")
-    if not os.path.exists(p):
-        mp3 = await tts.speak(text, voice_id)
+    if os.path.exists(p):
+        with open(p, "rb") as f:
+            return Response(f.read(), media_type="audio/mpeg")
+
+    async def gen():
+        buf = bytearray()
+        async for chunk in tts.stream(text, voice_id, fast=bool(fast)):
+            buf.extend(chunk)
+            yield chunk
         with open(p, "wb") as f:
-            f.write(mp3)
-    with open(p, "rb") as f:
-        return Response(f.read(), media_type="audio/mpeg")
+            f.write(bytes(buf))
+
+    return StreamingResponse(gen(), media_type="audio/mpeg")
 
 
 # ---------------- training: consent, panel rating, admin ----------------
@@ -249,16 +257,16 @@ async def rate_submit(token: str, request: Request):
 
 # ---------------------------------------------------------------- live conversations
 
-def _voice_url(text: str, voice_id: str) -> str:
+def _voice_url(text: str, voice_id: str, fast: bool = False) -> str:
     from urllib.parse import quote
-    return f"{PUBLIC_URL}/tts?voice_id={voice_id}&text={quote(text)}"
+    return f"{PUBLIC_URL}/tts?voice_id={voice_id}&text={quote(text)}" + ("&fast=1" if fast else "")
 
 
 @app.post("/session/start")
 async def session_start(request: Request):
     b = await request.json()
     try:
-        out = converse.start(room_id=b.get("room_id"), goal=b.get("goal"), lesson=b.get("lesson"), pressure=int(b.get("pressure", 1)), max_turns=b.get("max_turns"), attempt_of=b.get("attempt_of"))
+        out = converse.start(room_id=b.get("room_id"), goal=b.get("goal"), lesson=b.get("lesson"), pressure=int(b.get("pressure", 1)), max_turns=b.get("max_turns"), attempt_of=b.get("attempt_of"), tone=b.get("tone", "real"))
     except KeyError as e:
         raise HTTPException(410, str(e))
     except ValueError as e:
@@ -268,7 +276,7 @@ async def session_start(request: Request):
 
 
 @app.post("/session/{sid}/turn")
-async def session_turn(sid: str, audio_file: UploadFile | None = File(None, alias="audio"), video: UploadFile | None = File(None)):
+async def session_turn(sid: str, audio_file: UploadFile | None = File(None, alias="audio"), video: UploadFile | None = File(None), interrupted: str = Form("0")):
     """One user turn. Send `audio` (voice mode) or `video` (camera mode: face + eyes are measured too)."""
     if video is not None:
         path = await _save(video, ".mp4")
@@ -278,26 +286,45 @@ async def session_turn(sid: str, audio_file: UploadFile | None = File(None, alia
         with_face = False
     else:
         raise HTTPException(422, "send audio or video")
+    # Fast path: transcribe, compute word-level facts, let the character reply.
+    # Deep voice (pitch, pace timeline, fades) and face analysis run in the background and land before evaluation.
+    wav = audio.extract_wav(path)
     try:
-        v, p = await measure(path, with_face=with_face, face_mesh=True)
-    finally:
+        dg = await audio.transcribe(wav)
+    except Exception:
+        os.remove(wav)
         os.remove(path)
-    text = v.get("transcript") or ""
+        raise HTTPException(502, "Transcription hiccup. Go again, it doesn't count.")
+    quick = audio.quick_facts(dg, audio.duration_of(wav)).to_dict()
+    text = quick.get("transcript") or ""
     if len(text.split()) < 2:
-        # Not enough to react to. The client should let him go again without it counting.
+        os.remove(wav)
+        os.remove(path)
         raise HTTPException(422, "Didn't catch that. Try again, a little closer to the mic.")
-    facts = {k: x for k, x in v.items() if k != "transcript"}
-    if with_face:
-        facts["presence"] = p
+    facts = {k: x for k, x in quick.items() if k != "transcript"}
+    if interrupted == "1":
+        facts["interrupted"] = True
+
+    async def deep():
+        try:
+            v = await asyncio.to_thread(audio.analyse, wav, dg)
+            d = {k: x for k, x in v.to_dict().items() if k != "transcript"}
+            if with_face:
+                pf = await asyncio.to_thread(face.analyse, path, 6.0, True)
+                d["presence"] = pf.to_dict()
+            return d
+        finally:
+            for f in (wav, path):
+                if os.path.exists(f):
+                    os.remove(f)
+
     try:
         r = await converse.turn(sid, text, facts)
     except KeyError as e:
         raise HTTPException(410, str(e))
-    brief = {k: facts.get(k) for k in ("duration_s", "wpm", "filler_count", "hedge_count", "apology_count", "first_word_s", "ended_mid_sentence", "repeat_count", "restart_count", "fade_endings")}
-    brief["rushed"] = bool(facts.get("rush_moments"))
-    if with_face:
-        brief["eye_contact"] = p.get("eye_contact_ratio")
-    return {"user_text": text, "facts": brief, "reply": r["reply"], "reply_audio": _voice_url(r["reply"], r["voice"]), "done": r["done"], "turn": r["turn"], "interest": r["interest"], "trust": r["trust"]}
+    converse.attach_deep(sid, converse.last_user_index(sid), asyncio.ensure_future(deep()))
+    brief = {k: facts.get(k) for k in ("duration_s", "wpm", "filler_count", "hedge_count", "apology_count", "first_word_s", "ended_mid_sentence", "repeat_count")}
+    return {"user_text": text, "facts": brief, "reply": r["reply"], "reply_audio": _voice_url(r["reply"], r["voice"], fast=True), "done": r["done"], "turn": r["turn"], "interest": r["interest"], "trust": r["trust"]}
 
 
 @app.post("/session/{sid}/evaluate")
@@ -314,11 +341,11 @@ async def session_evaluate(sid: str, voice: bool = True):
 @app.post("/lesson")
 async def lesson(request: Request):
     b = await request.json()
-    return await converse.generate_lesson(unit=b.get("unit", ""), objective=b.get("objective", ""), weak=b.get("weak", []), avoid=b.get("avoid", []), pressure=int(b.get("pressure", 1)), unit_id=b.get("unit_id", ""))
+    return await converse.generate_lesson(unit=b.get("unit", ""), objective=b.get("objective", ""), weak=b.get("weak", []), avoid=b.get("avoid", []), pressure=int(b.get("pressure", 1)), unit_id=b.get("unit_id", ""), tone=b.get("tone", "real"))
 
 
 @app.post("/ledger")
-async def make_ledger(text: str = Form(""), context: str = Form(""), audio_file: UploadFile | None = File(None, alias="audio")):
+async def make_ledger(text: str = Form(""), context: str = Form(""), tone: str = Form("real"), audio_file: UploadFile | None = File(None, alias="audio")):
     story = text
     if audio_file is not None:
         path = await _save(audio_file, ".m4a")
@@ -329,7 +356,7 @@ async def make_ledger(text: str = Form(""), context: str = Form(""), audio_file:
             os.remove(path)
     if len(story.split()) < 5:
         raise HTTPException(422, "Tell me a little more about what happened.")
-    out = await converse.ledger(story, context)
+    out = await converse.ledger(story, context, tone)
     out["story"] = story
     return out
 

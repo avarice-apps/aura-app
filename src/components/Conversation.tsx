@@ -14,7 +14,13 @@ import { play } from '@/lib/sound';
 type Phase = 'loading' | 'speaking' | 'yourturn' | 'recording' | 'sending' | 'evaluating' | 'error';
 type Msg = { role: 'char' | 'user'; text: string };
 
-const WINDOW: Record<number, number> = { 1: 40, 2: 22, 3: 14 };
+const WINDOW: Record<number, number> = { 1: 45, 2: 30, 3: 20 };
+/** Talk longer than this and the character cuts in (pressure 2-3). */
+const CUT_IN: Record<number, number> = { 1: 0, 2: 24, 3: 15 };
+/** Silence after speech that counts as "done talking". */
+const END_SILENCE_MS: Record<number, number> = { 1: 1600, 2: 1300, 3: 1000 };
+const SPEECH_DB = -38;
+const SILENCE_DB = -46;
 
 export type ConversationDone = { sessionId: string; evaluation: Evaluation & { scriptAudio?: unknown }; start: SessionStart };
 
@@ -38,6 +44,12 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const sessionRef = useRef<string>('');
   const finishing = useRef(false);
+  const listening = useRef(false);
+  const heard = useRef(false);
+  const quietSince = useRef<number | null>(null);
+  const startedAt = useRef(0);
+  const cutIn = useRef(false);
+  const [notice, setNotice] = useState('');
   const pressure = args.pressure ?? 1;
 
   // live voice energy from mic metering (dBFS -60..0 -> 0..1)
@@ -45,7 +57,25 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
     if (phase === 'recording' && typeof rec.metering === 'number') {
       const v = Math.max(0, Math.min(1, (rec.metering + 55) / 45));
       energy.value = withTiming(v, { duration: 90 });
+      // Hands-free turn taking: once you've spoken, a short silence ends your turn.
+      const now = Date.now();
+      if (rec.metering > SPEECH_DB) {
+        heard.current = true;
+        quietSince.current = null;
+      } else if (heard.current && rec.metering < SILENCE_DB) {
+        if (quietSince.current === null) quietSince.current = now;
+        else if (now - quietSince.current > (END_SILENCE_MS[pressure] ?? 1400)) finish();
+      }
+      // Pressure: ramble past the cap and they cut in, like a real person would.
+      const cap = CUT_IN[pressure] ?? 0;
+      if (cap && heard.current && now - startedAt.current > cap * 1000 && !finishing.current) {
+        cutIn.current = true;
+        setNotice(`${start?.character.name ?? 'They'} cut in`);
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        finish();
+      }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rec.metering, phase, energy]);
 
   // idle breathing while the character speaks
@@ -71,7 +101,7 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
         setMsgs([{ role: 'char', text: s.opener }]);
         setPhase('speaking');
         await speak(s.openerAudio);
-        if (alive) setPhase('yourturn');
+        if (alive) listen();
       } catch (e: any) {
         fail(e?.message ?? 'Could not start.');
       }
@@ -90,14 +120,22 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
     onError?.(m);
   }
 
-  async function begin() {
-    if (phase !== 'yourturn') return;
+  /** Start listening right away: no tap needed. */
+  async function listen() {
+    if (listening.current) return;
+    listening.current = true;
+    heard.current = false;
+    quietSince.current = null;
+    cutIn.current = false;
+    startedAt.current = Date.now();
+    setNotice('');
     stopSpeaking();
     play('select');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await prepareMic();
     await recorder.prepareToRecordAsync();
     recorder.record();
+    setErr('');
     setPhase('recording');
     const w = WINDOW[pressure] ?? 40;
     setLeft(w);
@@ -120,12 +158,14 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
       clearInterval(timer.current);
       timer.current = null;
     }
+    listening.current = false;
     setPhase((p) => (p === 'recording' ? 'sending' : p));
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     try {
       await recorder.stop();
       const uri = recorder.uri ?? '';
-      const r = await sendTurn(sessionRef.current, uri);
+      if (!heard.current) throw new Error("Didn't catch that.");
+      const r = await sendTurn(sessionRef.current, uri, cutIn.current);
       setMsgs((m) => [...m, { role: 'user', text: r.user_text }, { role: 'char', text: r.reply }]);
       if (typeof r.interest === 'number') setInterest(r.interest);
       setPhase('speaking');
@@ -136,12 +176,14 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
         play('reveal');
         onDone({ sessionId: sessionRef.current, evaluation: e, start: start! });
       } else {
-        setPhase('yourturn');
+        finishing.current = false;
+        listen();
+        return;
       }
     } catch (e: any) {
       // A failed turn is recoverable and never counts: let them answer again.
       const m = String(e?.message ?? '');
-      setErr(/catch that|closer to the mic/i.test(m) ? "Didn't catch that. Go again, it doesn't count." : m || 'Something went wrong. Go again.');
+      setErr(/catch that|closer to the mic/i.test(m) ? "Didn't catch that. Tap to go again, it doesn't count." : m || 'Something went wrong. Tap to go again.');
       play('wrong');
       setPhase('yourturn');
     } finally {
@@ -155,7 +197,7 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
 
   const shared = phase === 'recording' ? energy : idle;
   const status =
-    phase === 'loading' ? 'Setting the scene' : phase === 'speaking' ? `${start?.character.name ?? ''} is talking` : phase === 'yourturn' ? 'Tap and answer out loud' : phase === 'recording' ? 'Listening. Tap when you’re done' : phase === 'sending' ? `${start?.character.name ?? ''} is thinking` : phase === 'evaluating' ? 'Poise is reading it back' : err;
+    phase === 'loading' ? 'Setting the scene' : phase === 'speaking' ? `${start?.character.name ?? ''} is talking` : phase === 'yourturn' ? err || 'Tap to talk' : phase === 'recording' ? (heard.current ? 'Listening…' : 'Your turn. Just talk') : phase === 'sending' ? notice || `${start?.character.name ?? ''} is thinking…` : phase === 'evaluating' ? 'Poise is reading it back' : err;
 
   return (
     <View style={{ flex: 1 }}>
@@ -188,8 +230,8 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
           </Animated.View>
         ))}
         {phase === 'sending' && (
-          <Animated.View entering={FadeIn} style={{ alignSelf: 'flex-end' }}>
-            <Muted small>Transcribing…</Muted>
+          <Animated.View entering={FadeIn} style={{ alignSelf: 'flex-start', backgroundColor: t.card, borderWidth: 1, borderColor: t.line, borderRadius: 18, paddingHorizontal: 16, paddingVertical: 12 }}>
+            <Muted small>{notice ? `${notice}…` : '•••'}</Muted>
           </Animated.View>
         )}
       </ScrollView>
@@ -199,7 +241,7 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
         <Pressable
           accessibilityLabel={phase === 'recording' ? 'Finish answer' : 'Start answering'}
           disabled={!(phase === 'yourturn' || phase === 'recording')}
-          onPress={() => (phase === 'recording' ? finish() : begin())}
+          onPress={() => (phase === 'recording' ? finish() : listen())}
           style={{ width: 170, height: 170, alignItems: 'center', justifyContent: 'center' }}
         >
           <View style={{ position: 'absolute' }}>

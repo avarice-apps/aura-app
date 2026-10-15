@@ -330,3 +330,53 @@ def analyse(wav_path: str, dg: dict) -> VoiceFacts:
         timeline=timeline[:24],
         signal_moments=moments[:40],
     )
+
+
+def quick_facts(dg: dict, duration: float) -> VoiceFacts:
+    """Word-level facts only (no audio DSP). Milliseconds, so the character can reply right away.
+
+    The full analyse() runs in the background and replaces these before evaluation.
+    """
+    words = _words(dg)
+    transcript = dg.get("results", {}).get("channels", [{}])[0].get("alternatives", [{}])[0].get("transcript", "")
+    if words:
+        span = max(0.5, words[-1].end - words[0].start)
+        wpm = len(words) / span * 60
+        first_word = words[0].start
+    else:
+        span, wpm, first_word = duration, 0.0, duration
+    fill = _find_phrases(words, FILLERS)
+    hedge = _find_phrases(words, HEDGES)
+    apol = _find_phrases(words, APOLOGIES)
+    pauses = [(words[i + 1].start - words[i].end) for i in range(len(words) - 1)]
+    long_pauses = [p for p in pauses if p > 0.7]
+    norm = [re.sub(r"[^a-z']", "", w.word.lower()) for w in words]
+    repeats = [{"word": norm[i], "t": round(words[i].start, 2)} for i in range(1, len(words)) if norm[i] and norm[i] == norm[i - 1] and words[i].start - words[i - 1].end < 0.6]
+    sentences = [s for s in re.split(r"(?<=[.!?])\s+", transcript.strip()) if s]
+    return VoiceFacts(
+        duration_s=round(duration, 2),
+        transcript=transcript,
+        word_count=len(words),
+        wpm=round(wpm, 1),
+        filler_count=len(fill),
+        filler_per_min=round(len(fill) / max(span, 1) * 60, 1),
+        fillers=fill,
+        hedge_count=len(hedge),
+        hedges=hedge,
+        apology_count=len(apol),
+        apologies=apol,
+        pause_count=len(long_pauses),
+        longest_pause_s=round(max(long_pauses), 2) if long_pauses else 0.0,
+        first_word_s=round(first_word, 2),
+        sentence_count=len(sentences),
+        ended_mid_sentence=bool(transcript.strip()) and not transcript.strip().endswith((".", "!", "?")),
+        repeat_count=len(repeats),
+        repeats=repeats[:12],
+    )
+
+
+def duration_of(wav_path: str) -> float:
+    import soundfile as sf
+
+    info = sf.info(wav_path)
+    return float(info.frames / info.samplerate) if info.samplerate else 0.0
