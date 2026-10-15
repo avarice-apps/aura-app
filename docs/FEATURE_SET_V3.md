@@ -27,7 +27,7 @@ Canvas row "Onboarding" has eight screens.
 6. **Retry.** The same question with the one change shown, plus an example line.
 7. **Before and after.**
    - The score delta (e.g. 48 → 61) and both transcripts.
-   - **Mara's reaction to each take**: take 1 gets "research into what?", take 2 gets "wait, how?". The other person's reaction is the proof.
+   - **Mara's reaction to each take**, generated blind to which take is the retry. An illustration; the recordings are the evidence.
    - Measured changes (hedges 3→0).
    - Share the before/after, or **challenge a friend**.
 8. **Paywall.**
@@ -43,7 +43,7 @@ Canvas row "Onboarding" has eight screens.
 | 3 | **Situations** | 80 written and checked (`content/situations.json`), 8 categories, 3 difficulties, each with aura +/− per answer, the why, and a one-line Code.<br>Sounds on select, right and wrong. |
 | 4 | **Feedback with replay** | Two strengths and one change.<br>Every claim cites words or timestamps. Observable facts (pace, fillers) are kept separate from interpretation ("read as hesitant"). |
 | 5 | **Instant retry and compare** | Available everywhere, not just in onboarding. |
-| 6 | **Aura profile** | The Mark, the Index, five axes (Voice, Presence, Command, Composure, Social IQ) and an archetype.<br>The archetype is clearly entertainment; the axes are measured.<br>Several valid styles: quiet-deliberate can score as high as warm-expressive. |
+| 6 | **Aura profile** | The Mark, the Index, five axes (Voice, Presence, Command, Composure, Social Awareness) and an archetype.<br>The archetype is clearly entertainment; the axes are measured.<br>Several valid styles: quiet-deliberate can score as high as warm-expressive. |
 | 7 | **Ask Poise and the Aura Ledger** | Describe a real moment and get +/− per beat, a net score, and "next time".<br>Can turn the moment into a drill or a roleplay. |
 | 8 | **Sunday Re-read** | A comparable weekly benchmark under the same conditions. It is the only thing that moves the Index. |
 | 9 | **Programs** | A 7-day program generated from the onboarding goal. Each session has one objective and takes 3–5 minutes. |
@@ -92,6 +92,30 @@ Group conversations (2–3 voices), blind friend comparison of two takes, a reme
   - It never scores faces or bodies, only posture, fit and grooming choices.
 - *"Thirty-five features."* Most are good ideas as *content* inside the live-conversation engine (Recovery Lab, Plot Twist, Pause Challenge and Hold Your Point are all Rooms with a twist), not separate products.
   - That keeps the app from becoming clunky.
+
+## Review round 2 (ChatGPT): accepted changes
+
+- **Evaluation hears the audio, not just the transcript.** It already does: pitch, pauses, energy and inflection come from librosa, and fillers come from Deepgram timestamps. Delivery claims must cite these measured facts.
+- **Character reactions are generated blind.** The character model is never told that a take is a retry. Some retries will not improve, or will trade one strength for another, and the compare screen says so honestly (e.g. "clearer, but faster"). The reaction is presented as an illustration; the recordings are the evidence.
+- **Three layers on every result:** the observable detail, then the interpretation, then the session rating.
+  - "Social IQ" is renamed **Social Awareness**.
+  - Camera mode says "looking toward the lens", not "eye contact".
+- **Onboarding.**
+  - A/B test one tap situation against three.
+  - The first live prompt matches the chosen goal:
+    - dates: "what do you enjoy outside work?"
+    - work: "tell me about yourself"
+    - rooms: joining a conversation
+    - holding ground: decline a request, then handle pushback
+  - The paywall headline matches the goal.
+  - Camera choice is honoured; voice-only stays the default.
+- **Pauses and fillers** are judged by whether they disrupt clarity in context, not by a fixed 2.5 s rule. Game timers are deadlines, not composure judgments.
+- **Retry offers "Give me a hint" or "Show an example".** No scripted line by default. A different but related prompt comes later to test transfer.
+- **Event Prep stays off the paywall until it ships.**
+  - Free users can accept and finish an invited Aura Off, and replay their first comparison.
+  - The referral reward is explicit: one premium Room, including its retry.
+- **The weekly benchmark** can be taken any day (Sunday is a suggestion). The first Index is labelled provisional; personal progress is the main comparison.
+- **Metrics** get explicit denominators. Added: voice response latency, failed sessions and unexpected interruptions. Trial conversion counts successful charges, with refunds tracked separately.
 
 ## Metrics that decide whether to expand
 
