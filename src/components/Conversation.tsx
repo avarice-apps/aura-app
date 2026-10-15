@@ -19,8 +19,16 @@ const WINDOW: Record<number, number> = { 1: 45, 2: 30, 3: 20 };
 const CUT_IN: Record<number, number> = { 1: 0, 2: 24, 3: 15 };
 /** Silence after speech that counts as "done talking". */
 const END_SILENCE_MS: Record<number, number> = { 1: 1600, 2: 1300, 3: 1000 };
-const SPEECH_DB = -38;
-const SILENCE_DB = -46;
+/** Speech is this many dB above the room's noise floor (calibrated in the first ~0.4s of each turn). */
+const SPEECH_OVER_FLOOR = 9;
+/** Small mono AAC: plenty for speech, uploads fast over a tunnel or mobile data. */
+const VOICE_PRESET = {
+  ...RecordingPresets.HIGH_QUALITY,
+  sampleRate: 22050,
+  numberOfChannels: 1,
+  bitRate: 64000,
+  isMeteringEnabled: true,
+};
 
 export type ConversationDone = { sessionId: string; evaluation: Evaluation & { scriptAudio?: unknown }; start: SessionStart };
 
@@ -36,7 +44,7 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
   const [left, setLeft] = useState(0);
   const [interest, setInterest] = useState<number | null>(null);
   const [err, setErr] = useState('');
-  const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
+  const recorder = useAudioRecorder(VOICE_PRESET);
   const rec = useAudioRecorderState(recorder, 80);
   const energy = useSharedValue(0);
   const idle = useSharedValue(0);
@@ -49,6 +57,8 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
   const quietSince = useRef<number | null>(null);
   const startedAt = useRef(0);
   const cutIn = useRef(false);
+  const floor = useRef<number[]>([]);
+  const meterSeen = useRef(false);
   const [notice, setNotice] = useState('');
   const pressure = args.pressure ?? 1;
 
@@ -59,10 +69,18 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
       energy.value = withTiming(v, { duration: 90 });
       // Hands-free turn taking: once you've spoken, a short silence ends your turn.
       const now = Date.now();
-      if (rec.metering > SPEECH_DB) {
+      meterSeen.current = true;
+      // Calibrate: the first ~0.4s of each turn sets the room's noise floor.
+      if (now - startedAt.current < 400) {
+        floor.current.push(rec.metering);
+        return;
+      }
+      const base = floor.current.length ? Math.min(...floor.current) : -60;
+      const speech = rec.metering > Math.max(base + SPEECH_OVER_FLOOR, -50);
+      if (speech) {
         heard.current = true;
         quietSince.current = null;
-      } else if (heard.current && rec.metering < SILENCE_DB) {
+      } else if (heard.current) {
         if (quietSince.current === null) quietSince.current = now;
         else if (now - quietSince.current > (END_SILENCE_MS[pressure] ?? 1400)) finish();
       }
@@ -127,14 +145,25 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
     heard.current = false;
     quietSince.current = null;
     cutIn.current = false;
-    startedAt.current = Date.now();
+    floor.current = [];
+    meterSeen.current = false;
     setNotice('');
     stopSpeaking();
-    play('select');
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    await prepareMic();
-    await recorder.prepareToRecordAsync();
-    recorder.record();
+    try {
+      const ok = await prepareMic();
+      if (!ok) throw new Error('Kleos needs the microphone. Turn it on in Settings › Expo Go › Microphone.');
+      // iOS needs a beat to switch the audio route from playback to recording.
+      await new Promise((r) => setTimeout(r, 220));
+      await recorder.prepareToRecordAsync();
+      recorder.record();
+    } catch (e: any) {
+      listening.current = false;
+      setErr(e?.message ?? 'The mic didn’t start. Tap to try again.');
+      setPhase('yourturn');
+      return;
+    }
+    startedAt.current = Date.now();
     setErr('');
     setPhase('recording');
     const w = WINDOW[pressure] ?? 40;
@@ -164,7 +193,8 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
     try {
       await recorder.stop();
       const uri = recorder.uri ?? '';
-      if (!heard.current) throw new Error("Didn't catch that.");
+      // Never throw a recording away on the phone. The server decides whether it heard words.
+      if (!uri) throw new Error("Didn't catch that.");
       const r = await sendTurn(sessionRef.current, uri, cutIn.current);
       setMsgs((m) => [...m, { role: 'user', text: r.user_text }, { role: 'char', text: r.reply }]);
       if (typeof r.interest === 'number') setInterest(r.interest);
@@ -196,8 +226,9 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
   }, [msgs.length]);
 
   const shared = phase === 'recording' ? energy : idle;
+  const level = phase === 'recording' && typeof rec.metering === 'number' ? Math.max(0, Math.min(1, (rec.metering + 55) / 45)) : 0;
   const status =
-    phase === 'loading' ? 'Setting the scene' : phase === 'speaking' ? `${start?.character.name ?? ''} is talking` : phase === 'yourturn' ? err || 'Tap to talk' : phase === 'recording' ? (heard.current ? 'Listening…' : 'Your turn. Just talk') : phase === 'sending' ? notice || `${start?.character.name ?? ''} is thinking…` : phase === 'evaluating' ? 'Poise is reading it back' : err;
+    phase === 'loading' ? 'Setting the scene' : phase === 'speaking' ? `${start?.character.name ?? ''} is talking` : phase === 'yourturn' ? err || 'Tap to talk' : phase === 'recording' ? (heard.current ? 'Listening… pause when you’re done' : meterSeen.current ? 'Your turn. Just talk' : 'Talk, then tap the square') : phase === 'sending' ? notice || `${start?.character.name ?? ''} is thinking…` : phase === 'evaluating' ? 'Poise is reading it back' : err;
 
   return (
     <View style={{ flex: 1 }}>
@@ -251,7 +282,16 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
             {phase === 'recording' ? <View style={{ width: 22, height: 22, borderRadius: 4, backgroundColor: t.onAccent }} /> : <Icon d={ICON.mic} size={26} color={t.onAccent} />}
           </View>
         </Pressable>
-        {phase === 'recording' ? <Body strong>{left}s</Body> : <View style={{ height: 21 }} />}
+        {phase === 'recording' ? (
+          <View style={{ alignItems: 'center', gap: 6 }}>
+            <View style={{ width: 120, height: 4, borderRadius: 2, backgroundColor: t.cardAlt, overflow: 'hidden' }}>
+              <View style={{ width: `${Math.round(level * 100)}%`, height: 4, borderRadius: 2, backgroundColor: t.accent }} />
+            </View>
+            <Muted small>{left}s</Muted>
+          </View>
+        ) : (
+          <View style={{ height: 27 }} />
+        )}
       </View>
     </View>
   );
