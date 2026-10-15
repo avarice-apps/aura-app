@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { color, font, size, space, radius, surface, Surface, motion } from '@/theme/tokens';
+import { play } from '@/lib/sound';
 
 // ---------- Screen ----------
 
@@ -121,6 +122,7 @@ export function Button({ label, onPress, variant = 'primary', surface: s = 'ink'
       onPressOut={() => (pressed.value = withTiming(0, { duration: motion.quick }))}
       onPress={() => {
         if (haptic) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid);
+        play('tap');
         onPress?.();
       }}
       style={[{ opacity: disabled ? 0.4 : 1 }, style]}

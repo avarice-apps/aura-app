@@ -8,6 +8,7 @@ import { Screen, Display, Label, Body, Button, Gutter, Stack, Row, Numeral } fro
 import { Mark } from '@/components/Mark';
 import { color, space } from '@/theme/tokens';
 import { READ_PROMPTS } from '@/data';
+import { play } from '@/lib/sound';
 
 type Phase = 'permission' | 'ready' | 'countdown' | 'recording' | 'done';
 
@@ -35,6 +36,7 @@ export default function Record() {
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    play('tick');
     const t = setTimeout(() => setCount((c) => c - 1), 800);
     return () => clearTimeout(t);
   }, [phase, count]);

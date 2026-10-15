@@ -1,0 +1,2482 @@
+[
+ {
+  "title": "The Name You Lost",
+  "scene": "You were introduced to someone at a house party ten minutes ago. A friend walks over, and you realise you have no idea what their name is.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Introduce your friend first and pause, hoping the other person fills in their own name.",
+    "delta": -1,
+    "why": "It often works, but when it doesn't, both of them are left standing in an awkward silence you created."
+   },
+   {
+    "text": "Say hello to your friend and carry on talking, leaving the introduction unmade.",
+    "delta": -4,
+    "why": "The new acquaintance is left out of the conversation, and your friend has no way in. Both notice."
+   },
+   {
+    "text": "\"I'm sorry, your name has completely left me. Tell me again?\" Then introduce them properly.",
+    "delta": 4,
+    "why": "Owning a small lapse at once costs almost nothing. The other person feels it matters to you that you get their name right."
+   },
+   {
+    "text": "Take your best guess at the name and introduce them with it.",
+    "delta": -5,
+    "why": "A wrong name said aloud in front of a third person is far more memorable than admitting you forgot."
+   }
+  ],
+  "best": 2,
+  "code": "Admitting you forgot beats pretending you didn't.",
+  "id": "intro-01",
+  "category": "intro"
+ },
+ {
+  "title": "Between Jobs",
+  "scene": "At a friend's birthday dinner, the person beside you asks what you do. You left your last role two months ago and haven't found the next one.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "\"I'm between things. I left a product role in the spring and I'm being deliberate about what comes next. What about you?\"",
+    "delta": 5,
+    "why": "It's honest without apology, and it hands the conversation back easily. They hear someone who is steady about where he is."
+   },
+   {
+    "text": "Describe your old job in the present tense.",
+    "delta": -6,
+    "why": "It's a lie, and it tends to unravel within two follow-up questions. The person who catches it remembers that more than anything else."
+   },
+   {
+    "text": "\"Honestly, nothing. I'm unemployed. It's grim.\"",
+    "delta": -3,
+    "why": "The heaviness lands on them. Now they have to reassure you or change the subject, and neither is easy over starters."
+   },
+   {
+    "text": "\"I try not to define myself by what I do for work.\"",
+    "delta": -2,
+    "why": "It reads as a deflection with a hint of lecture, and it leaves them unsure what they're allowed to ask next."
+   }
+  ],
+  "best": 0,
+  "code": "State where you are plainly. Then pass the question back.",
+  "id": "intro-02",
+  "category": "intro"
+ },
+ {
+  "title": "Two Friends, One Bar",
+  "scene": "You're having drinks with Sam when Priya, a friend from a different part of your life, arrives to join you. They've never met.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "\"Sam, Priya. Priya, Sam.\"",
+    "delta": -1,
+    "why": "It's correct but bare. They have names and nothing to say to each other, so the next silence is theirs to solve."
+   },
+   {
+    "text": "Give each of them a thorough rundown of the other's job, history and how you met.",
+    "delta": -2,
+    "why": "It's well meant, but it turns into a presentation. By the end there's nothing left for them to discover themselves."
+   },
+   {
+    "text": "Wave Priya over and let them introduce themselves while you check the drinks menu.",
+    "delta": -3,
+    "why": "As the person who knows both of them, you're the bridge. Stepping away leaves them to do the work you were best placed to do."
+   },
+   {
+    "text": "\"Sam, this is Priya. She's just back from Lisbon, which you've been threatening to visit for a year.\"",
+    "delta": 4,
+    "why": "Names and a single shared thread. They can start talking to each other at once, and you've made both of them feel known."
+   }
+  ],
+  "best": 3,
+  "code": "Introduce people with a reason to keep talking.",
+  "id": "intro-03",
+  "category": "intro"
+ },
+ {
+  "title": "The Plus-One",
+  "scene": "You're at your partner Elena's work dinner. Two of her colleagues turn to you, and one says, \"So you're the famous other half.\"",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Give your name and title, then talk about your own work in some detail.",
+    "delta": -2,
+    "why": "It isn't wrong to say what you do, but leading with credentials at her event pulls the attention away from where it belongs tonight."
+   },
+   {
+    "text": "\"Famous is generous. I'm Daniel. How long have you two worked with Elena?\"",
+    "delta": 4,
+    "why": "It's light and warm, and it puts the focus on them and their connection to her. They warm to you, and she sees you're at ease in her world."
+   },
+   {
+    "text": "Smile, say hello, and let Elena do most of the talking for the evening.",
+    "delta": -3,
+    "why": "Quiet can be fine, but here it reads as reluctance. Her colleagues end up working to include you."
+   },
+   {
+    "text": "\"Infamous, more like. Has she told you she answers emails at two in the morning?\"",
+    "delta": -2,
+    "why": "The joke is affectionate, but it's at her expense in front of her colleagues. That's her professional reputation, not yours to tease."
+   }
+  ],
+  "best": 1,
+  "code": "At their event, your job is curiosity, not credentials.",
+  "id": "intro-04",
+  "category": "intro"
+ },
+ {
+  "title": "Your Name, Mispronounced",
+  "scene": "A colleague introduces you to a new client as \"Tom-ass\". Your name is Tomasz, pronounced \"Tom-ash\".",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Let it pass to avoid embarrassing anyone.",
+    "delta": -2,
+    "why": "It feels polite in the moment, but the client will use the wrong name for months. Correcting it later becomes harder for everyone."
+   },
+   {
+    "text": "\"It's Tomasz, actually. The 'sz' is a 'sh'. A lot of people get it wrong.\"",
+    "delta": -4,
+    "why": "The correction is fair, but the tone turns it into a small lesson. The client feels caught out within seconds of meeting you."
+   },
+   {
+    "text": "Shake hands and say, \"Tom-ash, close enough. Good to meet you.\"",
+    "delta": 4,
+    "why": "The correct version is said once, with ease, and nobody feels at fault. The client learns it without being taught."
+   },
+   {
+    "text": "\"Twelve years we've worked together, and he still can't say it.\"",
+    "delta": -3,
+    "why": "It gets a laugh at your colleague's expense in front of a client. He'll feel it, and the client notices the edge."
+   }
+  ],
+  "best": 2,
+  "code": "Correct your name once, warmly, and move on.",
+  "id": "intro-05",
+  "category": "intro"
+ },
+ {
+  "title": "The Senior Speaker",
+  "scene": "At an industry conference, you find yourself beside the keynote speaker at the coffee station. She glances over and asks what you do.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "\"I'm an analyst on the pricing team at Halden. Your point about churn this morning has been on my mind. Have you seen it hold up in smaller markets?\"",
+    "delta": 5,
+    "why": "A clear answer, then a real question about her work. She's talking to someone who listened, not someone who wants something."
+   },
+   {
+    "text": "Describe your role as if you lead the team you sit on.",
+    "delta": -6,
+    "why": "People at her level can usually sense an inflated title. Once she doubts one thing you've said, she doubts the rest."
+   },
+   {
+    "text": "\"Oh, I'm just a junior analyst. Nothing interesting, really.\"",
+    "delta": -3,
+    "why": "The apology ends the conversation for her. She's left either reassuring you or politely moving on."
+   },
+   {
+    "text": "Explain your role, then ask whether her company is hiring.",
+    "delta": -4,
+    "why": "It turns a casual exchange into a request within a minute. She'll be more guarded with you, and probably with the next person too."
+   }
+  ],
+  "best": 0,
+  "code": "Answer briefly, then be genuinely interested in them.",
+  "id": "intro-06",
+  "category": "intro"
+ },
+ {
+  "title": "Joining the Circle",
+  "scene": "At a wedding reception, you drift toward a group of four mid-conversation. You know none of them, and no one stops to introduce you.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Step in straight away: \"Sorry to interrupt, I'm Daniel.\"",
+    "delta": -3,
+    "why": "Breaking in over someone's story makes the group reset around you. The person speaking feels cut off."
+   },
+   {
+    "text": "Stand at the edge and wait until someone notices you.",
+    "delta": -2,
+    "why": "The longer you hover, the stranger it gets for everyone. They start to feel watched rather than joined."
+   },
+   {
+    "text": "Decide it's a closed group and go to find someone you already know.",
+    "delta": -1,
+    "why": "There's no harm in it, but you give up an easy chance to meet people at an event built for exactly that."
+   },
+   {
+    "text": "Listen, laugh where it's natural, and at the first pause say, \"I'm Daniel. I know Tom from university.\"",
+    "delta": 4,
+    "why": "You've shown you're with them before asking for attention. The connection to the groom gives them an easy way to include you."
+   }
+  ],
+  "best": 3,
+  "code": "Join the conversation first. Introduce yourself at the pause.",
+  "id": "intro-07",
+  "category": "intro"
+ },
+ {
+  "title": "The Unglamorous Answer",
+  "scene": "At a gallery opening, a stranger asks what you do. You work in regulatory compliance for an insurance firm.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "\"I'm in regulatory compliance. Mostly Solvency II reporting and conduct risk frameworks.\"",
+    "delta": -2,
+    "why": "It's accurate, but the jargon gives them nothing to hold on to. They'll nod and look for an exit."
+   },
+   {
+    "text": "\"I work in compliance for an insurer. Mostly making sure the fine print actually means what it says.\"",
+    "delta": 4,
+    "why": "It's plain and human, with a little wit. They now understand your work and have a natural question to ask."
+   },
+   {
+    "text": "\"It's boring, honestly. You don't want to know.\"",
+    "delta": -3,
+    "why": "You've told them the conversation isn't worth having. Most people will take you at your word."
+   },
+   {
+    "text": "\"Let's not talk about work. What did you think of the third room?\"",
+    "delta": -2,
+    "why": "The question about the art is good, but skipping theirs entirely can feel like a brush-off. A one-line answer first would have cost nothing."
+   }
+  ],
+  "best": 1,
+  "code": "Translate your job into one sentence a stranger can enjoy.",
+  "id": "intro-08",
+  "category": "intro"
+ },
+ {
+  "title": "The New Neighbour",
+  "scene": "You're taking the bins out when you pass someone carrying boxes into the flat across the hall. It's clearly their moving day.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Give a friendly nod and keep walking. They're busy.",
+    "delta": -2,
+    "why": "It's considerate in a way, but it's a missed moment. A first hello is easiest to give on day one."
+   },
+   {
+    "text": "Stop and welcome them at length, including your views on the landlord and the noisy flat upstairs.",
+    "delta": -3,
+    "why": "They're mid-move with full arms. Building complaints are the wrong first impression of both the building and you."
+   },
+   {
+    "text": "\"I'm Marcus, 4B. Bins go out Thursday night, and shout if you need a hand with anything heavy.\"",
+    "delta": 4,
+    "why": "Your name, something useful and an easy offer, in ten seconds. They feel welcome without being held up."
+   },
+   {
+    "text": "Ask where they're moving from, what they do, and whether they live alone.",
+    "delta": -2,
+    "why": "Curiosity is good, but a string of personal questions in a hallway can feel like being assessed, especially that last one."
+   }
+  ],
+  "best": 2,
+  "code": "A good first hello is short, useful and easy to accept.",
+  "id": "intro-09",
+  "category": "intro"
+ },
+ {
+  "title": "They Don't Remember You",
+  "scene": "A friend introduces you to someone at a dinner party. You met this person properly at another party in March, and it's clear they have no memory of you.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Shake hands as if it's the first time you've met.",
+    "delta": -1,
+    "why": "It's kind and avoids any awkwardness, but you lose a real point of connection. If they remember later, it gets strange."
+   },
+   {
+    "text": "\"We've met, actually,\" then wait for them to place you.",
+    "delta": -4,
+    "why": "It puts them on the spot in front of others, with no way to save face. The silence that follows is uncomfortable for everyone."
+   },
+   {
+    "text": "\"Wow, I'm hurt. We talked for an hour at Hana's.\"",
+    "delta": -3,
+    "why": "The teasing is meant lightly, but it's still a public accusation of forgetting you. They'll spend the evening feeling slightly in debt."
+   },
+   {
+    "text": "\"Good to see you again. We met at Hana's in March, though it was a packed room, so no reason you'd remember.\"",
+    "delta": 5,
+    "why": "You give them the context and the excuse in the same breath. They're relieved rather than embarrassed, and you have something to talk about."
+   }
+  ],
+  "best": 3,
+  "code": "Remind people gently, and hand them the reason they forgot.",
+  "id": "intro-10",
+  "category": "intro"
+ },
+ {
+  "title": "The Bill Arrives",
+  "scene": "The first date has gone well and the waiter sets the bill between you. She reaches for her bag without hesitating.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Slide the folder toward yourself before she can get her card out.",
+    "delta": -3,
+    "why": "The gesture is generous, but grabbing it pre-empts her choice. Some women will feel overruled rather than treated."
+   },
+   {
+    "text": "Open the bill and work out exactly who had what.",
+    "delta": -2,
+    "why": "It is fair, but itemising a pleasant evening turns its last minutes into accounting. The mood cools slightly."
+   },
+   {
+    "text": "Say, 'I'd like to get this one, if that's alright,' and go with whatever she prefers.",
+    "delta": 5,
+    "why": "She hears warmth and an offer rather than a rule. Whether she accepts or insists on splitting, she leaves feeling respected."
+   },
+   {
+    "text": "Joke, 'Ah, a modern woman,' as she takes out her card.",
+    "delta": -5,
+    "why": "Even said lightly, it reduces her gesture to a category. She is left wondering what you actually think of her."
+   }
+  ],
+  "best": 2,
+  "code": "Offer generously, then let her decide.",
+  "id": "dating-01",
+  "category": "dating"
+ },
+ {
+  "title": "Headphones in the Bookshop",
+  "scene": "In a quiet bookshop you notice a woman browsing the fiction shelves. She has both headphones in and is clearly absorbed.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "If your eyes meet, offer a brief smile. Only speak if she takes an earbud out.",
+    "delta": 4,
+    "why": "She keeps full control of whether a conversation happens at all. If she opens the door, your opening arrives already welcome."
+   },
+   {
+    "text": "Tap her lightly on the shoulder to ask what she's reading.",
+    "delta": -5,
+    "why": "Physical contact with a stranger who has signalled focus is startling. Most women will feel intruded on before you have said a word."
+   },
+   {
+    "text": "Browse the same shelf nearby and wait for her to notice you.",
+    "delta": -3,
+    "why": "It may feel subtle to you, but lingering at close range reads as hovering. She now has to manage your presence."
+   },
+   {
+    "text": "Decide it's not the moment and carry on with your own browsing.",
+    "delta": -1,
+    "why": "It is entirely respectful and costs her nothing. It simply forgoes a moment that a quiet smile could have offered without pressure."
+   }
+  ],
+  "best": 0,
+  "code": "Let her signal open the door.",
+  "id": "dating-02",
+  "category": "dating"
+ },
+ {
+  "title": "Six Hours of Silence",
+  "scene": "After a good first date you sent her a short message. Six hours later she still hasn't replied.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Send a single question mark.",
+    "delta": -5,
+    "why": "It turns a normal gap into a reprimand. She reads impatience, and replying now feels like an obligation."
+   },
+   {
+    "text": "When she does reply, wait the same six hours before answering.",
+    "delta": -3,
+    "why": "Matching delays is a game she probably isn't playing. It quietly signals that you are keeping score."
+   },
+   {
+    "text": "Send, 'No worries if you're busy. Just let me know if you're not interested.'",
+    "delta": -2,
+    "why": "It is meant considerately, but it exposes anxiety after one quiet afternoon. She now has to reassure you."
+   },
+   {
+    "text": "Get on with your day, and reply warmly whenever she answers, without mentioning the gap.",
+    "delta": 4,
+    "why": "She experiences you as relaxed and pleased to hear from her. People have lives, and you treat hers as normal."
+   }
+  ],
+  "best": 3,
+  "code": "A quiet phone is not a verdict.",
+  "id": "dating-03",
+  "category": "dating"
+ },
+ {
+  "title": "Her Friend's Gentle Jab",
+  "scene": "Meeting her closest friends for the first time at a bar, one of them grins and says, 'So you're the one who couldn't pick a restaurant.'",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Fire back with a sharper joke about the friend.",
+    "delta": -4,
+    "why": "Escalating with someone you have just met feels combative. Her friends close ranks, and she has to smooth it over."
+   },
+   {
+    "text": "Laugh and say, 'Guilty. I'm better at ordering than choosing,' then ask how they all met.",
+    "delta": 5,
+    "why": "You take the tease with ease and hand the attention back to them. Her friends relax, and she sees you fit in."
+   },
+   {
+    "text": "Explain that you actually suggested three places and she chose.",
+    "delta": -3,
+    "why": "Correcting the record treats a friendly tease as an accusation. It comes across as stiff and a little defensive."
+   },
+   {
+    "text": "Glance at her with a smile, waiting for her to step in.",
+    "delta": -2,
+    "why": "It is not unkind, but it makes her your interpreter. Her friends learn little about you from it."
+   }
+  ],
+  "best": 1,
+  "code": "Take the tease lightly, then turn toward them.",
+  "id": "dating-04",
+  "category": "dating"
+ },
+ {
+  "title": "She's Had a Hard Week",
+  "scene": "Twenty minutes into a second date, she admits she's had a genuinely rough week at work and is a bit drained.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Immediately suggest a few ways she might handle the situation.",
+    "delta": -2,
+    "why": "The intent is good, but unrequested solutions can feel like you are fixing her rather than listening."
+   },
+   {
+    "text": "Say, 'Mine's been brutal too,' and describe your week.",
+    "delta": -4,
+    "why": "Solidarity tips into competition. She shared something and now finds herself listening to you."
+   },
+   {
+    "text": "Ask, 'Do you want to talk about it, or would you rather be distracted tonight?'",
+    "delta": 5,
+    "why": "She feels seen and gets to choose what the evening becomes. Either answer leaves her more at ease with you."
+   },
+   {
+    "text": "Say, 'Let's not think about work tonight,' and change the subject.",
+    "delta": -3,
+    "why": "It may be well meant, but it closes a door she just opened. She might feel her mood was an inconvenience."
+   }
+  ],
+  "best": 2,
+  "code": "Ask what she needs before offering anything.",
+  "id": "dating-05",
+  "category": "dating"
+ },
+ {
+  "title": "The Doorstep Moment",
+  "scene": "You've walked her home after a lovely first date. At her door there's a pause, and you're genuinely unsure whether she wants a kiss.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Say, 'I had a really good time. I'd like to kiss you. Would that be alright?'",
+    "delta": 5,
+    "why": "It is direct and warm, and it gives her an easy yes or an easy no. The question shows you care more about her comfort than the gesture."
+   },
+   {
+    "text": "Lean in quickly before the moment passes.",
+    "delta": -6,
+    "why": "When you are unsure, moving fast takes the choice away from her. Even if she would have said yes, it can feel unsettling."
+   },
+   {
+    "text": "Give a quick wave and head off before it gets awkward.",
+    "delta": -2,
+    "why": "It is safe and respectful, but the abrupt exit can read as disinterest after an evening that went well."
+   },
+   {
+    "text": "Smile and say, 'So, are we doing this?'",
+    "delta": -3,
+    "why": "It technically asks, but the phrasing puts her on the spot. The tone is closer to a dare than an invitation."
+   }
+  ],
+  "best": 0,
+  "code": "When unsure, ask plainly and kindly.",
+  "id": "dating-06",
+  "category": "dating"
+ },
+ {
+  "title": "She Doesn't Drink",
+  "scene": "Planning a first date by text, you suggest a wine bar you like. She replies, 'I don't drink, actually.'",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Ask her why she doesn't drink.",
+    "delta": -3,
+    "why": "The reasons may be private, and you are still near-strangers. She now has to explain herself to get a date."
+   },
+   {
+    "text": "Reply, 'Not even one glass?'",
+    "delta": -7,
+    "why": "This presses against a boundary she has just stated. It tells her that her no is open to negotiation."
+   },
+   {
+    "text": "Apologise at length for suggesting it.",
+    "delta": -1,
+    "why": "It is kind, but it makes an ordinary fact feel like an incident. A simple pivot would have been lighter."
+   },
+   {
+    "text": "Reply, 'Good to know. There's a café with excellent pastries near there. Fancy that instead?'",
+    "delta": 4,
+    "why": "You adjust without fuss or questions. She feels comfortable, and the plan still sounds appealing."
+   }
+  ],
+  "best": 3,
+  "code": "Adjust the plan, not her answer.",
+  "id": "dating-07",
+  "category": "dating"
+ },
+ {
+  "title": "No Second Date",
+  "scene": "After a pleasant first date where you felt no spark, she texts, 'I had fun. Would love to do it again.'",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Don't reply and let it fade.",
+    "delta": -6,
+    "why": "Silence leaves her guessing and quietly embarrassed. It treats her honest message as not worth an answer."
+   },
+   {
+    "text": "Reply, 'I enjoyed meeting you too. I didn't feel a romantic connection, but I wish you all the best.'",
+    "delta": 5,
+    "why": "It is clear, brief and warm. She may be disappointed, but she is not left confused, and she can respect how you handled it."
+   },
+   {
+    "text": "Reply, 'Yeah, maybe sometime,' and leave it vague.",
+    "delta": -3,
+    "why": "It spares you one awkward moment and costs her several. She may wait, wonder and follow up for nothing."
+   },
+   {
+    "text": "Send a long message explaining everything that didn't quite work for you.",
+    "delta": -2,
+    "why": "Honesty is good, but a detailed list feels like a review of her. Kindness here is mostly brevity."
+   }
+  ],
+  "best": 1,
+  "code": "Be clear, brief and kind when declining.",
+  "id": "dating-08",
+  "category": "dating"
+ },
+ {
+  "title": "Alone at Her Friend's Party",
+  "scene": "She brings you to a friend's house party where you know nobody. Ten minutes in, she's pulled into the other room to help with something.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Take out your phone and wait by the wall for her to return.",
+    "delta": -3,
+    "why": "It looks closed off. Her friends read you as uncomfortable, and she comes back feeling she has to look after you."
+   },
+   {
+    "text": "Follow her into the other room.",
+    "delta": -3,
+    "why": "It is understandable, but it suggests you can't stand on your own. It also crowds whatever she's helping with."
+   },
+   {
+    "text": "Introduce yourself to someone in the kitchen and ask how they know the host.",
+    "delta": 4,
+    "why": "You show you are easy to bring along. When she returns and finds you chatting, she can relax and enjoy the party."
+   },
+   {
+    "text": "Get a drink and finish it rather quickly while you settle in.",
+    "delta": -2,
+    "why": "It is a common reflex, but it does nothing to connect you with anyone, and it can read as nerves."
+   }
+  ],
+  "best": 2,
+  "code": "Be someone she never has to manage.",
+  "id": "dating-09",
+  "category": "dating"
+ },
+ {
+  "title": "Her Ex Walks In",
+  "scene": "On your third date at a small restaurant, her ex comes over to say hello. She introduces you, a little stiffly.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Offer a friendly hello and a handshake, let her set the length of the exchange, and don't raise it afterwards unless she does.",
+    "delta": 5,
+    "why": "You keep things easy for her in an awkward moment. Afterwards she feels trusted rather than questioned."
+   },
+   {
+    "text": "Put an arm around her shoulders as he approaches.",
+    "delta": -5,
+    "why": "It is a territorial signal aimed at him, not care aimed at her. She may feel used as a point being made."
+   },
+   {
+    "text": "Nod politely and go quiet for the rest of the meal.",
+    "delta": -4,
+    "why": "Your silence turns a brief encounter into the defining moment of the evening, and she is left to repair it."
+   },
+   {
+    "text": "Once he leaves, ask how long they were together and why it ended.",
+    "delta": -3,
+    "why": "Curiosity is natural, but now is the wrong time. She has to relive her past just after an uncomfortable moment."
+   }
+  ],
+  "best": 0,
+  "code": "Make awkward moments easier for her, not heavier.",
+  "id": "dating-10",
+  "category": "dating"
+ },
+ {
+  "title": "Credit Taken in the Meeting",
+  "scene": "In the weekly review, a colleague presents the analysis you spent three days building and refers to it as his own. Your manager nods approvingly and asks a follow-up question.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Interrupt: \"Actually, that was my analysis.\"",
+    "delta": -4,
+    "why": "You may be right, but the room sees a public correction and a tense moment. People remember the friction more than the fact."
+   },
+   {
+    "text": "Say nothing and let it pass, but stay irritated for the rest of the day.",
+    "delta": -3,
+    "why": "No one learns the work was yours, and your silence teaches your colleague that this is safe to repeat."
+   },
+   {
+    "text": "Answer the follow-up yourself: \"I can take that. When I ran those numbers, the surprising part was the Q3 drop. Here's what drove it.\"",
+    "delta": 5,
+    "why": "Depth is the clearest proof of authorship. Your manager sees who actually knows the material, and no one has been embarrassed."
+   },
+   {
+    "text": "Send your manager a detailed email afterwards listing everything you contributed.",
+    "delta": -2,
+    "why": "It records the facts, but on its own it reads as scorekeeping behind a colleague's back rather than quiet competence."
+   }
+  ],
+  "best": 2,
+  "code": "Let depth reveal ownership. Accusations rarely do.",
+  "id": "work-01",
+  "category": "work"
+ },
+ {
+  "title": "The Weakness Question",
+  "scene": "Halfway through a promising interview, the hiring manager leans back and asks, \"What would you say is your biggest weakness?\"",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Name a real but manageable weakness, such as delegating too late, and briefly describe what you now do differently.",
+    "delta": 4,
+    "why": "It sounds honest and self-aware without raising alarm. Interviewers trust candidates who can see themselves clearly."
+   },
+   {
+    "text": "\"Honestly, I'm a bit of a perfectionist.\"",
+    "delta": -3,
+    "why": "They have heard it hundreds of times. It reads as evasion presented as modesty."
+   },
+   {
+    "text": "\"I can't really think of one, to be honest.\"",
+    "delta": -5,
+    "why": "It suggests either a lack of self-reflection or an unwillingness to be candid, and both are concerning in a hire."
+   },
+   {
+    "text": "Open up at length about a serious struggle with procrastination that has cost you before.",
+    "delta": -2,
+    "why": "The honesty is admirable, but the weight and length leave them worried rather than reassured."
+   }
+  ],
+  "best": 0,
+  "code": "Honest, contained, and already in hand.",
+  "id": "work-02",
+  "category": "work"
+ },
+ {
+  "title": "Asking for the Raise",
+  "scene": "You have taken on significantly more responsibility this year and are now paid below market. Your manager is approachable but busy.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Mention that another company has made you an offer, though none exists, to create urgency.",
+    "delta": -7,
+    "why": "If it works, it rests on a lie. If it is ever tested, your credibility with your manager is gone."
+   },
+   {
+    "text": "Catch them at the end of a call: \"I know it's probably not a good time, but I was wondering about pay...\"",
+    "delta": -3,
+    "why": "The apology lowers your request before you have made it, and the timing tells them it can be deferred."
+   },
+   {
+    "text": "Raise it casually in the corridor to keep things light and low-pressure.",
+    "delta": -2,
+    "why": "It feels easy, but a passing comment is easy to forget. It signals that you are not quite serious about it."
+   },
+   {
+    "text": "Book a short meeting, set out what you've delivered and the market range, name a specific number, then stop talking.",
+    "delta": 6,
+    "why": "Preparation and a clear figure make it easy to say yes. Comfortable silence afterwards shows you think the request is reasonable."
+   }
+  ],
+  "best": 3,
+  "code": "Prepare, name the number, then let the silence work.",
+  "id": "work-03",
+  "category": "work"
+ },
+ {
+  "title": "Criticised in Front of Everyone",
+  "scene": "In a team meeting, your director says your project timeline is unrealistic and that she is surprised it went out in that state. Eight people are listening.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Walk through each assumption in the timeline to show it was reasoned.",
+    "delta": -4,
+    "why": "Even if your logic holds, a point-by-point defence turns feedback into a contest that you cannot win in public."
+   },
+   {
+    "text": "\"Fair point. Let me look at it again and come back to you this afternoon with a revised version.\"",
+    "delta": 5,
+    "why": "Calm acceptance without grovelling lowers the temperature. The room sees someone who can take a hit and stay steady."
+   },
+   {
+    "text": "Laugh it off: \"Well, there goes my promotion.\"",
+    "delta": -2,
+    "why": "It relieves the tension briefly, but it shrinks you and suggests you are not taking the point seriously."
+   },
+   {
+    "text": "Say nothing and stay noticeably cool for the rest of the meeting.",
+    "delta": -3,
+    "why": "People can feel the sulk. It makes the moment linger longer than the criticism itself would have."
+   }
+  ],
+  "best": 1,
+  "code": "Absorb it cleanly. Resolve it later, in private.",
+  "id": "work-04",
+  "category": "work"
+ },
+ {
+  "title": "The Projector Dies",
+  "scene": "Two slides into a presentation for senior leadership, the screen goes black and will not reconnect.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Keep apologising while you work at the cables and the laptop settings.",
+    "delta": -3,
+    "why": "The room is now watching your stress instead of your content, and each apology makes the delay feel longer."
+   },
+   {
+    "text": "Ask everyone to hold on while someone calls IT.",
+    "delta": -2,
+    "why": "It is reasonable, but it hands senior people's time over to a technical problem with no end in sight."
+   },
+   {
+    "text": "\"Let's do this without slides.\" Talk through the three key points and ask someone to flag when the screen is back.",
+    "delta": 4,
+    "why": "It shows command of the material rather than the deck. Leaders often remember the presenter who carried on without fuss."
+   },
+   {
+    "text": "Fill the gap with a long joke about technology and a story about your last presentation disaster.",
+    "delta": -1,
+    "why": "It is warm and keeps the energy up, but it uses their time on you rather than on the substance."
+   }
+  ],
+  "best": 2,
+  "code": "Know the material well enough to lose the slides.",
+  "id": "work-05",
+  "category": "work"
+ },
+ {
+  "title": "A Junior Idea Dismissed",
+  "scene": "In a cross-team meeting, a junior analyst offers a thoughtful suggestion. A senior partner waves it away with \"We tried that years ago\" and moves on.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Stay quiet. It isn't your project, and the partner outranks you.",
+    "delta": -2,
+    "why": "It feels safe, but the analyst notices who said nothing, and so does the rest of the room."
+   },
+   {
+    "text": "\"Could we come back to Priya's point for a moment? I think there's something in it, especially given how the market's shifted since.\"",
+    "delta": 6,
+    "why": "You restore her idea on its merits without challenging the partner's authority. Everyone sees generosity and judgement together."
+   },
+   {
+    "text": "Tell the partner directly, in the meeting, that brushing off a colleague's idea like that isn't fair.",
+    "delta": -4,
+    "why": "The instinct is decent, but a public rebuke puts the partner on the defensive and makes Priya the centre of a conflict she didn't choose."
+   },
+   {
+    "text": "Message Priya privately afterwards to say you thought her idea was strong.",
+    "delta": -1,
+    "why": "It is kind and she will appreciate it, but the idea stays dismissed and the room never hears your support."
+   }
+  ],
+  "best": 1,
+  "code": "Support the idea in the room, not just afterwards.",
+  "id": "work-06",
+  "category": "work"
+ },
+ {
+  "title": "A Question You Can't Answer",
+  "scene": "During a budget meeting, the finance lead asks you for the exact cost overrun on last quarter's vendor contract. You don't know it.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Give a confident estimate that sounds about right so the meeting keeps moving.",
+    "delta": -6,
+    "why": "If the figure is wrong, and it may well be, every number you give afterwards will be doubted."
+   },
+   {
+    "text": "\"Great question,\" then steer towards a related point you do know.",
+    "delta": -3,
+    "why": "Experienced people notice the dodge at once. It reads as evasive rather than smooth."
+   },
+   {
+    "text": "Apologise several times for not having it ready.",
+    "delta": -2,
+    "why": "Not knowing one figure is ordinary. The over-apology makes a small gap feel like a failing."
+   },
+   {
+    "text": "\"I don't have that to hand. I'll confirm it and send it round by end of day.\"",
+    "delta": 4,
+    "why": "Plain honesty with a firm commitment builds trust. People rely on those who say what they do and don't know."
+   }
+  ],
+  "best": 3,
+  "code": "\"I don't know yet\" is a complete, credible answer.",
+  "id": "work-07",
+  "category": "work"
+ },
+ {
+  "title": "Any Questions for Us",
+  "scene": "At the end of a final-round interview, the panel asks if you have any questions for them.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "\"What would someone need to do in the first six months for you to feel you'd hired exactly the right person?\" Then listen properly.",
+    "delta": 4,
+    "why": "It shows you are already thinking about their success, and it invites them to picture you in the role."
+   },
+   {
+    "text": "\"No, I think you've covered everything, thank you.\"",
+    "delta": -4,
+    "why": "It is polite, but it suggests limited curiosity and ends a final round on a flat note."
+   },
+   {
+    "text": "Ask about salary bands, holiday allowance and the remote-work policy.",
+    "delta": -2,
+    "why": "These are legitimate concerns, but opening with them makes the panel feel you are weighing the perks before the work."
+   },
+   {
+    "text": "Ask a prepared question about the company's mission that is answered on their homepage.",
+    "delta": -3,
+    "why": "It shows you rehearsed a question but not the research. The panel notices."
+   }
+  ],
+  "best": 0,
+  "code": "Ask what success looks like, then actually listen.",
+  "id": "work-08",
+  "category": "work"
+ },
+ {
+  "title": "One More Project",
+  "scene": "Your manager asks you to take on an urgent new project. You are already at capacity, with two deliverables due next week.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Say yes and plan to work late every night until it's done.",
+    "delta": -3,
+    "why": "It seems accommodating, but your manager stays unaware of the cost, and the quality across everything quietly suffers."
+   },
+   {
+    "text": "\"I really can't. I'm completely drowning at the moment.\"",
+    "delta": -2,
+    "why": "It is honest, but it reads as overwhelmed rather than in control, and it leaves your manager with the problem and no options."
+   },
+   {
+    "text": "\"I'd like to do this properly. If I take it on, the client report moves to the following week. Which matters more to you right now?\"",
+    "delta": 5,
+    "why": "You make the trade-off visible and let them set the priority. It comes across as capable and cooperative rather than difficult."
+   },
+   {
+    "text": "Agree to it, then let one of the existing deadlines slip without mentioning it.",
+    "delta": -6,
+    "why": "Missed deadlines with no warning damage trust far more than an honest conversation would have."
+   }
+  ],
+  "best": 2,
+  "code": "Make the trade-off visible. Let them choose.",
+  "id": "work-09",
+  "category": "work"
+ },
+ {
+  "title": "Late to the Client",
+  "scene": "Delays leave you ten minutes late to a client meeting that has already started. Your colleagues are mid-discussion as you reach the door.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Explain in detail what happened with the train and the signal failure.",
+    "delta": -2,
+    "why": "The client didn't need the story. It interrupts their flow twice, once by arriving and once by explaining."
+   },
+   {
+    "text": "A brief, quiet \"Apologies for the delay,\" then sit, pick up the thread from context, and contribute when you have something useful.",
+    "delta": 4,
+    "why": "It acknowledges their time without making yourself the subject. A calm recovery soon makes the lateness forgettable."
+   },
+   {
+    "text": "Slip in quietly without acknowledging that you're late.",
+    "delta": -3,
+    "why": "Avoiding the disruption can look like not noticing it. Clients tend to read that as indifference."
+   },
+   {
+    "text": "Ask if someone could quickly recap what you've missed.",
+    "delta": -3,
+    "why": "It makes the room pay for your lateness a second time. Your colleagues can brief you afterwards."
+   }
+  ],
+  "best": 1,
+  "code": "Acknowledge briefly, then rejoin without making it about you.",
+  "id": "work-10",
+  "category": "work"
+ },
+ {
+  "title": "Joining Mid-Story",
+  "scene": "At a house party you spot three acquaintances by the kitchen island. One of them is halfway through a story and the other two are leaning in.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Walk up, say hello to everyone, and introduce yourself to the one person you don't know.",
+    "delta": -4,
+    "why": "The story stops so they can manage you. The person telling it loses their moment, and that is the first thing they will remember about you."
+   },
+   {
+    "text": "Stand a few feet away for a while, waiting to be noticed, then drift off when no one turns.",
+    "delta": -2,
+    "why": "Hovering without committing reads as hesitation. When you leave, the chance to join leaves with you."
+   },
+   {
+    "text": "Step into the circle, catch one person's eye with a nod, and listen until the story lands. Then react to it.",
+    "delta": 4,
+    "why": "You arrive as part of the audience rather than as an interruption. Reacting to the punchline gives you a natural opening and a small bond with the teller."
+   },
+   {
+    "text": "Stand nearby and check your phone so it looks casual until someone pulls you in.",
+    "delta": -3,
+    "why": "The phone tells the group you are elsewhere, so nobody feels invited to bring you in. It also leaves the work of including you to them."
+   }
+  ],
+  "best": 2,
+  "code": "Enter as audience first. The opening will come.",
+  "id": "group-01",
+  "category": "group"
+ },
+ {
+  "title": "Your Story, Overtaken",
+  "scene": "You are telling a story over drinks when a friend cuts in with a bigger, louder version of the same experience. The table turns to him.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Let him have it, laugh at the good parts, and ask him a follow-up question when he finishes.",
+    "delta": 4,
+    "why": "Letting go of the floor this easily reads as security. The table registers that you did not need the spotlight back, and he likes you more for it."
+   },
+   {
+    "text": "Say, \"Sorry, I wasn't quite done,\" and carry on with yours.",
+    "delta": -2,
+    "why": "It is fair, but it puts a small correction on the table. The mood tightens for a moment and the story has to work harder to win them back."
+   },
+   {
+    "text": "Go quiet and let the conversation move on without you.",
+    "delta": -4,
+    "why": "The withdrawal is visible. People sense the sulk, and it makes the interruption look like it cost you more than it should have."
+   },
+   {
+    "text": "Wait until he finishes, then say, \"Anyway, as I was saying,\" and pick up where you left off.",
+    "delta": -2,
+    "why": "The word \"anyway\" brushes his story aside. The table can feel the scorekeeping, even if yours is the better story."
+   }
+  ],
+  "best": 0,
+  "code": "Losing the floor gracefully says more than holding it.",
+  "id": "group-02",
+  "category": "group"
+ },
+ {
+  "title": "The Joke That Missed",
+  "scene": "In a group of five at a work happy hour, you make a joke and it gets a polite half-second of silence.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Explain the reference so they understand why it was funny.",
+    "delta": -4,
+    "why": "Explaining stretches the awkward moment and makes everyone feel slightly slow. The silence becomes a small lecture."
+   },
+   {
+    "text": "Repeat the punchline a little louder in case they didn't hear it.",
+    "delta": -5,
+    "why": "A second attempt asks the group to rescue the joke. Now they have to perform a laugh, which they will notice and you will too."
+   },
+   {
+    "text": "Act as if you meant it seriously and continue the point.",
+    "delta": -3,
+    "why": "People usually see the switch, and a small pretence lingers longer than a missed joke. It also leaves the tension unacknowledged."
+   },
+   {
+    "text": "Smile, say \"That was better in my head,\" and move on.",
+    "delta": 4,
+    "why": "Owning it lightly releases the tension and often gets the laugh the joke didn't. It shows you are comfortable when things do not go your way."
+   }
+  ],
+  "best": 3,
+  "code": "Name the miss lightly, then let it go.",
+  "id": "group-03",
+  "category": "group"
+ },
+ {
+  "title": "The Quiet One at Dinner",
+  "scene": "At a group dinner, the new partner of a friend has barely spoken in an hour. The table is deep in stories from years she was not part of.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Say warmly, \"You're quiet tonight, everything okay?\"",
+    "delta": -3,
+    "why": "It is kindly meant, but it turns the table's attention on her quietness. Most people would rather be included than noticed."
+   },
+   {
+    "text": "Turn to her and ask an easy, specific question connected to what the table is discussing.",
+    "delta": 5,
+    "why": "She gets a door into the conversation without being singled out. The rest of the table follows your lead, and the evening widens to include her."
+   },
+   {
+    "text": "Leave it. She is with your friend, and it is his job to bring her in.",
+    "delta": -1,
+    "why": "Reasonable, but it misses a chance that costs you nothing. She will remember who made her feel welcome."
+   },
+   {
+    "text": "Bring her in with a teasing line about how you are probably boring her to death.",
+    "delta": -5,
+    "why": "Teasing someone you barely know puts her on the spot with no good reply. It can feel like a joke at her expense rather than an invitation."
+   }
+  ],
+  "best": 1,
+  "code": "Include people with questions, not observations.",
+  "id": "group-04",
+  "category": "group"
+ },
+ {
+  "title": "The Trip You Weren't In",
+  "scene": "Over a casual drink, two friends mention a weekend away the group has already planned. It is clear you were not included.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Say nothing, then become noticeably less available to the group for a few weeks.",
+    "delta": -5,
+    "why": "The coolness is felt but not understood, so it reads as moodiness. It makes a likely oversight into a real distance."
+   },
+   {
+    "text": "Say, with a smile, \"Thanks for the invite, then.\"",
+    "delta": -4,
+    "why": "The sarcasm puts both friends on the defensive in the moment. They are likely to remember the jab, not the exclusion."
+   },
+   {
+    "text": "Say it sounds great. Later, tell the friend you are closest to that you would love to come if there is room.",
+    "delta": 5,
+    "why": "It assumes good faith and gives them an easy way to include you. Being direct without accusation makes you easy to invite next time."
+   },
+   {
+    "text": "Make your own weekend plans with other people and make sure they appear online.",
+    "delta": -6,
+    "why": "It is a performance aimed at the group, and people usually recognise it. It trades a chance at closeness for a point that no one will award."
+   }
+  ],
+  "best": 2,
+  "code": "Assume an oversight, and make inviting you easy.",
+  "id": "group-05",
+  "category": "group"
+ },
+ {
+  "title": "Tension at the Table",
+  "scene": "At a friend's birthday, two people in your group start arguing about politics. Voices are rising and the rest of the table has gone still.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Back the one you agree with so the argument ends sooner.",
+    "delta": -5,
+    "why": "Taking a side turns a two-person argument into a camp. The other person now feels outnumbered at someone else's birthday."
+   },
+   {
+    "text": "Make a joke to break the tension.",
+    "delta": -2,
+    "why": "It sometimes works. When feelings are high, it can land as dismissive, and both of them may turn on the joke."
+   },
+   {
+    "text": "Excuse yourself and wait it out at the bar.",
+    "delta": -3,
+    "why": "It protects you but leaves the host and the table to absorb it. People notice who steps away when things get uncomfortable."
+   },
+   {
+    "text": "Turn to one of them and ask, easily, if he'll come help you get the next round.",
+    "delta": 4,
+    "why": "It gives both of them a dignified pause without anyone losing. The table can breathe again, and no one is made to feel corrected."
+   }
+  ],
+  "best": 3,
+  "code": "Give heated people an exit that saves face.",
+  "id": "group-06",
+  "category": "group"
+ },
+ {
+  "title": "Outside the Inside Joke",
+  "scene": "Your friend brings you along to meet his university friends. Ten minutes in, they are laughing at references you don't understand.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Wait for a natural pause, then ask with real curiosity what the story behind it is.",
+    "delta": 4,
+    "why": "People love retelling their own legends, and you have just invited them to. You go from outsider to audience, which is how outsiders become insiders."
+   },
+   {
+    "text": "Laugh along as if you understand.",
+    "delta": -2,
+    "why": "It smooths the moment, but you stay outside it. If someone asks what you thought was funny, the act unravels."
+   },
+   {
+    "text": "Gently move the conversation toward a topic where you can contribute.",
+    "delta": -3,
+    "why": "Steering away from their shared history can feel like you are competing with it. It reads as discomfort rather than ease."
+   },
+   {
+    "text": "Say, good-naturedly, \"I'm feeling very much the new guy here.\"",
+    "delta": -3,
+    "why": "It is honest, but it hands them responsibility for your comfort. The group starts managing you instead of enjoying you."
+   }
+  ],
+  "best": 0,
+  "code": "Curiosity about their history is the way in.",
+  "id": "group-07",
+  "category": "group"
+ },
+ {
+  "title": "Losing the Room",
+  "scene": "You are a few minutes into a story at a barbecue and notice two people glancing at their drinks and one checking her phone.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Keep going with the full detail. The ending is worth it.",
+    "delta": -3,
+    "why": "Their attention is already leaving, and more detail speeds it up. By the payoff, no one is there to receive it."
+   },
+   {
+    "text": "Skip to the ending in a sentence or two and land it.",
+    "delta": 4,
+    "why": "Reading the room and compressing shows awareness, which people notice and appreciate. A short story that lands beats a long one that drifts."
+   },
+   {
+    "text": "Stop and ask, half-joking, \"Am I losing you?\"",
+    "delta": -4,
+    "why": "It forces everyone into polite reassurance. The awkwardness of the question outlasts the story."
+   },
+   {
+    "text": "Raise your energy and volume to pull them back in.",
+    "delta": -5,
+    "why": "More force feels like pressure rather than interest. People sense they are being made to pay attention."
+   }
+  ],
+  "best": 1,
+  "code": "When attention drifts, cut to the ending.",
+  "id": "group-08",
+  "category": "group"
+ },
+ {
+  "title": "Arriving Late",
+  "scene": "You arrive thirty minutes late to a dinner with eight friends. Food is on the table and a lively conversation is underway.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Apologise to the table and explain what held you up.",
+    "delta": -2,
+    "why": "The explanation pulls the room's attention onto your evening. A short sorry would do the same work with less disruption."
+   },
+   {
+    "text": "Go around and greet each person individually before sitting down.",
+    "delta": -3,
+    "why": "Eight greetings halts the conversation eight times. It is warm in intent but costly to the room."
+   },
+   {
+    "text": "Sit down and ask what you have missed.",
+    "delta": -2,
+    "why": "Someone has to stop and summarise, which interrupts the thread. It asks the group to rewind for you."
+   },
+   {
+    "text": "Give a warm, quiet hello to the table, a brief sorry to the host, sit, and catch up by listening.",
+    "delta": 4,
+    "why": "You join without making an entrance. The conversation keeps its momentum, and you are part of it within minutes."
+   }
+  ],
+  "best": 3,
+  "code": "Arrive late quietly. The room should not reset.",
+  "id": "group-09",
+  "category": "group"
+ },
+ {
+  "title": "A Tease With an Edge",
+  "scene": "At a group gathering, a friend makes a joke about your recent breakup that gets a big laugh. It stings more than you expected.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Fire back with something sharper about him.",
+    "delta": -4,
+    "why": "The group sees escalation and the mood turns competitive. It also signals that the joke hit, without the honesty of saying so."
+   },
+   {
+    "text": "Go quiet and let the conversation move on.",
+    "delta": -3,
+    "why": "The silence is noticed and makes others uneasy. Your friend does not know where he stands, and neither does the table."
+   },
+   {
+    "text": "Smile, give a light line in return, and later tell him privately that one landed harder than he meant.",
+    "delta": 5,
+    "why": "You protect the mood in the moment and the friendship afterwards. Raising it privately gives him room to adjust without being embarrassed."
+   },
+   {
+    "text": "Say plainly, in front of everyone, \"That's not really funny right now.\"",
+    "delta": -2,
+    "why": "It is honest and sometimes right, but it puts him on trial publicly. The table goes still and everyone feels caught in it."
+   }
+  ],
+  "best": 2,
+  "code": "Keep the moment light; settle the real thing privately.",
+  "id": "group-10",
+  "category": "group"
+ },
+ {
+  "title": "Interrupted in front of client",
+  "scene": "You are halfway through explaining a pricing decision to a client when a colleague cuts across you with a different point. The client turns toward him.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Raise your voice slightly and keep talking until he stops.",
+    "delta": -5,
+    "why": "The client watches two people compete for airtime, and neither of you looks in control of the room."
+   },
+   {
+    "text": "Let the point go and say nothing further on pricing.",
+    "delta": -4,
+    "why": "The client loses information they needed, and your colleague learns he can override you whenever he likes."
+   },
+   {
+    "text": "Let him finish, then say evenly, \"Before we move on, I'd like to close the pricing point. It affects what James just raised.\"",
+    "delta": 5,
+    "why": "You reclaim the floor without a contest. Tying it to his point makes you look collaborative, and the client hears that you are steering the substance."
+   },
+   {
+    "text": "Turn to him and say, \"Sorry, I wasn't finished.\"",
+    "delta": -2,
+    "why": "It is fair, but saying it in front of a client puts the friction on display. You are correct and slightly diminished at once."
+   }
+  ],
+  "best": 2,
+  "code": "Wait for the gap, then return to your point.",
+  "id": "status-01",
+  "category": "status"
+ },
+ {
+  "title": "A compliment on your jacket",
+  "scene": "At a dinner party, a woman you have just met tells you she likes your jacket.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "\"Thank you. I nearly didn't wear it tonight, so that's good to hear.\"",
+    "delta": 4,
+    "why": "You accept it warmly and give her something small and human to respond to. The compliment becomes a conversation rather than a transaction."
+   },
+   {
+    "text": "\"Oh, this? It was on sale, honestly.\"",
+    "delta": -2,
+    "why": "Deflecting quietly tells her that her judgement was off. She has to work harder for having been kind."
+   },
+   {
+    "text": "Tell her the tailor, the fabric, and roughly what it cost.",
+    "delta": -4,
+    "why": "A light remark becomes a lecture on your taste. To her, it reads as fishing for more admiration."
+   },
+   {
+    "text": "\"Thanks,\" then return to your drink.",
+    "delta": -1,
+    "why": "This is polite and harmless, but she offered an opening and you closed it. It can come across as indifference."
+   }
+  ],
+  "best": 0,
+  "code": "Receive a compliment fully. Then hand the conversation back.",
+  "id": "status-02",
+  "category": "status"
+ },
+ {
+  "title": "Meeting the celebrated founder",
+  "scene": "At a friend's party you are introduced to a man who just sold his company for a figure everyone keeps mentioning. He asks what you do. You manage operations at a mid-sized logistics firm.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Describe your role as though you run the company.",
+    "delta": -6,
+    "why": "He meets inflated titles constantly and will likely notice. Once he does, nothing else you say will be trusted."
+   },
+   {
+    "text": "\"Nothing nearly as exciting as you. Mostly spreadsheets.\"",
+    "delta": -3,
+    "why": "Shrinking yourself makes the exchange awkward for him too. He now has to either reassure you or agree with you."
+   },
+   {
+    "text": "Tell him briefly, then mention your side project and how it might scale.",
+    "delta": -2,
+    "why": "The pivot is visible. It signals that you feel you need to compete, which he has seen many times before."
+   },
+   {
+    "text": "Tell him plainly, then ask, \"What surprised you most about the sale itself?\"",
+    "delta": 5,
+    "why": "Being straightforward shows you are comfortable with where you are. A specific question about his experience is rarer for him than congratulations."
+   }
+  ],
+  "best": 3,
+  "code": "Be plain about yourself and curious about him.",
+  "id": "status-03",
+  "category": "status"
+ },
+ {
+  "title": "Let me break this down",
+  "scene": "In a project meeting, a senior colleague begins explaining a concept you know well, slowly, prefaced with \"Let me break this down for you.\"",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "\"I know how it works.\"",
+    "delta": -3,
+    "why": "It is accurate but clipped. The room reads it as defensiveness rather than competence."
+   },
+   {
+    "text": "\"I'm comfortable with the basics. Where I'd value your view is the edge case with the legacy accounts.\"",
+    "delta": 5,
+    "why": "You redirect him to where his expertise is useful, which shows you know the material without embarrassing him."
+   },
+   {
+    "text": "Nod along and let him finish.",
+    "delta": -2,
+    "why": "Everyone's time is spent on something you already knew, and the room recalibrates your level downward."
+   },
+   {
+    "text": "Glance at a colleague and say, \"Use small words, please.\"",
+    "delta": -5,
+    "why": "The joke lands at his expense in front of others. He will remember it long after the meeting."
+   }
+  ],
+  "best": 1,
+  "code": "Redirect condescension toward where the person is actually useful.",
+  "id": "status-04",
+  "category": "status"
+ },
+ {
+  "title": "The promotion nobody knows about",
+  "scene": "Over drinks, an old friend asks how work is going. You were promoted last week and haven't told anyone in the group.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Explain the new title, the team size, and the raise.",
+    "delta": -4,
+    "why": "The figures turn good news into a scoreboard, and the friends who are struggling quietly feel it."
+   },
+   {
+    "text": "\"Same as ever, really.\"",
+    "delta": -2,
+    "why": "It is a small untruth. When they find out later, it can feel like you didn't trust them with good news."
+   },
+   {
+    "text": "\"Good, actually. I was promoted last week and I'm still settling in. How's the new role treating you?\"",
+    "delta": 4,
+    "why": "You share it simply and pass the conversation straight back. It reads as confidence without display."
+   },
+   {
+    "text": "Say \"Can't complain\" and hope someone else brings it up.",
+    "delta": -1,
+    "why": "This is understandable modesty, but it leaves the moment to chance and can look coy if it surfaces later."
+   }
+  ],
+  "best": 2,
+  "code": "Say good news once, briefly, then turn it outward.",
+  "id": "status-05",
+  "category": "status"
+ },
+ {
+  "title": "That little marketing thing",
+  "scene": "At dinner with your partner's friends, one of them smiles and asks, \"So are you still doing that little marketing thing?\"",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Laugh and say, \"Yes, still the little thing.\"",
+    "delta": -3,
+    "why": "Agreeing with the framing invites more of it, and your partner watches you accept a small slight."
+   },
+   {
+    "text": "Explain the accounts you manage and the results you've delivered this year.",
+    "delta": -3,
+    "why": "The list confirms that the remark hit. The table sees a man defending himself."
+   },
+   {
+    "text": "\"Little? Interesting choice of word.\"",
+    "delta": -2,
+    "why": "It is sharp and fair, but it puts tension on the table at your partner's dinner. People will remember the exchange more than the slight."
+   },
+   {
+    "text": "\"I am, and enjoying it more than ever. This year's been genuinely interesting. What's keeping you busy?\"",
+    "delta": 5,
+    "why": "You ignore the diminutive entirely and answer with ease. The slight finds nothing to catch on, and the table moves on warmly."
+   }
+  ],
+  "best": 3,
+  "code": "Answer the question and let the insult go unclaimed.",
+  "id": "status-06",
+  "category": "status"
+ },
+ {
+  "title": "Overlooked at the counter",
+  "scene": "In an upscale shop, a sales assistant walks past you twice to attend to a more expensively dressed customer.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Keep browsing. When you're ready, catch her eye and say, \"Could you help me with this when you have a moment?\"",
+    "delta": 4,
+    "why": "You are clear and courteous, and you make yourself impossible to overlook without any friction. Most assistants respond to that immediately."
+   },
+   {
+    "text": "Mention loudly that you could buy the whole rack.",
+    "delta": -6,
+    "why": "It confirms her assumption that status matters here, only from the other side. Everyone in the shop is now watching."
+   },
+   {
+    "text": "Leave and write a pointed review later.",
+    "delta": -2,
+    "why": "This is reasonable feedback, but you have given up what you came for and resolved nothing in the moment."
+   },
+   {
+    "text": "Stand near the counter and sigh audibly.",
+    "delta": -3,
+    "why": "Signalling irritation without asking forces her to guess. You become the difficult customer rather than the overlooked one."
+   }
+  ],
+  "best": 0,
+  "code": "Ask clearly and pleasantly. Being overlooked is not an insult.",
+  "id": "status-07",
+  "category": "status"
+ },
+ {
+  "title": "Your idea, his voice",
+  "scene": "In a team meeting, a colleague presents a proposal you sketched to him privately last week. Your manager calls it excellent.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "\"That's actually what I proposed to Sam on Tuesday.\"",
+    "delta": -2,
+    "why": "It is true, but it puts the room in the middle of a dispute and makes the manager choose between you."
+   },
+   {
+    "text": "\"Glad it's landing. When I first sketched this, the piece I hadn't solved was onboarding. Sam, how are you thinking about that?\"",
+    "delta": 5,
+    "why": "You establish authorship as a fact rather than a grievance, and you show the deepest grasp of the idea. The room draws its own conclusions."
+   },
+   {
+    "text": "Say nothing, then vent to a colleague afterward.",
+    "delta": -3,
+    "why": "The record stands as presented, and the frustration travels sideways instead of being dealt with."
+   },
+   {
+    "text": "\"That was my idea.\"",
+    "delta": -4,
+    "why": "Said flatly in the moment, it sounds petty, even though it is accurate. People remember the tone more than the facts."
+   }
+  ],
+  "best": 1,
+  "code": "Show ownership through depth, not accusation.",
+  "id": "status-08",
+  "category": "status"
+ },
+ {
+  "title": "The relentless one-upper",
+  "scene": "At a group dinner, a friend's new boyfriend has topped every story so far. You mention a trip to Lisbon, and he says Lisbon is fine but Porto is far better.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Mention that you have also done Porto, and the Douro Valley.",
+    "delta": -4,
+    "why": "Now there are two people competing, and the rest of the table becomes an audience to it."
+   },
+   {
+    "text": "Stop contributing for the rest of the evening.",
+    "delta": -2,
+    "why": "It concedes the table to him, and your friend may read your silence as dislike of her partner."
+   },
+   {
+    "text": "\"We get it. You've been everywhere.\"",
+    "delta": -5,
+    "why": "It may be what others are thinking, but saying it humiliates him and puts your friend in a difficult position."
+   },
+   {
+    "text": "\"I haven't been. What should I not miss?\"",
+    "delta": 4,
+    "why": "You let him have the point without contest. By being genuinely interested, you also give him a way to stop performing."
+   }
+  ],
+  "best": 3,
+  "code": "Decline the competition and the competitor relaxes.",
+  "id": "status-09",
+  "category": "status"
+ },
+ {
+  "title": "Praise meant for someone else",
+  "scene": "After a junior analyst on your team delivers a strong presentation to the executives, the managing director stops you in the corridor to congratulate you on it.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "\"Thank you, I pushed the team hard on that one.\"",
+    "delta": -4,
+    "why": "It quietly redirects credit to yourself. If the director later learns who did the work, it will reflect on your judgement."
+   },
+   {
+    "text": "\"Team effort.\"",
+    "delta": -1,
+    "why": "It is gracious but vague. The analyst stays invisible, and the director learns nothing useful."
+   },
+   {
+    "text": "\"Thank you. That was Priya's work. She built the model and the narrative. She's one to watch.\"",
+    "delta": 5,
+    "why": "Naming her specifically raises her profile and shows the director you can develop people. That reflects better on you than taking the credit would."
+   },
+   {
+    "text": "Accept it with a nod and move on.",
+    "delta": -3,
+    "why": "Silence accepts credit that isn't yours. If it comes up later, it looks deliberate."
+   }
+  ],
+  "best": 2,
+  "code": "Pass credit downward by name. It rises back to you.",
+  "id": "status-10",
+  "category": "status"
+ },
+ {
+  "title": "The third loan request",
+  "scene": "A good friend asks to borrow £400 until the end of the month. He still owes you £250 from spring and hasn't mentioned it.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "\"Sure, no problem. Just send it back when you can.\"",
+    "delta": -4,
+    "why": "He gets the money, and you start keeping a quiet ledger he doesn't know about. The resentment usually surfaces later, and at a worse moment."
+   },
+   {
+    "text": "\"I'm going to pass on this one. I'd rather keep money out of things between us, and we've still got the spring one open.\"",
+    "delta": 5,
+    "why": "It is clear and unhurried, and it names the real issue without making it an accusation. He hears that the friendship is the priority, not the money."
+   },
+   {
+    "text": "\"Money's really tight for me right now, sorry.\"",
+    "delta": -2,
+    "why": "It ends the conversation, but it's a cover story. It also invites him to ask again once things are supposedly less tight."
+   },
+   {
+    "text": "\"Mate, you haven't even paid back the last one.\"",
+    "delta": -3,
+    "why": "It's true, but it lands as a rebuke, and he'll focus on the sting rather than the point. He leaves embarrassed rather than informed."
+   }
+  ],
+  "best": 1,
+  "code": "A clean no protects the friendship better than a reluctant yes.",
+  "id": "conflict-01",
+  "category": "conflict"
+ },
+ {
+  "title": "Your analysis, his slide",
+  "scene": "In a team meeting, a peer presents the pricing analysis you built last week as his own, and your director nods approvingly.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Say nothing in the meeting and raise it with your director privately afterwards.",
+    "delta": -1,
+    "why": "It's discreet, but it turns a simple attribution into a complaint about a colleague. Your director now has to arbitrate something you could have settled in the room."
+   },
+   {
+    "text": "\"Hang on, that's actually my work.\"",
+    "delta": -4,
+    "why": "You're right, but it sounds like a grievance, and the room's attention shifts to the friction rather than the work. Your director remembers the awkwardness more than the authorship."
+   },
+   {
+    "text": "\"Glad that's landing. When I put the model together I also tested a higher tier. Happy to walk through it.\"",
+    "delta": 5,
+    "why": "You establish authorship by showing depth, not by objecting. The room updates its view without anyone being publicly corrected."
+   },
+   {
+    "text": "Let it go entirely. The work matters more than the credit.",
+    "delta": -3,
+    "why": "That sounds gracious, but it teaches everyone present, including him, that your work is available to take."
+   }
+  ],
+  "best": 2,
+  "code": "Claim your work by knowing it best, not by objecting loudest.",
+  "id": "conflict-02",
+  "category": "conflict"
+ },
+ {
+  "title": "Forty minutes late",
+  "scene": "You arrive forty minutes late to a birthday dinner your partner organised. You stayed at work to finish something that could have waited.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "\"I'm sorry. I chose to stay on at work and I shouldn't have. You planned this, and I missed the start of it.\"",
+    "delta": 5,
+    "why": "It owns the choice rather than the circumstance and names what it cost her. With nothing to argue with, she can let it go sooner."
+   },
+   {
+    "text": "\"I'm so sorry, work was absolutely insane today.\"",
+    "delta": -3,
+    "why": "The apology is quickly swallowed by the excuse. She hears that something else ranked higher, and that you'd prefer not to say so."
+   },
+   {
+    "text": "Slip in quietly, kiss her hello and make up for it by being excellent company.",
+    "delta": -2,
+    "why": "Warmth helps, but skipping the apology leaves her to decide whether to raise it herself. Most people resent being put in that position."
+   },
+   {
+    "text": "\"I know, I know. I'm the worst. Feel free to hate me.\"",
+    "delta": -2,
+    "why": "Self-mockery asks her to reassure you. The focus moves from her evening to your guilt."
+   }
+  ],
+  "best": 0,
+  "code": "Apologise for the choice, not the circumstances.",
+  "id": "conflict-03",
+  "category": "conflict"
+ },
+ {
+  "title": "The deadline he wants",
+  "scene": "Your manager asks for the migration in three weeks. You estimated six. He says, \"I need you to make three work.\"",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "\"Understood. We'll find a way.\"",
+    "delta": -6,
+    "why": "It ends the tension today and moves it to week three, where it will be larger and partly your fault. He'll plan around a promise you didn't believe."
+   },
+   {
+    "text": "\"With respect, six is six. I'm not going to promise something I can't deliver.\"",
+    "delta": -1,
+    "why": "It's honest and firm, but it leaves him with a problem and no options. He may experience it as obstruction rather than expertise."
+   },
+   {
+    "text": "\"Let me think about it and come back to you tomorrow.\"",
+    "delta": -2,
+    "why": "Time to reflect is reasonable, but here it reads as softening. He'll assume three is now in play."
+   },
+   {
+    "text": "\"Three weeks gets us the core migration with no reporting and minimal testing. Six gets the full thing safely. Which matters more for this launch?\"",
+    "delta": 6,
+    "why": "You keep your estimate intact and give him a real decision to make. He leaves with control and clarity rather than a confrontation."
+   }
+  ],
+  "best": 3,
+  "code": "Don't bend the estimate. Show what each deadline buys.",
+  "id": "conflict-04",
+  "category": "conflict"
+ },
+ {
+  "title": "Bass at one a.m.",
+  "scene": "It's past one on a weeknight and your new upstairs neighbour's music is coming through the ceiling. You have an early start.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Bang on the ceiling a few times.",
+    "delta": -4,
+    "why": "It may work, but it introduces you as an irritation rather than a person. Your next interaction now starts from mild hostility."
+   },
+   {
+    "text": "Leave a polite note under their door in the morning.",
+    "delta": -1,
+    "why": "It's courteous but slow, and you still lose the night. Notes also tend to read colder than the writer intended."
+   },
+   {
+    "text": "Knock, introduce yourself, and say: \"Sorry to interrupt. The sound carries more than you'd think. Could you turn it down for tonight?\"",
+    "delta": 5,
+    "why": "It's direct, friendly and gives them the benefit of the doubt. Most people are mortified rather than defensive, and you've started a decent neighbourly relationship."
+   },
+   {
+    "text": "Message the building manager so you don't have to deal with it.",
+    "delta": -3,
+    "why": "Escalating first, over something one knock would fix, tells them you'd rather report than talk. It can sour things for years."
+   }
+  ],
+  "best": 2,
+  "code": "Ask the person before you complain about them.",
+  "id": "conflict-05",
+  "category": "conflict"
+ },
+ {
+  "title": "The running joke",
+  "scene": "At a group dinner, an old friend makes his third joke tonight about your recent divorce. The table laughs, a little uncertainly.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Laugh along and add a joke of your own about it.",
+    "delta": -3,
+    "why": "It smooths the moment but tells him the topic is open. The table's uncertainty was a signal, and you've told them to ignore it."
+   },
+   {
+    "text": "Let the moment pass. Later, alone, say: \"The divorce jokes. I'd rather you dropped them. It's still raw.\"",
+    "delta": 5,
+    "why": "He hears it without an audience, so he can simply agree rather than defend himself. The boundary is clear and the friendship stays intact."
+   },
+   {
+    "text": "\"Seriously, can you give it a rest?\" in front of everyone.",
+    "delta": -2,
+    "why": "The point is fair, but saying it publicly makes him defensive and the table awkward. People tend to remember the tension rather than the reason."
+   },
+   {
+    "text": "Go quiet for the rest of the evening.",
+    "delta": -4,
+    "why": "Everyone senses something is wrong and nobody knows what. He learns nothing, and you carry it home."
+   }
+  ],
+  "best": 1,
+  "code": "Some boundaries are best drawn without an audience.",
+  "id": "conflict-06",
+  "category": "conflict"
+ },
+ {
+  "title": "Wrong, and confident",
+  "scene": "At a party, an acquaintance holds forth on how your industry works. He gets a central fact clearly wrong, and a small group is listening.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "\"Interesting. I work in that area, and in my experience it's actually the reverse. Happy to explain why.\"",
+    "delta": 4,
+    "why": "You correct the record and make it easy for him to engage rather than retreat. The group learns something, and nobody is humiliated."
+   },
+   {
+    "text": "\"That's just not true. I literally do this for a living.\"",
+    "delta": -3,
+    "why": "You're right, but you've turned a conversation into a contest of status. He'll dig in, and the listeners will feel the temperature drop."
+   },
+   {
+    "text": "Nod along. It isn't worth the friction at a party.",
+    "delta": -1,
+    "why": "This is a reasonable call for a trivial point. On something central, though, you've let a room leave misinformed when you could have helped."
+   },
+   {
+    "text": "Ask a series of pointed questions until he realises he's wrong.",
+    "delta": -4,
+    "why": "It feels clever but works as a trap, and everyone watching can tell. He'll feel set up, and you'll seem to be performing."
+   }
+  ],
+  "best": 0,
+  "code": "Correct the fact, spare the person.",
+  "id": "conflict-07",
+  "category": "conflict"
+ },
+ {
+  "title": "The extended warranty",
+  "scene": "Buying a laptop, the salesperson offers the three-year protection plan. You decline, and he begins a second, more detailed pitch.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Explain at length why you've researched it and it's poor value.",
+    "delta": -2,
+    "why": "Reasons invite counter-reasons, and you've now opened a debate you didn't want. It also makes your no sound negotiable."
+   },
+   {
+    "text": "\"Fine, maybe the one-year version.\"",
+    "delta": -3,
+    "why": "You've bought something you didn't want just to end the pressure. He learns that persistence works."
+   },
+   {
+    "text": "\"Look, I said no already.\"",
+    "delta": -1,
+    "why": "It's clear, but the edge is aimed at someone doing his job. It adds friction you don't need."
+   },
+   {
+    "text": "Smile and repeat, \"No thanks, just the laptop,\" in the same easy tone.",
+    "delta": 4,
+    "why": "Calm repetition tells him the answer is settled without making it personal. Most salespeople move on gratefully."
+   }
+  ],
+  "best": 3,
+  "code": "A settled no doesn't need new reasons.",
+  "id": "conflict-08",
+  "category": "conflict"
+ },
+ {
+  "title": "You snapped yesterday",
+  "scene": "In yesterday's stand-up you cut off a junior colleague sharply when she raised a concern. She's been noticeably quiet since.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Be especially warm with her today and let it fade.",
+    "delta": -2,
+    "why": "Kindness helps, but she's left wondering whether you even noticed. Concerns she might raise in future stay unspoken."
+   },
+   {
+    "text": "\"Sorry if I came across a bit harsh yesterday.\"",
+    "delta": -1,
+    "why": "The \"if\" makes it conditional and puts the judgement back on her. It's polite but doesn't quite repair anything."
+   },
+   {
+    "text": "Find her privately: \"I cut you off yesterday, and that was wrong. Your concern was valid. Can we go through it properly?\"",
+    "delta": 6,
+    "why": "It names exactly what you did and returns the respect you took away. She learns that raising concerns with you is safe."
+   },
+   {
+    "text": "Apologise to her in front of the whole team at today's stand-up.",
+    "delta": -1,
+    "why": "The gesture is generous, but it may put her on the spot in a way she didn't ask for. A private word first usually serves her better."
+   }
+  ],
+  "best": 2,
+  "code": "Apologise specifically, and give back what you took.",
+  "id": "conflict-09",
+  "category": "conflict"
+ },
+ {
+  "title": "Your mother on your partner",
+  "scene": "Over a holiday lunch, your mother makes another pointed remark about your partner's career, with your partner sitting beside you.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Change the subject quickly and talk to your partner about it later.",
+    "delta": -4,
+    "why": "It avoids a scene, but your partner has watched you choose comfort over them. Your mother learns the remarks carry no cost."
+   },
+   {
+    "text": "\"Mum, she's doing work she's good at and I'm proud of her. Let's leave that there.\" Then carry on warmly.",
+    "delta": 6,
+    "why": "Your partner hears you stand with them, and your mother hears a clear line without being humiliated. The warmth afterwards keeps the lunch intact."
+   },
+   {
+    "text": "\"That's incredibly rude. You do this every single time.\"",
+    "delta": -3,
+    "why": "The anger is understandable, but it widens the conflict and puts your partner at the centre of a family row they didn't start."
+   },
+   {
+    "text": "Glance at your partner and let them decide whether to respond.",
+    "delta": -5,
+    "why": "It hands them a burden that is yours to carry with your own family. They're left to defend themselves at your mother's table."
+   }
+  ],
+  "best": 1,
+  "code": "With your own family, the boundary is yours to hold.",
+  "id": "conflict-10",
+  "category": "conflict"
+ },
+ {
+  "title": "The Joke That Landed Nowhere",
+  "scene": "At a dinner party with people you met an hour ago, you make a dry remark about the wine list. It meets polite smiles and a short silence.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Explain what you meant and why it was supposed to be funny.",
+    "delta": -4,
+    "why": "Explaining stretches the silence and asks the table to perform a laugh they now owe you. A small moment becomes a long one."
+   },
+   {
+    "text": "Say \"Tough crowd,\" with a grin.",
+    "delta": -2,
+    "why": "Some tables enjoy this, but it hands responsibility for the miss to them. Strangers may hear a light accusation rather than a joke."
+   },
+   {
+    "text": "Smile, say \"That was better in my head,\" and ask the person beside you how they know the host.",
+    "delta": 4,
+    "why": "You acknowledge the miss in one line and give everyone a new place to go. People relax when they see the moment cost you nothing."
+   },
+   {
+    "text": "Follow it quickly with a second, stronger joke to win the table back.",
+    "delta": -3,
+    "why": "It reads as needing the laugh. If the second one misses too, the table starts bracing whenever you speak."
+   }
+  ],
+  "best": 2,
+  "code": "Name the miss lightly, then move the room along.",
+  "id": "recovery-01",
+  "category": "recovery"
+ },
+ {
+  "title": "A Name, Entirely Gone",
+  "scene": "At the office summer party, a colleague from another team greets you warmly. You have met three times and cannot recall her name.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Keep the conversation going and avoid needing her name.",
+    "delta": -2,
+    "why": "It works until someone joins and you have to introduce her. The hesitation then shows, and it looks worse than asking would have."
+   },
+   {
+    "text": "Say \"I'm sorry, your name has completely left me. I do remember you were moving to Lisbon. How did that go?\"",
+    "delta": 5,
+    "why": "The honesty is brief, and the specific memory shows she registered with you. Most people care more about being remembered as a person than as a name."
+   },
+   {
+    "text": "Introduce her to a friend nearby so she says her own name.",
+    "delta": -1,
+    "why": "It is a common workaround, but it is a small sleight of hand. If she simply waits for you to do the introduction, you are stuck in front of two people."
+   },
+   {
+    "text": "Greet her with a warm, generic \"Hey, you\" and carry on.",
+    "delta": -3,
+    "why": "People notice when their name is being stepped around. The warmth starts to sound like a cover."
+   }
+  ],
+  "best": 1,
+  "code": "Remembering the person matters more than remembering the label.",
+  "id": "recovery-02",
+  "category": "recovery"
+ },
+ {
+  "title": "Blank Mid-Toast",
+  "scene": "Halfway through your toast at a friend's wedding, the next line of the story disappears. Eighty guests are looking at you.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Pause, glance at your notes, say \"Where was I. Right,\" and continue.",
+    "delta": 5,
+    "why": "A calm pause reads as composure to an audience, not failure. Your steadiness tells them they can relax."
+   },
+   {
+    "text": "Apologise, say you're nervous, and apologise again as you look for your place.",
+    "delta": -4,
+    "why": "Repeated apologies pull attention from the couple to your discomfort. The room starts worrying for you instead of listening."
+   },
+   {
+    "text": "Skip the rest and go straight to raising your glass.",
+    "delta": -2,
+    "why": "It ends the discomfort, but the abrupt finish is noticeable. The story built for the couple goes unsaid."
+   },
+   {
+    "text": "Abandon the story and improvise a different one about the groom.",
+    "delta": -3,
+    "why": "Unrehearsed wedding stories tend to wander or reveal too much. You trade a small risk for a larger one."
+   }
+  ],
+  "best": 0,
+  "code": "A pause feels longer to you than to them.",
+  "id": "recovery-03",
+  "category": "recovery"
+ },
+ {
+  "title": "The Congratulations That Wasn't",
+  "scene": "At a friend's barbecue, you congratulate an acquaintance on her pregnancy. She tells you, evenly, that she isn't pregnant.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Explain that someone mentioned it, or that you thought you'd noticed.",
+    "delta": -8,
+    "why": "Any justification draws more attention to her body and puts her in the position of managing your mistake. It deepens the hurt."
+   },
+   {
+    "text": "Laugh and say \"Well, you're glowing anyway.\"",
+    "delta": -5,
+    "why": "The attempt at charm brushes past what happened. It can feel like being asked to find it funny."
+   },
+   {
+    "text": "Return to her several times through the afternoon to apologise again.",
+    "delta": -4,
+    "why": "The sincerity is real, but each apology reopens the moment. She ends up comforting you."
+   },
+   {
+    "text": "Say \"I'm so sorry. That was careless of me,\" and let her steer what comes next.",
+    "delta": 4,
+    "why": "A short, unqualified apology takes responsibility without making her relive it. Letting her lead returns control to the person who was put on the spot."
+   }
+  ],
+  "best": 3,
+  "code": "Apologise once, cleanly, and give them back control.",
+  "id": "recovery-04",
+  "category": "recovery"
+ },
+ {
+  "title": "Waving at Nobody",
+  "scene": "Across a busy café, someone waves in your direction and you wave back. You realise they were waving at the person behind you.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Give a small smile at your own mistake and return to your coffee.",
+    "delta": 3,
+    "why": "Anyone who noticed sees a man unbothered by a minor misstep. Ease about small errors is quietly attractive."
+   },
+   {
+    "text": "Turn the wave into a hand through your hair.",
+    "delta": -2,
+    "why": "Everyone has tried this, and everyone can tell. The cover draws more notice than the wave did."
+   },
+   {
+    "text": "Freeze, flush, and look at your phone for the next several minutes.",
+    "delta": -2,
+    "why": "Visible embarrassment extends a two-second moment. Onlookers feel awkward on your behalf."
+   },
+   {
+    "text": "Walk over later to explain to the waver what happened.",
+    "delta": -3,
+    "why": "No one needed the explanation. It turns a passing nothing into a conversation about your self-consciousness."
+   }
+  ],
+  "best": 0,
+  "code": "Small errors deserve small reactions.",
+  "id": "recovery-05",
+  "category": "recovery"
+ },
+ {
+  "title": "Wrong Room for a Quip",
+  "scene": "You join a team meeting late and make a light comment about Friday plans. Then you realise the meeting is about restructuring and possible redundancies.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Go quiet, look down at your notes, and say nothing more.",
+    "delta": -3,
+    "why": "Silence avoids making it worse but leaves the remark hanging. Colleagues may read you as unaware or indifferent."
+   },
+   {
+    "text": "Add another joke to lift the mood, since everyone looks tense.",
+    "delta": -6,
+    "why": "Levity in a meeting about people's jobs reads as not taking their worry seriously. It can be remembered for a long time."
+   },
+   {
+    "text": "Explain that you hadn't seen the agenda and didn't know what the meeting was about.",
+    "delta": -3,
+    "why": "It is true, but a long explanation makes the moment about your reputation while others are worried about their livelihoods."
+   },
+   {
+    "text": "Say \"Sorry, that was badly timed. Please go on,\" and give the meeting your full attention.",
+    "delta": 5,
+    "why": "A brief acknowledgement shows you understand the weight of the room. Then your attentiveness repairs more than words could."
+   }
+  ],
+  "best": 3,
+  "code": "Read the room after entering, then apologise and listen.",
+  "id": "recovery-06",
+  "category": "recovery"
+ },
+ {
+  "title": "Corrected on His Name",
+  "scene": "In your first week at a new job, you call a teammate Dan. He tells you, mildly, that it's Daniel.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Apologise several times and say you're terrible with names.",
+    "delta": -2,
+    "why": "The over-apology makes him reassure you about a minor correction. Calling yourself bad with names also suggests it will happen again."
+   },
+   {
+    "text": "Say \"Daniel. Got it, thank you,\" and use it correctly from then on.",
+    "delta": 4,
+    "why": "You take the correction without fuss and show it registered. Using it correctly later is the real apology."
+   },
+   {
+    "text": "Say \"You look more like a Dan, to be fair.\"",
+    "delta": -3,
+    "why": "It may be meant warmly, but it dismisses his preference. People are particular about their names for good reasons."
+   },
+   {
+    "text": "Avoid using his name for the next few weeks in case you slip.",
+    "delta": -2,
+    "why": "Noticeably avoiding someone's name creates distance. He may wonder whether he made things awkward."
+   }
+  ],
+  "best": 1,
+  "code": "Accept a correction once and prove it with practice.",
+  "id": "recovery-07",
+  "category": "recovery"
+ },
+ {
+  "title": "Mistaken for Staff",
+  "scene": "At a gallery opening, you ask a woman in black where the coat check is. She tells you she has no idea; she's a guest, and the artist's sister.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Say \"Forgive me, I assumed. I'm James,\" and ask her what she thinks of her sister's work.",
+    "delta": 5,
+    "why": "You own the assumption without fuss and treat her as the guest she is. Turning to her sister's work gives her something she is glad to talk about."
+   },
+   {
+    "text": "Explain that her outfit looked like what the staff were wearing.",
+    "delta": -6,
+    "why": "Justifying the assumption puts the cause on her. It sounds like you're saying the mistake was hers."
+   },
+   {
+    "text": "Laugh, say \"My mistake,\" and move away quickly.",
+    "delta": -4,
+    "why": "The quick exit makes it look as though she only interested you as staff. It leaves her with the awkwardness."
+   },
+   {
+    "text": "Apologise sincerely, then keep your distance for the rest of the evening.",
+    "delta": -3,
+    "why": "The apology is right, but steering clear afterwards keeps the mistake alive. She will notice the avoidance."
+   }
+  ],
+  "best": 0,
+  "code": "Repair an assumption by meeting the actual person.",
+  "id": "recovery-08",
+  "category": "recovery"
+ },
+ {
+  "title": "A Story Already Told",
+  "scene": "Over drinks, you start a story about a disastrous flight. Your friend says, kindly, \"You told me this last week.\"",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Tell it anyway, since the others at the table haven't heard it.",
+    "delta": -3,
+    "why": "The others may enjoy it, but your friend now sits through a rerun. It suggests the audience matters more to you than he does."
+   },
+   {
+    "text": "Get flustered, apologise, and say you must be getting old.",
+    "delta": -2,
+    "why": "Turning it into a small crisis makes everyone reassure you. A slip this ordinary doesn't need ceremony."
+   },
+   {
+    "text": "Say \"I did, didn't I. Your turn, then. What's new with you?\"",
+    "delta": 4,
+    "why": "You concede with good humour and hand him the floor. It shows interest in him rather than in your material."
+   },
+   {
+    "text": "Insist you haven't, and that he must be thinking of someone else.",
+    "delta": -4,
+    "why": "Arguing over a small memory lapse makes you seem defensive. He was being kind, and you made it a contest."
+   }
+  ],
+  "best": 2,
+  "code": "When you've been heard already, start listening.",
+  "id": "recovery-09",
+  "category": "recovery"
+ },
+ {
+  "title": "Lost Thread on a Date",
+  "scene": "On a second date, you're halfway through a story about your week when you lose your point entirely. She's waiting for where it goes.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Stop and act as though that was where the story was meant to end.",
+    "delta": -2,
+    "why": "She can tell it trailed off. The small pretence makes the moment stiffer than simply admitting it."
+   },
+   {
+    "text": "Ask her \"What was I saying?\"",
+    "delta": -1,
+    "why": "It's honest and can be warm, but it hands her the job of reconstructing your story. She may not remember either."
+   },
+   {
+    "text": "Keep talking until you find your way back to the point.",
+    "delta": -3,
+    "why": "Searching out loud tends to ramble. Her attention drifts while you work it out."
+   },
+   {
+    "text": "Laugh and say \"I've lost the thread completely. It wasn't vital,\" then ask about her week.",
+    "delta": 4,
+    "why": "Being easy about the lapse shows you aren't performing for her. Turning to her week keeps the evening moving and about both of you."
+   }
+  ],
+  "best": 3,
+  "code": "Let a lost point go with good grace.",
+  "id": "recovery-10",
+  "category": "recovery"
+ },
+ {
+  "title": "Third Speaker, Restless Room",
+  "scene": "You are the third speaker at a friend's wedding. The first two ran well over time, and guests are glancing at the bar.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Deliver your full prepared five minutes as written. You were asked to speak, and you rehearsed.",
+    "delta": -3,
+    "why": "The words may be good, but the room is already spent. Guests hear the length more than the content, and the couple feels the energy drain."
+   },
+   {
+    "text": "Open with a joke about how long the previous speeches went on.",
+    "delta": -2,
+    "why": "It gets a laugh, but at the expense of two people who are still sitting in the room. The couple's friends end up looking slightly foolish at their wedding."
+   },
+   {
+    "text": "Acknowledge the evening with a light line, go straight to your best story and one sincere sentence, and raise your glass within two minutes.",
+    "delta": 5,
+    "why": "The room relaxes the moment it senses you will be brief, and that goodwill makes your one real line land harder. The couple gets a highlight rather than an endurance test."
+   },
+   {
+    "text": "Skip the speech entirely and simply say, 'To the couple.'",
+    "delta": -1,
+    "why": "It is considerate of the guests, but it feels abrupt. The couple loses the words they were looking forward to hearing from you."
+   }
+  ],
+  "best": 2,
+  "code": "Read the room, then give it less than it expects.",
+  "id": "hosting-01",
+  "category": "hosting"
+ },
+ {
+  "title": "The Unannounced Plus-One",
+  "scene": "You have set a table for six. A close friend arrives at the door with someone you have never met and did not expect.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Welcome them both warmly, introduce yourself, and quietly add a setting while they take their coats.",
+    "delta": 4,
+    "why": "The stranger feels genuinely welcome instead of tolerated. Your friend notices your grace and will likely send a warning next time without being asked."
+   },
+   {
+    "text": "Say, 'Oh, I didn't realise you were bringing someone,' with a polite but tight smile.",
+    "delta": -3,
+    "why": "It is honest, but the guest hears that they are an imposition within seconds of arriving. That discomfort tends to sit at the table all evening."
+   },
+   {
+    "text": "Make a cheerful show of rearranging chairs, joking that it is lucky you over-cater.",
+    "delta": -1,
+    "why": "It is kindly meant, but the fuss draws attention to the disruption. The new guest still feels like the reason everyone had to move."
+   },
+   {
+    "text": "Take your friend aside in the kitchen straight away and explain that this is a seated dinner.",
+    "delta": -4,
+    "why": "The guest is left standing alone, knowing exactly what is being discussed. You have made a logistical problem into a social one."
+   }
+  ],
+  "best": 0,
+  "code": "A guest should never feel they are a logistical problem.",
+  "id": "hosting-02",
+  "category": "hosting"
+ },
+ {
+  "title": "Wine, and One Who Abstains",
+  "scene": "You are choosing wine for a table of four at a good restaurant. One friend does not drink.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Order a bottle you know is good without consulting anyone, to keep things moving.",
+    "delta": -2,
+    "why": "It is efficient, but it presumes the others' tastes. Your non-drinking friend is quietly left out of the moment."
+   },
+   {
+    "text": "Tell the waiter, 'A bottle of the Rioja, and nothing for him, he doesn't drink.'",
+    "delta": -4,
+    "why": "It is meant to be helpful, but it puts his choice on display to a stranger. He would rather order for himself than be explained."
+   },
+   {
+    "text": "Say, 'Whatever everyone wants is fine with me,' and leave the decision open.",
+    "delta": -1,
+    "why": "It is polite, but the table drifts while nobody takes the lead. Someone else ends up doing the work you were handed."
+   },
+   {
+    "text": "Check red or white with the drinkers, order the bottle, then ask your friend what he'd like, and perhaps suggest something from the soft drinks list.",
+    "delta": 4,
+    "why": "Everyone is consulted in a few seconds, and your friend is included as a guest rather than treated as an exception. The table feels looked after."
+   }
+  ],
+  "best": 3,
+  "code": "Include everyone in the choice, not just those who share yours.",
+  "id": "hosting-03",
+  "category": "hosting"
+ },
+ {
+  "title": "A Few Words, Unplanned",
+  "scene": "At a colleague's leaving drinks, your manager turns to you and says, 'You worked with her most. Say a few words.'",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Wave it off: 'I'm really not a speeches person. Someone else should.'",
+    "delta": -2,
+    "why": "It feels modest, but the colleague hears that nobody wanted to speak about her. The awkward pause is worse than any imperfect speech."
+   },
+   {
+    "text": "Share one specific memory of something she did well, say what you'll miss, wish her well, and finish in under a minute.",
+    "delta": 5,
+    "why": "One real detail tells her she was seen, and the brevity tells the room you respect its time. People remember how specific it was, not how polished."
+   },
+   {
+    "text": "Do a light roast of her habits, such as the lateness and the desk snacks, to keep it fun.",
+    "delta": -3,
+    "why": "Some laughs come, but at a farewell she is exposed in front of senior people. It can leave her unsure what you actually thought of her."
+   },
+   {
+    "text": "Walk through the main projects you delivered together over the past three years.",
+    "delta": -2,
+    "why": "It is sincere, but it drifts toward your shared work and runs long. The room starts to hear a summary rather than a tribute."
+   }
+  ],
+  "best": 1,
+  "code": "One true detail outweighs a polished paragraph.",
+  "id": "hosting-04",
+  "category": "hosting"
+ },
+ {
+  "title": "The Overcooked Roast",
+  "scene": "You are carving at your own dinner party when it becomes obvious the lamb is well past the pink you intended.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Apologise as you serve and mention it again a few times during the meal.",
+    "delta": -3,
+    "why": "Each apology asks your guests to reassure you. The meal turns into a conversation about the lamb instead of about each other."
+   },
+   {
+    "text": "Say nothing and carry on as though it came out perfectly.",
+    "delta": -1,
+    "why": "It avoids fuss, but your guests can see it. A small unspoken awkwardness sits over the first few bites."
+   },
+   {
+    "text": "Name it once, lightly: 'A little more done than planned, so the sauce has a job tonight.' Then serve and move on.",
+    "delta": 4,
+    "why": "Guests are let off the hook of pretending, and your ease tells them the evening is unaffected. The mood stays on the company."
+   },
+   {
+    "text": "Offer to order in instead if anyone would prefer.",
+    "delta": -2,
+    "why": "Generous, but it overcorrects. Guests now have to insist the food is fine, and the hosting momentum stalls."
+   }
+  ],
+  "best": 2,
+  "code": "Name the flaw once, then let the evening outrank it.",
+  "id": "hosting-05",
+  "category": "hosting"
+ },
+ {
+  "title": "Your Father at Seventy",
+  "scene": "Midway through a toast at your father's seventieth birthday, your voice catches and the room goes quiet.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Break the tension with a quick joke about allergies, then carry on.",
+    "delta": -1,
+    "why": "It earns a warm laugh and is entirely understandable. But it steps away from the moment the room was leaning into."
+   },
+   {
+    "text": "Push through the remaining lines quickly before it gets worse.",
+    "delta": -2,
+    "why": "The rush reads as discomfort, and the best lines get swallowed. Your father hears the hurry more than the words."
+   },
+   {
+    "text": "Stop, apologise, and ask your sister to finish for you.",
+    "delta": -4,
+    "why": "The room feels your embarrassment rather than your affection. Your father loses the toast he was in the middle of receiving."
+   },
+   {
+    "text": "Pause, let the silence sit, take a breath, look at him, and finish the line.",
+    "delta": 6,
+    "why": "The pause tells everyone how much this means without your having to say it. Most people in that room will remember the moment you stopped more than anything you said."
+   }
+  ],
+  "best": 3,
+  "code": "Feeling shown without apology is the speech.",
+  "id": "hosting-06",
+  "category": "hosting"
+ },
+ {
+  "title": "Tonight Is On You",
+  "scene": "You have taken friends to dinner to celebrate your promotion and said it's on you. When the bill arrives, one friend insists on paying his share.",
+  "difficulty": 2,
+  "options": [
+   {
+    "text": "Thank him and hold your ground warmly: 'Tonight's mine. You can get the next one.'",
+    "delta": 4,
+    "why": "It honours his offer without letting the gesture dissolve. He keeps his dignity, and the evening ends where you intended."
+   },
+   {
+    "text": "Relent and split it so there's no awkwardness.",
+    "delta": -1,
+    "why": "It smooths the moment, but quietly undoes what you offered. The others may wonder whether they should have insisted too."
+   },
+   {
+    "text": "Go back and forth with him for a few minutes until he gives in.",
+    "delta": -3,
+    "why": "The table has to sit through the negotiation. A generous gesture starts to look like a contest."
+   },
+   {
+    "text": "Laugh and say, 'Put it away, I'm the one with the raise now.'",
+    "delta": -5,
+    "why": "It is meant playfully, but it puts your new income in the middle of the table. Friends feel ranked at a dinner meant to include them."
+   }
+  ],
+  "best": 0,
+  "code": "Let a gift stay a gift, gently.",
+  "id": "hosting-07",
+  "category": "hosting"
+ },
+ {
+  "title": "Politics Over the Main Course",
+  "scene": "At your dinner party, two guests have slipped into a heated political argument. The rest of the table has gone quiet and is looking at their plates.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Offer your own view on the issue to help settle it.",
+    "delta": -4,
+    "why": "You stop being the host and become a third party. One guest now feels the house has taken a side against them."
+   },
+   {
+    "text": "Step in with good humour and no verdict: 'Two strong cases. Let's adjourn before the dessert gets cold.' Then ask a quieter guest about something they mentioned earlier.",
+    "delta": 5,
+    "why": "Neither guest loses face, and the redirect gives the room somewhere else to go. The quiet guests are grateful someone moved things on."
+   },
+   {
+    "text": "Say firmly, 'No politics at my table, please.'",
+    "delta": -2,
+    "why": "It works, but it lands like a reprimand delivered in front of everyone. Both guests feel scolded, and conversation stays stiff for a while."
+   },
+   {
+    "text": "Let it run its course. They're adults, and stepping in might seem controlling.",
+    "delta": -3,
+    "why": "The intention is respectful, but everyone else's evening is being spent on it. Guests look to the host to protect the room."
+   }
+  ],
+  "best": 1,
+  "code": "A host keeps the peace by offering the room an exit.",
+  "id": "hosting-08",
+  "category": "hosting"
+ },
+ {
+  "title": "They Sing to You",
+  "scene": "At a restaurant birthday dinner, the lights dim, a cake appears, and your table, along with a few strangers, begins singing to you.",
+  "difficulty": 1,
+  "options": [
+   {
+    "text": "Smile, take it in, look around at the people singing, then thank them and blow out the candles.",
+    "delta": 4,
+    "why": "Receiving it openly lets the people who planned it enjoy their gesture. Your ease makes the whole table feel the moment worked."
+   },
+   {
+    "text": "Cover your face and visibly cringe until it's over.",
+    "delta": -2,
+    "why": "It is a natural reaction, but it signals that their effort embarrassed you. The singing turns hesitant and ends with a flat note."
+   },
+   {
+    "text": "Stand and conduct the singing with theatrical gestures.",
+    "delta": -1,
+    "why": "It is good-natured and gets laughs, but it turns their gift into your performance. Some at the table may feel they've become your audience."
+   },
+   {
+    "text": "Interrupt halfway with a self-deprecating joke about your age.",
+    "delta": -2,
+    "why": "The laugh releases your discomfort, but it cuts off their song. The gesture loses its finish."
+   }
+  ],
+  "best": 0,
+  "code": "Being celebrated well is a courtesy to those celebrating.",
+  "id": "hosting-09",
+  "category": "hosting"
+ },
+ {
+  "title": "The Opening Joke Falls Flat",
+  "scene": "You are giving a short welcome at a company event for eighty people. Your opening joke meets complete silence.",
+  "difficulty": 3,
+  "options": [
+   {
+    "text": "Briefly explain the joke so people understand what you meant.",
+    "delta": -4,
+    "why": "Explaining stretches the awkward moment and makes the audience feel they've failed a test. The silence becomes the memorable part."
+   },
+   {
+    "text": "Try a second joke straight away to win them back.",
+    "delta": -3,
+    "why": "The room senses the scramble. If it also misses, the pressure doubles, and everyone feels it with you."
+   },
+   {
+    "text": "Smile and say, 'That went better in rehearsal,' then move into your welcome.",
+    "delta": 5,
+    "why": "Owning it lightly releases the tension and usually earns the laugh the joke didn't. The audience relaxes, seeing that you are unbothered."
+   },
+   {
+    "text": "Carry on to the next line as though nothing happened.",
+    "delta": -1,
+    "why": "It is composed and keeps things moving, but a little stiffness lingers. The room never quite gets its release."
+   }
+  ],
+  "best": 2,
+  "code": "Acknowledge the miss lightly, and the room forgives it.",
+  "id": "hosting-10",
+  "category": "hosting"
+ }
+]

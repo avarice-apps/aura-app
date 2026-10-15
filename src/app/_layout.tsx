@@ -6,6 +6,7 @@ import { useFonts, Antonio_200ExtraLight, Antonio_300Light, Antonio_500Medium } 
 import { JetBrainsMono_400Regular, JetBrainsMono_500Medium } from '@expo-google-fonts/jetbrains-mono';
 import { Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
 import { color } from '@/theme/tokens';
+import { initSounds } from '@/lib/sound';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -19,6 +20,10 @@ export default function RootLayout() {
     Inter_400Regular,
     Inter_500Medium,
   });
+
+  useEffect(() => {
+    initSounds();
+  }, []);
 
   useEffect(() => {
     if (loaded) SplashScreen.hideAsync();

@@ -11,6 +11,7 @@ import { color, space } from '@/theme/tokens';
 import { tierFor, ARCHETYPES, AXIS_LABEL } from '@/data';
 import { useStore, isPaid } from '@/state/store';
 import { OFFLINE } from '@/lib/config';
+import { play } from '@/lib/sound';
 
 export default function Verdict() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -42,6 +43,7 @@ export default function Verdict() {
   // count up
   useEffect(() => {
     if (stage < 1 || !verdict) return;
+    play('reveal');
     const target = verdict.index;
     const start = Date.now();
     const dur = 1300;

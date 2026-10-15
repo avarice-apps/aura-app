@@ -9,6 +9,7 @@ import { color, space } from '@/theme/tokens';
 import { PRESSURE_PROMPTS } from '@/data';
 import { scorePressure } from '@/lib/api';
 import { useStore } from '@/state/store';
+import { play } from '@/lib/sound';
 
 const ROUNDS = 5;
 const ANSWER_S = 20;
@@ -44,6 +45,7 @@ export default function Pressure() {
       return;
     }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    play('tick');
     const t = setTimeout(() => setCount((c) => c - 1), 1000);
     return () => clearTimeout(t);
   }, [phase, count]);

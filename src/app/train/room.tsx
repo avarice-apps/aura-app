@@ -7,6 +7,7 @@ import { Screen, Display, Label, Body, Button, Gutter, Stack, Row, Numeral } fro
 import { color, space } from '@/theme/tokens';
 import { ROOM_QUESTIONS, RoomQuestion } from '@/data';
 import { useStore } from '@/state/store';
+import { play } from '@/lib/sound';
 
 const PER_Q_S = 10;
 const N = 6;
@@ -46,8 +47,10 @@ export default function Room() {
       const bonus = Math.round(10 * (1 - Math.min(ms, PER_Q_S * 1000) / (PER_Q_S * 1000)));
       setScore((s) => s + 10 + bonus);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      play('correct');
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      play('wrong');
     }
     setPhase('reveal');
   }
