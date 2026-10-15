@@ -73,7 +73,7 @@ export function PaywallBody({ onDone, onSkip }: { onDone: () => void; onSkip: ()
 
         <Card style={{ marginTop: 14, gap: 6 }}>
           <Row style={{ justifyContent: 'space-between' }}>
-            <Body strong>Aura Black</Body>
+            <Body strong>Kleos Black</Body>
             <Tag label="Soon" />
           </Row>
           <Muted small>For the big moments: rehearsals built from your real interview or date, Heat checkpoints, your monthly Portrait, unlimited voice with Poise.</Muted>

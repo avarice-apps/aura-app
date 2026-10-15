@@ -93,7 +93,7 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
     (async () => {
       try {
         const ok = await prepareMic();
-        if (!ok) throw new Error('Aura needs the microphone to hear your answer.');
+        if (!ok) throw new Error('Kleos needs the microphone to hear your answer.');
         const s = await startSession(args);
         if (!alive) return;
         sessionRef.current = s.session_id;

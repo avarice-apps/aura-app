@@ -1,6 +1,9 @@
 import { API_URL, OFFLINE } from './config';
 import type { Evaluation, Lesson, Receipt, ScanResult, SessionStart, TurnResult } from './types';
-import type { Goal } from '@/state/store';
+import { useStore, type Goal } from '@/state/store';
+import { QUESTS } from './quests';
+
+const tone = () => useStore.getState().tone ?? 'real';
 
 // ------------------------------------------------------------------ offline demo
 // Real voices, pre-rendered. Lets the whole app be walked through before the server is deployed.
@@ -140,10 +143,11 @@ export async function startSession(a: StartArgs): Promise<SessionStart & { opene
     demo = { goal: g, attempt: a.attempt_of ? 2 : 1, turns: 0 };
     const sc = DEMO_SCENES[g];
     await sleep(400);
-    const lessonScene = a.lesson ? { setting: a.lesson.setting, opener: a.lesson.opener, goal: a.lesson.goal } : null;
+    const q = a.room_id ? QUESTS.find((x) => x.id === a.room_id) : undefined;
+    const lessonScene = a.lesson ? { setting: a.lesson.setting, opener: a.lesson.opener, goal: a.lesson.goal } : q ? { setting: q.setting, opener: q.opener, goal: q.goal } : null;
     return { session_id: `demo_${Date.now()}`, character: sc.character, setting: lessonScene?.setting ?? sc.setting, goal: lessonScene?.goal ?? sc.goal, opener: lessonScene?.opener ?? sc.opener, max_turns: 2, pressure: a.pressure ?? 1, openerAudio: lessonScene ? undefined : DEMO_AUDIO[`open_${g}` as keyof typeof DEMO_AUDIO] };
   }
-  const r = await postJSON<SessionStart>('/session/start', a);
+  const r = await postJSON<SessionStart>('/session/start', { ...a, tone: tone() });
   return { ...r, openerAudio: r.opener_audio };
 }
 
@@ -187,7 +191,7 @@ export async function generateLesson(a: { unit: string; unit_id?: string; object
     await sleep(600);
     return { character: 'dev', setting: 'At a coworking desk on a Thursday afternoon.', opener: "Hey, quick favour: can you cover my Friday 4pm client call? I'd totally owe you.", twist: 'He says it’s only thirty minutes and asks if you’re really that busy.', goal: a.objective, hint: 'Lead with your answer, give at most one reason, then pause.' };
   }
-  return postJSON<Lesson>('/lesson', a);
+  return postJSON<Lesson>('/lesson', { ...a, tone: tone() });
 }
 
 // ------------------------------------------------------------------ receipts
@@ -216,6 +220,7 @@ export async function makeReceipt(a: { text?: string; audioUri?: string; context
   const form = new FormData();
   if (a.text) form.append('text', a.text);
   if (a.context) form.append('context', a.context);
+  form.append('tone', tone());
   if (a.audioUri) form.append('audio', fileField(a.audioUri, 'story.m4a', 'audio/m4a'));
   return postForm<Receipt>('/ledger', form);
 }

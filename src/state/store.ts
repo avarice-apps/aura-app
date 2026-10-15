@@ -6,6 +6,7 @@ import type { Evaluation, Receipt, ScanResult } from '@/lib/types';
 export type Goal = 'dates' | 'work' | 'rooms' | 'ground';
 export type ThemePref = 'gallery' | 'nocturne' | 'system';
 export type Mode = 'voice' | 'camera';
+export type Tone = 'real' | 'unfiltered';
 
 export type SessionRecord = {
   id: string;
@@ -21,6 +22,7 @@ type State = {
   // prefs
   theme: ThemePref;
   sounds: boolean;
+  tone: Tone; // 'unfiltered' = funny, swearing, frank adult talk (never explicit)
   // gates
   ageConfirmed: boolean;
   biometricConsent: boolean;
@@ -46,6 +48,7 @@ type State = {
   missionsDone: string[];
   activeMission?: string;
   situationsSeen: string[];
+  questsDone: string[];
   patternsDismissed: string[]; // pattern keys the user removed from their history
   daily: { day: string; done: string[] }; // today's small things: situation, mission, debrief, scan
   // plan
@@ -68,6 +71,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const initial = {
   theme: 'gallery' as ThemePref,
   sounds: true,
+  tone: 'real' as Tone,
   ageConfirmed: false,
   biometricConsent: false,
   trainingConsent: false,
@@ -86,6 +90,7 @@ const initial = {
   composure: 3,
   missionsDone: [] as string[],
   situationsSeen: [] as string[],
+  questsDone: [] as string[],
   patternsDismissed: [] as string[],
   daily: { day: '', done: [] as string[] },
   plan: 'free' as const,

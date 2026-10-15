@@ -138,7 +138,7 @@ export default function ScanResultScreen() {
               </Row>
               <RNText style={{ fontFamily: font.mono, fontSize: 11, letterSpacing: 1, color: t.ink3 }}>{r.tier.toUpperCase()} · {TIER_LINE[r.tier] ?? ''}</RNText>
               <Body small color={t.ink2} style={{ marginTop: 8 }}>{r.roast}</Body>
-              <RNText style={{ fontFamily: font.mono, fontSize: 10, letterSpacing: 1, color: t.ink3, marginTop: 10 }}>AURA SCAN · “{r.prompt?.toUpperCase().slice(0, 40)}”</RNText>
+              <RNText style={{ fontFamily: font.mono, fontSize: 10, letterSpacing: 1, color: t.ink3, marginTop: 10 }}>KLEOS · AURA SCAN · “{r.prompt?.toUpperCase().slice(0, 40)}”</RNText>
             </View>
           </Animated.View>
         </ViewShot>

@@ -11,7 +11,7 @@ import { useStore } from '@/state/store';
 const PAPER = '#F6F4EF';
 const INK = '#141416';
 
-/** Aura Receipt: the share card. Paper and mono, deliberately unlike the rest of the app so it pops in a feed. */
+/** Kleos receipt: the share card. Paper and mono, deliberately unlike the rest of the app so it pops in a feed. */
 export default function ReceiptScreen() {
   const t = useTheme();
   const { i, kind } = useLocalSearchParams<{ i?: string; kind?: string }>();
@@ -39,7 +39,7 @@ export default function ReceiptScreen() {
             {r ? (
               <>
                 <View style={{ alignItems: 'center', gap: 2 }}>
-                  <RNText style={{ fontFamily: font.monoMedium, fontSize: 20, letterSpacing: 6, color: INK }}>AURA</RNText>
+                  <RNText style={{ fontFamily: font.monoMedium, fontSize: 20, letterSpacing: 6, color: INK }}>KLEOS</RNText>
                   <RNText style={{ fontFamily: font.mono, fontSize: 10, letterSpacing: 1.4, color: '#5E5B56' }}>RECEIPT NO. {r.receipt_no}</RNText>
                   <RNText style={{ fontFamily: font.mono, fontSize: 10, color: '#5E5B56' }}>{r.title.toUpperCase()}</RNText>
                 </View>
@@ -58,11 +58,11 @@ export default function ReceiptScreen() {
                 <Dash />
                 <RNText style={{ fontFamily: font.mono, fontSize: 11, lineHeight: 16, color: '#3F3C38' }}>NOTE FROM POISE{'\n'}{r.headline} Next time: {r.next_time}</RNText>
                 <Barcode />
-                <RNText style={{ fontFamily: font.mono, fontSize: 10, letterSpacing: 1.2, color: '#5E5B56', textAlign: 'center' }}>GET YOUR RECEIPT · AURA</RNText>
+                <RNText style={{ fontFamily: font.mono, fontSize: 10, letterSpacing: 1.2, color: '#5E5B56', textAlign: 'center' }}>GET YOUR RECEIPT · KLEOS</RNText>
               </>
             ) : ob.first && ob.second ? (
               <>
-                <RNText style={{ fontFamily: font.monoMedium, fontSize: 20, letterSpacing: 6, color: INK, textAlign: 'center' }}>AURA</RNText>
+                <RNText style={{ fontFamily: font.monoMedium, fontSize: 20, letterSpacing: 6, color: INK, textAlign: 'center' }}>KLEOS</RNText>
                 <RNText style={{ fontFamily: font.mono, fontSize: 10, letterSpacing: 1.4, color: '#5E5B56', textAlign: 'center' }}>ONE CHANGE · TWO TAKES</RNText>
                 <Dash />
                 <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'baseline', gap: 10 }}>
@@ -74,7 +74,7 @@ export default function ReceiptScreen() {
                 <Dash />
                 <RNText style={{ fontFamily: font.mono, fontSize: 11, color: INK }}>HEDGES {ob.first.counts.hedges} → {ob.second.counts.hedges}   FILLERS {ob.first.counts.fillers} → {ob.second.counts.fillers}</RNText>
                 <Barcode />
-                <RNText style={{ fontFamily: font.mono, fontSize: 10, letterSpacing: 1.2, color: '#5E5B56', textAlign: 'center' }}>TRY THIS SITUATION · AURA</RNText>
+                <RNText style={{ fontFamily: font.mono, fontSize: 10, letterSpacing: 1.2, color: '#5E5B56', textAlign: 'center' }}>TRY THIS SITUATION · KLEOS</RNText>
               </>
             ) : null}
           </Animated.View>

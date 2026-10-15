@@ -7,6 +7,8 @@ import { font, useTheme } from '@/theme';
 import { useStore, auraIndex } from '@/state/store';
 import { nextLesson, ALL_MISSIONS } from '@/lib/progress';
 import { play } from '@/lib/sound';
+import { questsFor, PARTNER, QUEST_CATEGORY } from '@/lib/quests';
+import { ToneSwitch } from '@/components/ToneSwitch';
 
 const TIER = (n: number) => (n >= 85 ? ['Gravity', 'People lean in without knowing why.'] : n >= 72 ? ['Magnetic', 'The room reorganises around you.'] : n >= 60 ? ['Composed', 'Steady. Nothing leaks.'] : n >= 45 ? ['Present', 'You hold attention. You don’t yet direct it.'] : ['Faint', 'The good parts are getting buried.']);
 
@@ -87,7 +89,34 @@ export default function Today() {
           </Pressable>
         </Animated.View>
 
-        {/* 3 · Daily */}
+        {/* 3 · Side quests */}
+        <Animated.View entering={FadeInDown.duration(450).delay(120)} style={{ marginTop: 28 }}>
+          <Row style={{ justifyContent: 'space-between', marginBottom: 10 }}>
+            <RNText style={{ fontFamily: font.medium, fontSize: 17, letterSpacing: -0.3, color: t.ink }}>Side quests</RNText>
+            <ToneSwitch />
+          </Row>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}>
+            {questsFor(s.tone, s.questsDone ?? []).slice(0, 8).map((q) => {
+              const done = (s.questsDone ?? []).includes(q.id);
+              return (
+                <Pressable
+                  key={q.id}
+                  onPress={() => { play('select'); router.push({ pathname: '/quest/[id]', params: { id: q.id } }); }}
+                  style={{ width: 200, height: 150, borderRadius: 20, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, padding: 16, justifyContent: 'space-between' }}
+                >
+                  <Row style={{ justifyContent: 'space-between' }}>
+                    <Label color={t.accent}>{QUEST_CATEGORY[q.category] ?? q.category}</Label>
+                    {done ? <Icon d={ICON.check} size={14} color={t.accent} stroke={2.4} /> : q.spicy ? <Label>18+</Label> : null}
+                  </Row>
+                  <RNText style={{ fontFamily: font.medium, fontSize: 17, lineHeight: 21, letterSpacing: -0.3, color: t.ink }} numberOfLines={3}>{q.title}</RNText>
+                  <Muted small>With {PARTNER[q.partner] ?? q.partner}</Muted>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </Animated.View>
+
+        {/* 4 · Daily */}
         <Animated.View entering={FadeInDown.duration(450).delay(160)} style={{ marginTop: 28 }}>
           <Section title="Today" note={`${doneCount} of 3 done`} />
           <View style={{ borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, paddingHorizontal: 16 }}>

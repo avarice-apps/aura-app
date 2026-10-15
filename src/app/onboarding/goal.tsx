@@ -5,7 +5,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Screen, Title, Muted, Button, Segments, Stack, Icon, ICON } from '@/ui';
 import { font, useTheme } from '@/theme';
-import { useStore, Goal } from '@/state/store';
+import { useStore, Goal, Tone } from '@/state/store';
 import { play } from '@/lib/sound';
 
 const GOALS: { key: Goal; label: string; sub: string }[] = [
@@ -20,6 +20,7 @@ export default function GoalScreen() {
   const t = useTheme();
   const set = useStore((s) => s.set);
   const [goal, setGoal] = useState<Goal | null>(null);
+  const [tone, setTone] = useState<Tone>('real');
   return (
     <Screen edges={['top', 'bottom']}>
       <View style={{ paddingHorizontal: 20, paddingTop: 12, flex: 1 }}>
@@ -54,13 +55,35 @@ export default function GoalScreen() {
             );
           })}
         </Stack>
+        <Animated.View entering={FadeInDown.duration(400).delay(360)} style={{ marginTop: 26, gap: 10 }}>
+          <RNText style={{ fontFamily: font.medium, fontSize: 16, color: t.ink }}>How should it talk to you?</RNText>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {([
+              { key: 'real', label: 'Straight', sub: 'Clear, honest, no swearing.' },
+              { key: 'unfiltered', label: 'Unfiltered', sub: 'Funny, blunt, swears. 18+.' },
+            ] as { key: Tone; label: string; sub: string }[]).map((o) => {
+              const on = tone === o.key;
+              return (
+                <Pressable
+                  key={o.key}
+                  onPress={() => { play('select'); Haptics.selectionAsync(); setTone(o.key); }}
+                  style={{ flex: 1, minHeight: 84, borderRadius: 16, padding: 14, backgroundColor: on ? t.accentSoft : t.card, borderWidth: on ? 1.5 : 1, borderColor: on ? t.accent : t.line, gap: 4 }}
+                >
+                  <RNText style={{ fontFamily: font.medium, fontSize: 15, color: on ? t.accent : t.ink }}>{o.label}</RNText>
+                  <RNText style={{ fontFamily: font.regular, fontSize: 12, lineHeight: 16, color: t.ink2 }}>{o.sub}</RNText>
+                </Pressable>
+              );
+            })}
+          </View>
+          <RNText style={{ fontFamily: font.regular, fontSize: 12, color: t.ink3 }}>Switch any time from Today.</RNText>
+        </Animated.View>
       </View>
       <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>
         <Button
           label="Continue"
           disabled={!goal}
           onPress={() => {
-            set({ goal: goal! });
+            set({ goal: goal!, tone });
             router.push('/onboarding/quick');
           }}
         />

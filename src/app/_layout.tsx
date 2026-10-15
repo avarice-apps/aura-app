@@ -37,6 +37,7 @@ export default function RootLayout() {
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="lesson/[id]" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
+        <Stack.Screen name="quest/[id]" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="situations" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="receipt" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="scan" options={{ animation: 'slide_from_bottom' }} />

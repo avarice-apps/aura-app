@@ -8,6 +8,7 @@ import { useStore, isPaid, auraIndex, ThemePref } from '@/state/store';
 import { patterns, UNITS, ROMAN } from '@/lib/progress';
 import { withdrawTraining } from '@/lib/api';
 import { setSoundsEnabled, play } from '@/lib/sound';
+import { ToneSwitch } from '@/components/ToneSwitch';
 
 export default function YouTab() {
   const t = useTheme();
@@ -39,7 +40,7 @@ export default function YouTab() {
     <Screen>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 30 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <View style={{ paddingTop: 8, gap: 4 }}>
-          <Label>{paid ? 'Aura' : 'Free plan'}{s.trialEndsAt && paid ? ' · trial' : ''}</Label>
+          <Label>{paid ? 'Kleos+' : 'Free plan'}{s.trialEndsAt && paid ? ' · trial' : ''}</Label>
           <TextInput value={s.name} onChangeText={(v) => s.set({ name: v })} placeholder="Your name" placeholderTextColor={t.ink3} style={{ fontFamily: font.medium, fontSize: 30, letterSpacing: -0.8, color: t.ink, padding: 0 }} />
         </View>
 
@@ -102,8 +103,9 @@ export default function YouTab() {
             ))}
           </Row>
           <Card style={{ paddingVertical: 4 }}>
-            <ListRow first title="Sounds" sub="Taps, reveals, the tick" right={<Switch value={s.sounds} onValueChange={(v) => { s.set({ sounds: v }); setSoundsEnabled(v); }} trackColor={{ true: t.accent }} />} />
-            <ListRow title={paid ? 'Plan · Aura' : 'Plan · Free'} sub={paid ? 'Every lesson, every room' : 'First two lessons per unit'} onPress={() => router.push('/paywall')} />
+            <ListRow first title="Conversation style" sub="Unfiltered is funny, blunt and swears" right={<ToneSwitch />} />
+            <ListRow title="Sounds" sub="Taps, reveals, the tick" right={<Switch value={s.sounds} onValueChange={(v) => { s.set({ sounds: v }); setSoundsEnabled(v); }} trackColor={{ true: t.accent }} />} />
+            <ListRow title={paid ? 'Plan · Kleos+' : 'Plan · Free'} sub={paid ? 'Every lesson, every room' : 'First two lessons per unit'} onPress={() => router.push('/paywall')} />
             <ListRow title="Replay onboarding" sub="Keeps your progress" onPress={() => { s.set({ onboarded: false, ob: {} }); router.replace('/onboarding'); }} />
           </Card>
         </View>
@@ -123,7 +125,7 @@ export default function YouTab() {
         </View>
 
         <View style={{ marginTop: 28 }}>
-          <Muted small align="center">Aura rates a take, not a person. Several styles are valid. Poise measures what can be measured and says what it is interpreting.</Muted>
+          <Muted small align="center">Kleos rates a take, not a person. Several styles are valid. Poise measures what can be measured and says what it is interpreting.</Muted>
         </View>
       </ScrollView>
     </Screen>

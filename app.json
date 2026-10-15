@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Aura",
+    "name": "Kleos",
     "slug": "aura",
     "scheme": "aura",
     "version": "0.1.0",
@@ -18,8 +18,8 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.avarice.aura",
       "infoPlist": {
-        "NSCameraUsageDescription": "Aura records a short clip of you answering a prompt so Poise can read your presence. Clips are measured, never shared, and deleted after 30 days.",
-        "NSMicrophoneUsageDescription": "Aura records your voice during a Read to measure pace, fillers and energy.",
+        "NSCameraUsageDescription": "Kleos records a short clip of you answering a prompt so Poise can read how you come across. Clips are measured, never shared, and deleted after they are read.",
+        "NSMicrophoneUsageDescription": "Kleos listens during conversations so the other person can reply and Poise can measure pace, fillers and tone.",
         "ITSAppUsesNonExemptEncryption": false
       }
     },
@@ -42,8 +42,8 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Aura records a short clip so Poise can read your presence.",
-          "microphonePermission": "Aura measures your voice during a Read."
+          "cameraPermission": "Kleos records a short clip so Poise can read how you come across.",
+          "microphonePermission": "Kleos listens during conversations to measure your voice."
         }
       ],
       "expo-sharing",
