@@ -123,22 +123,22 @@ export default function ScanResultScreen() {
       </Row>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20, gap: 12 }} showsVerticalScrollIndicator={false}>
         <ViewShot ref={shot} options={{ format: 'png', quality: 1 }}>
-          <Animated.View entering={FadeInDown.duration(500)} style={{ borderRadius: 24, backgroundColor: t.accent, overflow: 'hidden' }}>
+          <Animated.View entering={FadeInDown.duration(500)} style={{ borderRadius: 24, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, overflow: 'hidden' }}>
             <View style={{ height: 200, alignItems: 'center', justifyContent: 'flex-end' }}>
-              <View style={{ position: 'absolute', top: -30 }}><Halo size={260} opacity={0.35} /></View>
+              <View style={{ position: 'absolute', top: -30 }}><Halo size={260} opacity={0.5} /></View>
               <Statue name={STATUE_FOR[r.tier] ?? 'head'} height={190} />
             </View>
             <View style={{ padding: 18, gap: 4 }}>
               <Row style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <Stack gap={2}>
-                  <Label color={t.onInverse2}>{r.name}</Label>
-                  <Title size={30} color={t.onInverse}>{r.archetype}</Title>
+                  <Label color={t.accent}>{r.name}</Label>
+                  <Title size={30}>{r.archetype}</Title>
                 </Stack>
-                <Num value={r.score} size={64} color={t.onInverse} />
+                <Num value={r.score} size={64} color={t.accent} />
               </Row>
-              <RNText style={{ fontFamily: font.mono, fontSize: 11, letterSpacing: 1, color: t.onInverse2 }}>{r.tier.toUpperCase()} · {TIER_LINE[r.tier] ?? ''}</RNText>
-              <Body small color={t.onInverse} style={{ marginTop: 8 }}>{r.roast}</Body>
-              <RNText style={{ fontFamily: font.mono, fontSize: 10, letterSpacing: 1, color: t.onInverse2, marginTop: 10 }}>AURA SCAN · “{r.prompt?.toUpperCase().slice(0, 40)}”</RNText>
+              <RNText style={{ fontFamily: font.mono, fontSize: 11, letterSpacing: 1, color: t.ink3 }}>{r.tier.toUpperCase()} · {TIER_LINE[r.tier] ?? ''}</RNText>
+              <Body small color={t.ink2} style={{ marginTop: 8 }}>{r.roast}</Body>
+              <RNText style={{ fontFamily: font.mono, fontSize: 10, letterSpacing: 1, color: t.ink3, marginTop: 10 }}>AURA SCAN · “{r.prompt?.toUpperCase().slice(0, 40)}”</RNText>
             </View>
           </Animated.View>
         </ViewShot>

@@ -110,11 +110,11 @@ export function SituationCard({ s, onAnswered, timed = true }: { s: Situation; o
         })}
       </Stack>
       {picked !== null && (
-        <Animated.View entering={FadeInDown.duration(350)} style={{ backgroundColor: t.inverse, borderRadius: 16, padding: 14, gap: 6 }}>
-          <Label color={t.onInverse2}>{picked < 0 ? 'Too slow' : picked === s.best ? `Aura gained +${chosen!.delta}` : `Aura lost ${Math.abs(chosen!.delta)} · best was +${s.options[s.best].delta}`}</Label>
-          <Body small color={t.onInverse}>{picked < 0 ? s.options[s.best].why : chosen!.why}</Body>
-          {picked !== s.best && picked >= 0 ? <Body small color={t.onInverse2}>Best: {s.options[s.best].text}</Body> : null}
-          <Body small color={t.onInverse} style={{ fontFamily: font.serifItalic, fontSize: 16, marginTop: 4 }}>{s.code}</Body>
+        <Animated.View entering={FadeInDown.duration(350)} style={{ backgroundColor: t.card, borderWidth: 1, borderColor: t.line, borderLeftWidth: 3, borderLeftColor: t.accent, borderRadius: 16, padding: 14, gap: 6 }}>
+          <Label color={t.accent}>{picked < 0 ? 'Too slow' : picked === s.best ? `Aura gained +${chosen!.delta}` : `Aura lost ${Math.abs(chosen!.delta)} · best was +${s.options[s.best].delta}`}</Label>
+          <Body small>{picked < 0 ? s.options[s.best].why : chosen!.why}</Body>
+          {picked !== s.best && picked >= 0 ? <Body small color={t.ink2}>Best: {s.options[s.best].text}</Body> : null}
+          <Body small color={t.accent} style={{ fontFamily: font.serifItalic, fontSize: 16, marginTop: 4 }}>{s.code}</Body>
         </Animated.View>
       )}
       {picked !== null && (

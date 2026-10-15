@@ -75,14 +75,14 @@ export default function Today() {
           <Section title="Up next" note="Path" onNote={() => router.push('/(tabs)/path')} />
           <Pressable
             onPress={() => { play('select'); router.push({ pathname: '/lesson/[id]', params: { id: next.lesson.id } }); }}
-            style={{ borderRadius: 22, backgroundColor: t.accent, padding: 20, gap: 6 }}
+            style={{ borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, padding: 20, gap: 6 }}
           >
-            <Label color={t.onInverse2}>{next.unit.title} · {next.lesson.checkpoint ? 'Checkpoint' : `Lesson ${next.index + 1}`}</Label>
-            <Title size={24} color={t.onAccent}>{next.lesson.title}</Title>
-            <Body small color={t.onInverse2} numberOfLines={2}>{next.lesson.objective}</Body>
-            <View style={{ marginTop: 10, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: t.onAccent, borderRadius: 999, paddingHorizontal: 16, height: 40 }}>
-              <Icon d={ICON.play} size={11} fill={t.accent} />
-              <RNText style={{ fontFamily: font.medium, fontSize: 14, color: t.accent }}>Start · 3 min</RNText>
+            <Label color={t.accent}>{next.unit.title} · {next.lesson.checkpoint ? 'Checkpoint' : `Lesson ${next.index + 1}`}</Label>
+            <Title size={24}>{next.lesson.title}</Title>
+            <Body small color={t.ink2} numberOfLines={2}>{next.lesson.objective}</Body>
+            <View style={{ marginTop: 10, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: t.accent, borderRadius: 999, paddingHorizontal: 16, height: 40 }}>
+              <Icon d={ICON.play} size={11} fill={t.onAccent} />
+              <RNText style={{ fontFamily: font.medium, fontSize: 14, color: t.onAccent }}>Start · 3 min</RNText>
             </View>
           </Pressable>
         </Animated.View>

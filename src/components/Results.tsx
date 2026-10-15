@@ -83,21 +83,21 @@ const STATUE_FOR: Record<string, 'athlete' | 'bust' | 'bustDark' | 'antinoos' | 
 export function ResultHero({ e, label = 'This answer read as' }: { e: Evaluation; label?: string }) {
   const t = useTheme();
   return (
-    <View style={{ height: 210, borderRadius: 24, backgroundColor: t.inverse, overflow: 'hidden' }}>
-      <View style={{ position: 'absolute', right: -40, top: -30 }}>
-        <Halo size={270} opacity={0.35} />
+    <View style={{ height: 210, borderRadius: 24, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, overflow: 'hidden' }}>
+      <View style={{ position: 'absolute', right: -50, top: -40 }}>
+        <Halo size={280} opacity={0.45} />
       </View>
       <View style={{ position: 'absolute', right: 6, bottom: -12 }}>
         <Statue name={STATUE_FOR[e.archetype] ?? 'head'} height={176} />
       </View>
       <View style={{ position: 'absolute', left: 18, top: 16, width: 180, gap: 3 }}>
-        <Label color={t.onInverse2}>{label}</Label>
-        <Title size={26} color={t.onInverse}>{e.archetype}</Title>
-        <Body small color={t.onInverse2}>{e.archetype_line}</Body>
+        <Label color={t.accent}>{label}</Label>
+        <Title size={26}>{e.archetype}</Title>
+        <Body small color={t.ink2}>{e.archetype_line}</Body>
       </View>
       <View style={{ position: 'absolute', left: 18, bottom: 12, flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-        <Num value={e.rating} size={54} color={t.onInverse} />
-        <Label color={t.onInverse2}>Aura · this read</Label>
+        <Num value={e.rating} size={54} color={t.accent} />
+        <Label>Aura · this read</Label>
       </View>
     </View>
   );
@@ -132,11 +132,11 @@ export function SignalCard({ e }: { e: Evaluation }) {
   const t = useTheme();
   if (!e.signal) return null;
   return (
-    <Card inverse style={{ gap: 8 }}>
-      <Label color={t.onInverse2}>The moment · turn {e.signal.turn}</Label>
-      <Serif size={22} italic color={t.onInverse}>“{e.signal.quote}”</Serif>
-      <Body small color={t.onInverse}>{e.signal.text}</Body>
-      <RNText style={{ fontFamily: font.mono, fontSize: 11, color: t.onInverse2, marginTop: 2 }}>MEASURED · {e.signal.measured.toUpperCase()}</RNText>
+    <Card style={{ gap: 8, borderLeftWidth: 3, borderLeftColor: t.accent }}>
+      <Label color={t.accent}>The moment · turn {e.signal.turn}</Label>
+      <Serif size={22} italic>“{e.signal.quote}”</Serif>
+      <Body small color={t.ink2}>{e.signal.text}</Body>
+      <RNText style={{ fontFamily: font.mono, fontSize: 11, color: t.ink3, marginTop: 2 }}>MEASURED · {e.signal.measured.toUpperCase()}</RNText>
     </Card>
   );
 }

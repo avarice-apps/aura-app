@@ -112,15 +112,15 @@ export default function PoiseTab() {
           {pane === 'missions' && (
             <Animated.View entering={FadeInDown.duration(300)} style={{ gap: 24 }}>
               {mission ? (
-                <View style={{ borderRadius: 22, backgroundColor: t.accent, padding: 20, gap: 8 }}>
-                  <Label color={t.onInverse2}>Active · {mission.skill}</Label>
-                  <Title size={22} color={t.onAccent}>{mission.title}</Title>
-                  <Body small color={t.onInverse2}>{mission.task}</Body>
+                <View style={{ borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, padding: 20, gap: 8 }}>
+                  <Label color={t.accent}>Active · {mission.skill}</Label>
+                  <Title size={22}>{mission.title}</Title>
+                  <Body small color={t.ink2}>{mission.task}</Body>
                   <Pressable
                     onPress={() => { setContext(`Field mission: ${mission.task}`); setPane('ask'); play('select'); }}
-                    style={{ marginTop: 8, alignSelf: 'flex-start', backgroundColor: t.onAccent, borderRadius: 999, paddingHorizontal: 16, height: 40, justifyContent: 'center' }}
+                    style={{ marginTop: 8, alignSelf: 'flex-start', backgroundColor: t.accent, borderRadius: 999, paddingHorizontal: 16, height: 40, justifyContent: 'center' }}
                   >
-                    <RNText style={{ fontFamily: font.medium, fontSize: 14, color: t.accent }}>I did it · debrief me</RNText>
+                    <RNText style={{ fontFamily: font.medium, fontSize: 14, color: t.onAccent }}>I did it · debrief me</RNText>
                   </Pressable>
                 </View>
               ) : (
