@@ -93,6 +93,59 @@ Group conversations (2–3 voices), blind friend comparison of two takes, a reme
 - *"Thirty-five features."* Most are good ideas as *content* inside the live-conversation engine (Recovery Lab, Plot Twist, Pause Challenge and Hold Your Point are all Rooms with a twist), not separate products.
   - That keeps the app from becoming clunky.
 
+## Viral surfaces (v1.1): back camera, uploads, share formats
+
+Canvas row "Viral surfaces" has the mockups.
+
+### Aura Scan: back camera, game interface
+- Point the phone at a friend. They get a prompt ("Convince the table to go out tonight", 15 s) and answer.
+- The live display shows:
+  - the Mark's rays reacting to their voice;
+  - pace, fillers, stillness and posture readouts;
+  - floating "+40 AURA" chips as moments land.
+- The result is a trading-card reveal: score, tier, archetype, stat bars and the best moment.
+- **Party Mode:** pass the phone around, everyone answers the same prompt, and there's a leaderboard for the night. Awards go beyond the winner ("best recovery", "funniest") so that losing is fun.
+- **Why it spreads:** the person filmed is someone else, so the video is entertainment and not self-exposure. The scan display is the ad.
+
+### Upload a clip
+Users can upload a toast, a presentation, a Hinge voice prompt, a TikTok they posted, or a voice note before sending it.
+- The same analysis runs.
+- Up to 3 minutes. Video, or audio only.
+
+### Share formats
+- **Aura Receipt.** Any Ask Poise story becomes a receipt with aura points per moment and a total. It speaks the meme language ("-200 aura") at share-card scale. The in-app Ledger stays at precise scale.
+- **Scan card and before/after clip.** A vertical video with the Mark overlay and captions.
+- **"Can you beat the greats?"** Deliver famous public-domain lines (e.g. JFK, 1962) and compare against Poise's breakdown of the original. This is editorial: the famous clip is never run through the biometric pipeline.
+
+### Guardrails (these keep the app in the App Store and out of court)
+1. **Only consenting adults are scored.**
+   - Before any back-camera scan, the subject taps "I'm in, I'm 18+" on the screen (or says it in Party Mode, and it's logged).
+   - No consent, no score.
+2. **Prompt-response format only.**
+   - Scans need a person answering a prompt.
+   - There is no "rate this stranger" mode and no scoring of crowds or of people in the background.
+   - This also makes secretly filming someone pointless.
+3. **Never appearance.**
+   - Delivery, composure, posture and words only.
+   - No looks or attractiveness ratings, ever. This matters for Apple review and for harassment risk.
+4. **Uploads of other people:**
+   - The uploader confirms they're the person in the clip or have the subject's permission.
+   - Non-account-holders get **delivery-only mode**: audio plus body pose, and no face mesh.
+   - The clip is deleted right after scoring.
+5. **Data handling.**
+   - No face templates.
+   - Clips aren't kept unless the user saves their own.
+   - Nothing from a scanned friend is used for training unless that friend opts in from their own account.
+
+### More ideas (backlog, ranked by virality × retention)
+1. **Draft check.** "How does this text / voice note come across?" before sending it to a date or a boss. Daily utility; Poise rewrites it in three tones.
+2. **Walk-in.** A friend films you entering a room. Posture and pace give an "Entrance" read. Good for ads ("aura-rating how I walk into a party").
+3. **Pickup line / opener lab.** Opener plus delivery scored live, respectful only, with a "how she might hear it" reaction.
+4. **Aura Wrapped.** A monthly recap reel: best moment, most improved, archetype shift.
+5. **Statue series (content, not a feature).** Aura-scanning Greek statues as a running TikTok bit ("2,500 years, zero fillers").
+6. **Hinge/Tinder prompt audit.** Text and voice prompts only; photos are excluded.
+7. **Group chat mode.** A friend group shares a weekly prompt, and the results unlock when everyone submits.
+
 ## Review round 2 (ChatGPT): accepted changes
 
 - **Evaluation hears the audio, not just the transcript.** It already does: pitch, pauses, energy and inflection come from librosa, and fillers come from Deepgram timestamps. Delivery claims must cite these measured facts.
