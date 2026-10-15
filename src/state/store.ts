@@ -54,9 +54,11 @@ type State = {
   profileReads: import('@/lib/types').ProfileRead[];
   patternsDismissed: string[]; // pattern keys the user removed from their history
   daily: { day: string; done: string[] }; // today's small things: situation, mission, debrief, scan
-  // plan
-  plan: 'free' | 'plus';
+  // plan (set from RevenueCat entitlements; trial counts as plus)
+  plan: 'free' | 'plus' | 'black';
   trialEndsAt?: string;
+  usage: { week: string; calls: number; clips: number; poise: number; profiles: number };
+  duels: { id: string; code: string; topic: string; role: 'a' | 'b'; createdAt: string; result?: any }[];
   // actions
   set: (p: Partial<State>) => void;
   addSession: (r: SessionRecord) => void;
@@ -99,7 +101,9 @@ const initial = {
   profileReads: [] as import('@/lib/types').ProfileRead[],
   patternsDismissed: [] as string[],
   daily: { day: '', done: [] as string[] },
-  plan: 'free' as const,
+  plan: 'free' as 'free' | 'plus' | 'black',
+  usage: { week: '', calls: 0, clips: 0, poise: 0, profiles: 0 },
+  duels: [] as { id: string; code: string; topic: string; role: 'a' | 'b'; createdAt: string; result?: any }[],
 };
 
 export const useStore = create<State>()(

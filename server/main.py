@@ -18,7 +18,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, Response, HTMLResponse, FileResponse, StreamingResponse
 from fastapi import Request
 
-from pipeline import audio, face, rubric, poise, tts, converse, live, vision
+from pipeline import audio, face, rubric, poise, tts, converse, live, vision, duel, legal
 from training import store as train_store, learned
 
 app = FastAPI(title="Aura", version="0.1")
@@ -508,6 +508,67 @@ def _as_jpeg(raw: bytes) -> bytes | None:
     except Exception as e:
         print("image decode failed:", repr(e)[:120])
         return None
+
+
+@app.get("/privacy", response_class=HTMLResponse)
+async def privacy_page():
+    return legal.privacy()
+
+
+@app.get("/terms", response_class=HTMLResponse)
+async def terms_page():
+    return legal.terms()
+
+
+@app.post("/portrait")
+async def make_portrait(request: Request):
+    """Kleos Black: a deep read across every conversation (the app sends compact summaries; nothing is stored)."""
+    b = await request.json()
+    hist = b.get("history") or []
+    if len(hist) < 3:
+        raise HTTPException(422, "Have at least three conversations first, so there's something real to read.")
+    return await converse.portrait(hist, b.get("tone", "real"))
+
+
+@app.post("/duel")
+async def duel_create(video: UploadFile = File(...), topic_id: str = Form(...), name: str = Form(""), tone: str = Form("real")):
+    """Debate Duel, first take. Returns a code to send to the opponent."""
+    path = await _save(video, ".mp4")
+    try:
+        v, p = await measure(path)
+    finally:
+        os.remove(path)
+    if (v.get("word_count") or 0) < 8:
+        raise HTTPException(422, "Couldn't hear enough of your argument. Try again, closer to the mic.")
+    try:
+        return duel.create(topic_id, name, tone, v, p)
+    except KeyError as e:
+        raise HTTPException(404, str(e))
+
+
+@app.get("/duel/{code}")
+async def duel_get(code: str):
+    try:
+        return duel.get(code)
+    except KeyError as e:
+        raise HTTPException(404, str(e).strip("'\""))
+
+
+@app.post("/duel/{code}/answer")
+async def duel_answer(code: str, video: UploadFile = File(...), name: str = Form("")):
+    """Debate Duel, second take. Poise judges both."""
+    try:
+        duel.get(code)
+    except KeyError as e:
+        raise HTTPException(404, str(e).strip("'\""))
+    path = await _save(video, ".mp4")
+    try:
+        v, p = await measure(path)
+    finally:
+        os.remove(path)
+    if (v.get("word_count") or 0) < 8:
+        raise HTTPException(422, "Couldn't hear enough of your argument. Try again, closer to the mic.")
+    return await duel.answer(code, name, v, p)
 
 
 @app.post("/moment")

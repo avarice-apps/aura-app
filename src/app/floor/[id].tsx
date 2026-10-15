@@ -12,6 +12,7 @@ import { FLOORS } from '@/lib/floors';
 import { PARTNER } from '@/lib/quests';
 import type { Evaluation } from '@/lib/types';
 import { play } from '@/lib/sound';
+import { gate } from '@/lib/plan';
 
 type Step = 'brief' | 'talk' | 'result';
 type Ev = Evaluation & { scriptAudio?: any };
@@ -108,10 +109,10 @@ export default function FloorScreen() {
       </ScrollView>
 
       <View style={{ paddingHorizontal: 20, paddingBottom: 10, gap: 8 }}>
-        {step === 'brief' && <Button label="Start the call" sound="select" onPress={() => setStep('talk')} />}
+        {step === 'brief' && <Button label="Start the call" sound="select" onPress={() => gate('calls') && setStep('talk')} />}
         {step === 'result' && (
           <>
-            <Button label="Go again" sound="select" onPress={() => { setEv(null); setKey((k) => k + 1); setStep('talk'); }} />
+            <Button label="Go again" sound="select" onPress={() => { if (!gate('calls')) return; setEv(null); setKey((k) => k + 1); setStep('talk'); }} />
             <Button label="Done" variant="secondary" onPress={() => { play('cleared'); router.back(); }} />
           </>
         )}

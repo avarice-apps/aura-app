@@ -11,6 +11,7 @@ import { useStore } from '@/state/store';
 import { generateLesson } from '@/lib/api';
 import type { Evaluation, Lesson } from '@/lib/types';
 import { play } from '@/lib/sound';
+import { gate } from '@/lib/plan';
 
 type Step = 'brief' | 'talk' | 'result';
 type Ev = Evaluation & { scriptAudio?: any };
@@ -96,7 +97,7 @@ export default function Replay() {
         ))}
       </ScrollView>
       <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>
-        {step === 'brief' && <Button label={lesson ? 'Start the replay' : 'Building the scene…'} disabled={!lesson} sound="select" onPress={() => setStep('talk')} />}
+        {step === 'brief' && <Button label={lesson ? 'Start the replay' : 'Building the scene…'} disabled={!lesson} sound="select" onPress={() => gate('calls') && setStep('talk')} />}
         {step === 'result' && <Button label="Done" onPress={() => { play('cleared'); router.back(); }} />}
       </View>
     </Screen>

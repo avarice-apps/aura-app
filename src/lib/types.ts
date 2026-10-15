@@ -115,3 +115,27 @@ export type ProfileRead = {
   song?: { title: string; artist: string; why: string };
   createdAt?: string;
 };
+
+/** Debate Duel: two takes on one topic, judged by Poise. */
+export type Duel = {
+  id: string;
+  code: string;
+  topic_id: string;
+  topic: string;
+  side_a: string;
+  side_b: string;
+  name_a: string;
+  name_b?: string | null;
+  status: 'waiting' | 'done';
+  result?: {
+    winner: 'a' | 'b' | 'draw';
+    margin: 'clear' | 'close';
+    scores: { a: { argument: number; composure: number; total: number }; b: { argument: number; composure: number; total: number } };
+    verdict: string;
+    best_line?: { who: 'a' | 'b'; quote: string };
+    fumble?: { who: 'a' | 'b'; quote: string; why: string } | null;
+    note_a: string;
+    note_b: string;
+    caption: string;
+  } | null;
+};

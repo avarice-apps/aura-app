@@ -1,5 +1,5 @@
 import { API_URL, OFFLINE } from './config';
-import type { Evaluation, Lesson, Moment, ProfileRead, Receipt, ScanResult, SessionStart, TurnResult } from './types';
+import type { Duel, Evaluation, Lesson, Moment, ProfileRead, Receipt, ScanResult, SessionStart, TurnResult } from './types';
 import { useStore, type Goal } from '@/state/store';
 import { QUESTS } from './quests';
 
@@ -370,4 +370,39 @@ export async function readProfile(a: { uris: string[]; handle?: string }): Promi
   if (a.handle) form.append('handle', a.handle);
   form.append('tone', tone());
   return postForm<ProfileRead>('/profile', form, 180000);
+}
+
+// ------------------------------------------------------------------ debate duel
+
+export async function duelCreate(a: { videoUri: string; topicId: string; name?: string }): Promise<Duel> {
+  if (OFFLINE) throw new Error('Duels need the Kleos server. Start it with npm run dev.');
+  const form = new FormData();
+  form.append('video', fileField(a.videoUri, 'take.mov', 'video/quicktime'));
+  form.append('topic_id', a.topicId);
+  if (a.name) form.append('name', a.name);
+  form.append('tone', tone());
+  return postForm<Duel>('/duel', form, 180000);
+}
+
+export async function duelGet(code: string): Promise<Duel> {
+  if (OFFLINE) throw new Error('Duels need the Kleos server.');
+  const r = await fetch(`${API_URL}/duel/${encodeURIComponent(code.trim().toUpperCase())}`);
+  if (!r.ok) throw new Error((await r.json().catch(() => ({})))?.detail ?? 'No duel with that code.');
+  return r.json();
+}
+
+export async function duelAnswer(a: { code: string; videoUri: string; name?: string }): Promise<Duel> {
+  const form = new FormData();
+  form.append('video', fileField(a.videoUri, 'take.mov', 'video/quicktime'));
+  if (a.name) form.append('name', a.name);
+  return postForm<Duel>(`/duel/${encodeURIComponent(a.code.trim().toUpperCase())}/answer`, form, 180000);
+}
+
+// ------------------------------------------------------------------ portrait (Black)
+
+export type Portrait = { headline: string; in_a_room: string; strengths: string[]; the_pattern: string; when_it_works: string; next_month: string[]; line: string };
+
+export async function makePortrait(history: unknown[]): Promise<Portrait> {
+  if (OFFLINE) throw new Error('The Portrait needs the Kleos server.');
+  return postJSON<Portrait>('/portrait', { history, tone: tone() });
 }

@@ -1,0 +1,102 @@
+import { Platform } from 'react-native';
+import { useStore } from '@/state/store';
+import { RC_IOS_KEY } from './config';
+import { track, setPlanProperty } from './analytics';
+import type { Tier } from './plan';
+
+/**
+ * RevenueCat. Entitlements: "plus" and "black". Products (App Store Connect, one subscription group "Kleos"):
+ *   kleos_plus_weekly   $6.99 / week, 3-day free trial
+ *   kleos_plus_annual   $49.99 / year
+ *   kleos_black_monthly $19.99 / month
+ *   kleos_black_annual  $129.99 / year
+ * All four go in the RevenueCat "default" offering.
+ */
+let Purchases: any = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  Purchases = require('react-native-purchases').default;
+} catch {}
+
+let ready = false;
+
+export type Product = { id: string; tier: Exclude<Tier, 'free'>; period: 'week' | 'month' | 'year'; price: string; perWeek?: string; trial?: string; pkg?: any };
+
+// Shown when the store can't be reached (no key yet, Expo Go, offline). Prices match the plan above.
+export const FALLBACK: Product[] = [
+  { id: 'kleos_plus_weekly', tier: 'plus', period: 'week', price: '$6.99', trial: '3 days free' },
+  { id: 'kleos_plus_annual', tier: 'plus', period: 'year', price: '$49.99', perWeek: '$0.96' },
+  { id: 'kleos_black_monthly', tier: 'black', period: 'month', price: '$19.99' },
+  { id: 'kleos_black_annual', tier: 'black', period: 'year', price: '$129.99', perWeek: '$2.50' },
+];
+
+export const purchasesLive = () => Boolean(Purchases && RC_IOS_KEY && Platform.OS === 'ios');
+
+function apply(info: any) {
+  const a = info?.entitlements?.active ?? {};
+  const plan: Tier = a.black ? 'black' : a.plus ? 'plus' : 'free';
+  useStore.getState().set({ plan });
+  setPlanProperty(plan);
+}
+
+export async function initPurchases(appUserId: string) {
+  if (!purchasesLive() || ready) return;
+  try {
+    Purchases.configure({ apiKey: RC_IOS_KEY, appUserID: appUserId });
+    ready = true;
+    Purchases.addCustomerInfoUpdateListener(apply);
+    apply(await Purchases.getCustomerInfo());
+  } catch (e) {
+    console.warn('RevenueCat init failed', e);
+  }
+}
+
+export async function loadProducts(): Promise<Product[]> {
+  if (!ready) return FALLBACK;
+  try {
+    const o = await Purchases.getOfferings();
+    const pkgs: any[] = o?.current?.availablePackages ?? [];
+    const out = FALLBACK.map((f) => {
+      const pkg = pkgs.find((p) => p.product?.identifier === f.id);
+      if (!pkg) return null;
+      const intro = pkg.product.introPrice;
+      return { ...f, price: pkg.product.priceString, trial: intro && intro.price === 0 ? `${intro.periodNumberOfUnits} ${String(intro.periodUnit).toLowerCase()}${intro.periodNumberOfUnits > 1 ? 's' : ''} free` : undefined, pkg } as Product;
+    }).filter(Boolean) as Product[];
+    return out.length ? out : FALLBACK;
+  } catch {
+    return FALLBACK;
+  }
+}
+
+/** Returns true when the purchase went through, false when the user cancelled. Throws on real errors. */
+export async function buy(p: Product): Promise<boolean> {
+  track('purchase_started', { product: p.id });
+  if (!ready || !p.pkg) {
+    if (__DEV__) {
+      // Development builds without RevenueCat: unlock locally so every screen can be tested.
+      useStore.getState().set({ plan: p.tier });
+      track('purchase_dev_unlock', { product: p.id });
+      return true;
+    }
+    throw new Error('The App Store isn’t reachable right now. Try again in a minute.');
+  }
+  try {
+    const r = await Purchases.purchasePackage(p.pkg);
+    apply(r.customerInfo);
+    track('purchase_completed', { product: p.id });
+    return true;
+  } catch (e: any) {
+    if (e?.userCancelled) {
+      track('purchase_cancelled', { product: p.id });
+      return false;
+    }
+    throw new Error(e?.message ?? 'The purchase didn’t go through.');
+  }
+}
+
+export async function restore(): Promise<Tier> {
+  if (!ready) return useStore.getState().plan;
+  const info = await Purchases.restorePurchases();
+  apply(info);
+  return useStore.getState().plan;
+}

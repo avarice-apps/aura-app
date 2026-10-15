@@ -3,12 +3,14 @@ import { View, ScrollView, TextInput, Share, Text as RNText } from 'react-native
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Screen, Title, Body, Muted, Label, Button, IconButton, Icon, ICON, Card, ArtCard, OnBlue, Row } from '@/ui';
+import { Screen, Body, Muted, Label, Button, IconButton, Icon, ICON, Card, ArtCard, OnBlue, Row } from '@/ui';
 import { font, useTheme } from '@/theme';
 import { useStore } from '@/state/store';
 import { rateMoment } from '@/lib/api';
 import type { Moment } from '@/lib/types';
 import { play } from '@/lib/sound';
+import { spend, refund } from '@/lib/plan';
+import { track } from '@/lib/analytics';
 
 /** Rate a Clip: any moment from your camera roll, replayed beat by beat for aura gained and lost. */
 export default function Clip() {
@@ -30,14 +32,20 @@ export default function Clip() {
   }
 
   async function rate() {
+    if (!spend('clips')) {
+      router.push({ pathname: '/paywall', params: { reason: 'clips' } });
+      return;
+    }
     setBusy(true);
     setErr('');
     try {
       const r = await rateMoment({ videoUri: uri, note: note.trim() || undefined });
       setM(r);
+      track('clip_rated', { total: r.total });
       s.set({ moments: [{ ...r, createdAt: new Date().toISOString() }, ...(s.moments ?? [])].slice(0, 30) });
       play('reveal');
     } catch (e: any) {
+      refund('clips');
       setErr(e?.message ?? 'Poise couldn’t read that clip.');
     } finally {
       setBusy(false);

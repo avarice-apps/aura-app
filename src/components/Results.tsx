@@ -3,6 +3,8 @@ import { View, Pressable, Text as RNText } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Body, Card, Icon, ICON, Label, Muted, Num, Row, Stack, Title, Bar, Tag, Serif, ArtCard } from '@/ui';
 import type { ArtName } from '@/theme';
+import { router } from 'expo-router';
+import { useTier } from '@/lib/plan';
 import { font, useTheme } from '@/theme';
 import type { Evaluation } from '@/lib/types';
 import { speak, stopSpeaking } from '@/lib/voice';
@@ -32,6 +34,34 @@ export function HearPoise({ src, seconds }: { src: AudioSrc; seconds?: number })
       </View>
       <Body strong>{on ? 'Poise is speaking' : 'Hear Poise say it'}</Body>
       {seconds ? <Label style={{ marginLeft: 'auto', marginRight: 10 }}>0:{String(seconds).padStart(2, '0')}</Label> : null}
+    </Pressable>
+  );
+}
+
+/** Free tier: show what's inside the full read, blurred, with one tap to unlock. */
+function LockedRead({ e }: { e: Evaluation }) {
+  const t = useTheme();
+  const rows = [
+    e.signal ? ['The moment', `Turn ${e.signal.turn}: where two signals lined up`] : null,
+    e.turning_point ? ['Turning point', `Turn ${e.turning_point.turn}: where it changed`] : null,
+    e.trace && e.trace.length > 1 ? ['What they were thinking', `${e.trace.length - 1} private reactions, turn by turn`] : null,
+    e.alternatives?.length ? ['Two ways in', 'Two lines you could have said instead'] : null,
+  ].filter(Boolean) as [string, string][];
+  return (
+    <Pressable onPress={() => router.push({ pathname: '/paywall', params: { reason: 'read' } })} style={{ borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, padding: 16, gap: 12 }}>
+      <Row style={{ justifyContent: 'space-between' }}>
+        <Label color={t.accent}>The full read</Label>
+        <Icon d={ICON.lock} size={14} color={t.accent} />
+      </Row>
+      {rows.map(([a, b]) => (
+        <View key={a} style={{ gap: 2 }}>
+          <Body small strong>{a}</Body>
+          <Muted small>{b}</Muted>
+        </View>
+      ))}
+      <View style={{ height: 44, borderRadius: 22, backgroundColor: t.accent, alignItems: 'center', justifyContent: 'center' }}>
+        <RNText style={{ fontFamily: font.medium, fontSize: 14, color: t.onAccent }}>Unlock with Kleos+</RNText>
+      </View>
     </Pressable>
   );
 }
@@ -261,9 +291,11 @@ export function Appear({ children, delay = 0 }: { children: React.ReactNode; del
 /** Everything beyond the headline read, folded. Results stay clean; depth is one tap away. */
 export function FullRead({ e, showAlternatives = true }: { e: Evaluation; showAlternatives?: boolean }) {
   const t = useTheme();
+  const tier = useTier();
   const [open, setOpen] = useState(false);
   const has = e.signal || (e.trace && e.trace.length > 1) || e.turning_point;
   if (!has) return null;
+  if (tier === 'free') return <LockedRead e={e} />;
   return (
     <View style={{ gap: 12 }}>
       <Pressable

@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Stack, SplashScreen } from 'expo-router';
+import { Stack, SplashScreen, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useFonts } from 'expo-font';
@@ -10,6 +10,8 @@ import { Antonio_200ExtraLight, Antonio_300Light } from '@expo-google-fonts/anto
 import { useTheme } from '@/theme';
 import { initSounds, setSoundsEnabled } from '@/lib/sound';
 import { useStore } from '@/state/store';
+import { initAnalytics, screen } from '@/lib/analytics';
+import { initPurchases } from '@/lib/purchases';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -18,9 +20,19 @@ export default function RootLayout() {
   const sounds = useStore((s) => s.sounds);
   const [loaded] = useFonts({ Antonio_200ExtraLight, Antonio_300Light, Geist_300Light, Geist_400Regular, Geist_500Medium, Geist_600SemiBold, GeistMono_400Regular, GeistMono_500Medium, InstrumentSerif_400Regular, InstrumentSerif_400Regular_Italic });
 
+  const subjectId = useStore((s) => s.subjectId);
+  const path = usePathname();
   useEffect(() => {
     initSounds();
   }, []);
+  useEffect(() => {
+    if (!subjectId) return;
+    initAnalytics(subjectId);
+    initPurchases(subjectId);
+  }, [subjectId]);
+  useEffect(() => {
+    screen(path);
+  }, [path]);
   useEffect(() => {
     setSoundsEnabled(sounds);
   }, [sounds]);
@@ -47,6 +59,12 @@ export default function RootLayout() {
         <Stack.Screen name="room/[cat]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="floor/index" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="daily" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
+        <Stack.Screen name="rehearse" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
+        <Stack.Screen name="path" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="portrait" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="codes" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="duel/index" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="duel/[code]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="clip" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="profile-read" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="floor/[id]" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />

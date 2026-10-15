@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { View, ScrollView, TextInput, Pressable, Text as RNText } from 'react-native';
+import { View, ScrollView, TextInput, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import * as ImagePicker from 'expo-image-picker';
 import { Screen, Title, Body, Muted, Label, Card, Row, Button, Icon, ICON, ListRow, Tag, Section, IconButton, ArtCard, OnBlue } from '@/ui';
 import { font, useTheme } from '@/theme';
 import { useStore } from '@/state/store';
@@ -30,15 +29,7 @@ export default function ScanTab() {
     router.push('/scan/consent');
   }
 
-  async function upload() {
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
-    const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'], videoMaxDuration: 30, quality: 0.8 });
-    if (res.canceled || !res.assets[0]) return;
-    scan.begin('upload', ['Clip']);
-    scan.set({ uploadUri: res.assets[0].uri });
-    router.push('/scan/consent');
-  }
+
 
   return (
     <Screen>
@@ -80,18 +71,9 @@ export default function ScanTab() {
         )}
 
         <Button label={mode === 'party' ? 'Start the round' : 'Scan me'} style={{ marginTop: 14 }} onPress={start} disabled={mode === 'party' && names.filter((n) => n.trim()).length < 2} />
-        <Button label="Upload a clip instead" variant="ghost" onPress={upload} icon={<Icon d={ICON.upload} size={16} color={t.accent} />} />
 
         <Muted small align="center" style={{ marginTop: 6 }}>Rates the take, not the person. Clips are deleted after they’re read.</Muted>
 
-        <Pressable onPress={() => { play('select'); router.push('/clip'); }} style={{ marginTop: 22, borderRadius: 22, backgroundColor: t.accent, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-          <View style={{ flex: 1, gap: 3 }}>
-            <Label color="rgba(255,255,255,0.75)">Rate a clip</Label>
-            <Body strong color="#FFF">Someone else’s moment. Aura gained or lost?</Body>
-            <Body small color="rgba(255,255,255,0.8)">A toast, a pitch, a fumble at the bar. Beat by beat.</Body>
-          </View>
-          <Icon d={ICON.upload} size={18} color="#FFF" />
-        </Pressable>
 
         {scans.length > 0 && (
           <View style={{ marginTop: 28 }}>

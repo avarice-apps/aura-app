@@ -713,7 +713,8 @@ Previous attempt: {prev_block}"""
 
 LESSON_SYSTEM = """You design one 3-minute practice conversation for Aura. Return only JSON:
 {"character": one of mara|theo|dev|julian|ines|kai, "setting": str (one sentence, concrete, everyday, varied), "opener": str (the character's first line, natural, under 20 words), "twist": str or null (a plausible mid-conversation change), "goal": str (the lesson goal restated for this scene, under 14 words), "hint": str (one delivery/structure tip, no script)}
-Rules: scenes are realistic for adults 18-30 in cities: work, friends, dates, family, service, travel. Never sexual, never cruel. Vary settings; avoid ones in 'avoid'. Choose the character whose style best tests the goal."""
+Rules: scenes are realistic for adults 18-30 in cities: work, friends, dates, family, service, travel. Never sexual, never cruel.
+If the unit is "Rehearse", the objective is the user's own description of a real situation coming up. Rebuild it as faithfully as you can: the same kind of person, setting and stakes, with an opener that person would really say, and a twist that is the thing he is most likely dreading. Vary settings; avoid ones in 'avoid'. Choose the character whose style best tests the goal."""
 
 
 async def generate_lesson(*, unit: str, objective: str, weak: list[str], avoid: list[str], pressure: int, unit_id: str = "", tone: str = "real") -> dict:
@@ -753,3 +754,25 @@ async def ledger(story: str, context: str = "", tone: str = "real") -> dict:
     out = await _json_call(M_EVAL, sys_, f"{context}\nStory: {story}".strip(), max_tokens=1200, check=check, allow_slang=tone == "unfiltered")
     out["receipt_no"] = f"{uuid.uuid4().int % 10000:04d}"
     return out
+
+
+# ---------------------------------------------------------------- portrait (Kleos Black)
+
+PORTRAIT_SYSTEM = """You are Poise. You've read every practice conversation this person has had in Kleos. Write their Portrait: an honest, specific read of who they are in a room, built only from the evidence given (scores, verdicts, the changes you kept giving, archetypes, recurring patterns). Never generic. Never flattering for its own sake. Quote patterns with counts where you can.
+Return only JSON:
+{"headline": str (<= 12 words, the truest sentence about how he comes across),
+ "in_a_room": str (2-3 sentences: what people experience talking to him),
+ "strengths": [str, str] (each <= 16 words, with evidence),
+ "the_pattern": str (the one habit that costs him most, with how often it showed up),
+ "when_it_works": str (the conditions where he's at his best),
+ "next_month": [str, str, str] (three specific practice targets, in order),
+ "line": str (one line Poise would say to him out loud, <= 20 words)}"""
+
+
+async def portrait(history: list[dict], tone: str = "real") -> dict:
+    voice = "Voice: UNFILTERED, brutal and funny, swear if earned." if tone == "unfiltered" else "Voice: blunt and exact, warm underneath."
+    def check(o):
+        if not o.get("headline") or len(o.get("next_month") or []) != 3:
+            return "need headline and three next_month items"
+        return None
+    return await _json_call(M_EVAL, PORTRAIT_SYSTEM, f"{voice}\nConversations, newest first:\n{json.dumps(history[:30])}", max_tokens=1600, check=check, allow_slang=tone == "unfiltered")

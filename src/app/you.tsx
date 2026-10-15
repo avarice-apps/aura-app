@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
-import { View, ScrollView, TextInput, Pressable, Switch, Alert, Text as RNText } from 'react-native';
+import { View, ScrollView, TextInput, Pressable, Switch, Alert, Linking } from 'react-native';
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Screen, Body, Muted, Label, Card, Row, Stack, ListRow, Pill, Num, Tag, Serif, Section, IconButton, Icon, ICON } from '@/ui';
 import { font, useTheme } from '@/theme';
-import { useStore, isPaid, auraIndex, ThemePref } from '@/state/store';
+import { useStore, auraIndex, ThemePref } from '@/state/store';
+import { useTier, remaining } from '@/lib/plan';
+import { restore } from '@/lib/purchases';
+import { LEGAL_URL } from '@/lib/config';
 import { patterns, UNITS, ROMAN } from '@/lib/progress';
 import { withdrawTraining } from '@/lib/api';
 import { setSoundsEnabled, play } from '@/lib/sound';
@@ -13,7 +16,7 @@ import { ToneSwitch } from '@/components/ToneSwitch';
 export default function YouTab() {
   const t = useTheme();
   const s = useStore();
-  const paid = isPaid(s);
+  const tier = useTier();
   const idx = auraIndex(s.sessions);
   const pats = patterns(s.sessions, s.patternsDismissed);
   const [open, setOpen] = useState<string | null>(null);
@@ -41,7 +44,7 @@ export default function YouTab() {
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 30 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <IconButton label="Back" onPress={() => router.back()}><Icon d={ICON.back} size={18} /></IconButton>
         <View style={{ paddingTop: 12, gap: 4 }}>
-          <Label>{paid ? 'Kleos+' : 'Free plan'}{s.trialEndsAt && paid ? ' · trial' : ''}</Label>
+          <Label>{tier === 'black' ? 'Kleos Black' : tier === 'plus' ? 'Kleos+' : 'Free plan'}</Label>
           <TextInput value={s.name} onChangeText={(v) => s.set({ name: v })} placeholder="Your name" placeholderTextColor={t.ink3} style={{ fontFamily: font.medium, fontSize: 30, letterSpacing: -0.8, color: t.ink, padding: 0 }} />
         </View>
 
@@ -105,8 +108,10 @@ export default function YouTab() {
           </Row>
           <Card style={{ paddingVertical: 4 }}>
             <ListRow first title="Conversation style" sub="Unfiltered is funny, blunt and swears" right={<ToneSwitch />} />
-            <ListRow title="Sounds" sub="Taps, reveals, the tick" right={<Switch value={s.sounds} onValueChange={(v) => { s.set({ sounds: v }); setSoundsEnabled(v); }} trackColor={{ true: t.accent }} />} />
-            <ListRow title={paid ? 'Plan · Kleos+' : 'Plan · Free'} sub={paid ? 'Every lesson, every room' : 'First two lessons per unit'} onPress={() => router.push('/paywall')} />
+            <ListRow title="Sounds" sub="The reveal after a read" right={<Switch value={s.sounds} onValueChange={(v) => { s.set({ sounds: v }); setSoundsEnabled(v); }} trackColor={{ true: t.accent }} />} />
+            <ListRow title={`Plan · ${tier === 'black' ? 'Kleos Black' : tier === 'plus' ? 'Kleos+' : 'Free'}`} sub={tier === 'free' ? `${remaining('calls')} free call${remaining('calls') === 1 ? '' : 's'} left this week` : 'Manage in Settings › Apple ID › Subscriptions'} onPress={() => router.push({ pathname: '/paywall', params: { reason: 'plan' } })} />
+            <ListRow title="Restore purchases" sub="Bought Kleos on another phone?" onPress={async () => { try { const p = await restore(); Alert.alert(p === 'free' ? 'Nothing to restore' : 'Restored', p === 'free' ? 'No active Kleos subscription on this Apple ID.' : `You’re on ${p === 'black' ? 'Kleos Black' : 'Kleos+'}.`); } catch (e: any) { Alert.alert('Restore failed', e?.message ?? 'Try again.'); } }} />
+            <ListRow title="Terms and privacy" sub="How Kleos works with your data" onPress={() => Linking.openURL(`${LEGAL_URL}/privacy`)} />
             <ListRow title="Replay onboarding" sub="Keeps your progress" onPress={() => { s.set({ onboarded: false, ob: {} }); router.replace('/onboarding'); }} />
           </Card>
         </View>
@@ -122,6 +127,7 @@ export default function YouTab() {
             />
             <ListRow title="What Poise keeps" sub="Transcripts and measurements. Never raw face data." onPress={() => Alert.alert('What is kept', 'Each session stores the transcript, measured numbers (pace, fillers, pitch range, gaze ratio) and Poise’s notes on this phone. Audio and video are deleted after they are read. Face landmarks are reduced to numbers per frame and discarded. If you opt into training, the clip is kept on the server under a random id until you withdraw.')} />
             <ListRow title="Delete everything" sub="Local progress, and any training clips" onPress={askDelete} />
+            <ListRow title="Install id" sub={s.subjectId} />
           </Card>
         </View>
 

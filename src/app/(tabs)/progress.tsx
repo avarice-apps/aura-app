@@ -3,7 +3,8 @@ import { View, ScrollView, Pressable, Text as RNText } from 'react-native';
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import Svg, { Polyline, Circle, Line } from 'react-native-svg';
-import { Screen, Title, Muted, Label, Num, Halo, Statue, Bar, Section, Chevron } from '@/ui';
+import { Screen, Title, Muted, Label, Num, Halo, Statue, Bar, Section, Chevron, Row, Icon, ICON } from '@/ui';
+import { useTier } from '@/lib/plan';
 import { font, useTheme } from '@/theme';
 import { useStore, auraIndex, SessionRecord } from '@/state/store';
 import { patterns, UNITS } from '@/lib/progress';
@@ -25,6 +26,7 @@ const avg = (xs: number[]) => (xs.length ? Math.round(xs.reduce((a, b) => a + b,
 export default function Progress() {
   const t = useTheme();
   const s = useStore();
+  const tier = useTier();
   const [range, setRange] = useState<Range>('8w');
   const [now0] = useState(() => Date.now());
   const scored = useMemo(() => s.sessions.filter((x) => best(x)?.axes && !best(x).insufficient), [s.sessions]);
@@ -113,7 +115,7 @@ export default function Progress() {
 
         {/* Tiles */}
         <Animated.View entering={FadeInDown.duration(450).delay(160)} style={{ marginTop: 14, flexDirection: 'row', gap: 10 }}>
-          <Pressable onPress={() => router.push('/(tabs)/train')} style={{ flex: 1, borderRadius: 20, backgroundColor: t.accent, padding: 16, gap: 4, minHeight: 124 }}>
+          <Pressable onPress={() => router.push('/(tabs)/live')} style={{ flex: 1, borderRadius: 20, backgroundColor: t.accent, padding: 16, gap: 4, minHeight: 124 }}>
             <Label color={t.onInverse2}>Laurels</Label>
             <RNText style={{ fontFamily: font.medium, fontSize: 26, letterSpacing: -0.6, color: t.onAccent }}>{laurels} earned</RNText>
             <RNText style={{ fontFamily: font.medium, fontSize: 13, lineHeight: 18, color: t.onAccent }}>{golds ? `${golds} gold. Proven on a different day.` : 'Gold needs a repeat on another day.'}</RNText>
@@ -125,10 +127,30 @@ export default function Progress() {
           </View>
         </Animated.View>
 
+        {/* Portrait (Black) */}
+        <Animated.View entering={FadeInDown.duration(450).delay(200)} style={{ marginTop: 14 }}>
+          <Pressable onPress={() => { play('select'); router.push('/portrait'); }} style={{ borderRadius: 20, backgroundColor: t.ink, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <View style={{ flex: 1, gap: 3 }}>
+              <RNText style={{ fontFamily: font.mono, fontSize: 10.5, letterSpacing: 1.4, color: 'rgba(255,255,255,0.6)' }}>KLEOS BLACK</RNText>
+              <RNText style={{ fontFamily: font.medium, fontSize: 17, color: '#FFF' }}>Your Portrait</RNText>
+              <RNText style={{ fontFamily: font.regular, fontSize: 13, color: 'rgba(255,255,255,0.75)' }}>A deep read of every conversation you’ve had.</RNText>
+            </View>
+            <Chevron color="#FFF" />
+          </Pressable>
+        </Animated.View>
+
         {/* Patterns */}
         <Animated.View entering={FadeInDown.duration(450).delay(240)} style={{ marginTop: 28 }}>
           <Section title="Still showing" note="With evidence" onNote={() => router.push('/you')} />
-          {live.length === 0 ? (
+          {live.length > 0 && tier === 'free' ? (
+            <Pressable onPress={() => router.push({ pathname: '/paywall', params: { reason: 'read' } })} style={{ borderRadius: 20, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, padding: 16, gap: 6 }}>
+              <Row style={{ justifyContent: 'space-between' }}>
+                <RNText style={{ fontFamily: font.medium, fontSize: 15, color: t.ink }}>{live.length} pattern{live.length === 1 ? '' : 's'} keep showing up</RNText>
+                <Icon d={ICON.lock} size={14} color={t.accent} />
+              </Row>
+              <Muted small>See what they are, with the quotes behind each one. Kleos+.</Muted>
+            </Pressable>
+          ) : live.length === 0 ? (
             <View style={{ borderRadius: 20, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
               <Statue name="bust" height={60} />
               <Muted small style={{ flex: 1 }}>Patterns show up after a few conversations, each with the quotes behind it.</Muted>

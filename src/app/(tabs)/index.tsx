@@ -92,7 +92,7 @@ export default function Today() {
 
         {/* 2 · Up next */}
         <Animated.View entering={FadeInDown.duration(450).delay(80)} style={{ marginTop: 28 }}>
-          <Section title="Up next" note="Train" onNote={() => router.push('/(tabs)/train')} />
+          <Section title="Up next" note="The Path" onNote={() => router.push('/path')} />
           <Pressable
             onPress={() => { play('select'); router.push({ pathname: '/lesson/[id]', params: { id: next.lesson.id } }); }}
             style={{ borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, padding: 20, gap: 6 }}

@@ -3,7 +3,6 @@ import { View, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Screen, Title, Muted, Label, Button, IconButton, Icon, ICON, Row, Pill, Tag } from '@/ui';
-import { useTheme } from '@/theme';
 import { useStore } from '@/state/store';
 import { SituationCard, pickSituation, ALL_SITUATIONS, CATEGORY_LABEL } from '@/components/SituationCard';
 import { play } from '@/lib/sound';
@@ -12,7 +11,6 @@ const CATS = Object.keys(CATEGORY_LABEL);
 
 /** Situations: ten-second judgment calls. Endless, categorised, with what everyone picked once there's enough data. */
 export default function Situations() {
-  const t = useTheme();
   const s = useStore();
   const [cat, setCat] = useState<string>('all');
   const [n, setN] = useState(0);

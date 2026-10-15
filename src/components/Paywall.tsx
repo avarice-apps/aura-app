@@ -1,106 +1,162 @@
-import React, { useState } from 'react';
-import { View, ScrollView, Pressable, Text as RNText } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import React, { useEffect, useState } from 'react';
+import { View, ScrollView, Pressable, Text as RNText, Linking, ActivityIndicator } from 'react-native';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { Body, Button, Card, Icon, ICON, Label, Muted, Row, Stack, Title, Tag } from '@/ui';
+import { Body, Button, Icon, ICON, Muted, Row, Stack, ArtCard, OnBlue } from '@/ui';
 import { font, useTheme } from '@/theme';
-import { useStore, Goal } from '@/state/store';
+import { TIERS, useTier } from '@/lib/plan';
+import { FALLBACK, Product, buy, loadProducts, restore } from '@/lib/purchases';
+import { LEGAL_URL } from '@/lib/config';
+import { track } from '@/lib/analytics';
 import { play } from '@/lib/sound';
-import PATH from '../../content/path.json';
 
-const UNIT_FOR: Record<Goal, string> = { work: 'intro', dates: 'dates', rooms: 'rooms', ground: 'pushback' };
-const HEADLINE: Record<Goal, string> = { work: 'Your interview week is ready.', dates: 'Your first-date week is ready.', rooms: 'Your rooms week is ready.', ground: 'Your hold-your-ground week is ready.' };
+/** Why the paywall opened; sets the headline so it answers the moment. */
+export type PaywallReason = 'calls' | 'clips' | 'poise' | 'profiles' | 'read' | 'black' | 'path' | 'onboarding' | 'plan';
 
-// Prices are hypotheses to test. RevenueCat replaces the local trial when products exist.
-const PLANS = [
-  { key: 'year', label: 'Yearly', price: '$59.99 a year', sub: 'About $1.15 a week', trial: true },
-  { key: 'month', label: 'Monthly', price: '$12.99 a month', sub: 'Cancel any time', trial: false },
-] as const;
+const HEAD: Record<PaywallReason, [string, string]> = {
+  calls: ['You’ve used this week’s free calls.', 'Kleos+ makes every scene, every day, unlimited.'],
+  clips: ['That was this week’s free clip.', 'Rate every fumble you see. Unlimited with Kleos+.'],
+  poise: ['Poise is out of free debriefs this week.', 'Tell her about every date, meeting and night out.'],
+  profiles: ['That was your free Profile Read.', 'Re-read your page after every change.'],
+  read: ['There’s more to this read.', 'The moment it turned, two ways in, and Poise’s voice note.'],
+  black: ['This one is Kleos Black.', 'Rehearse your real situation before it happens.'],
+  path: ['The rest of the Path is Kleos+.', 'Every lesson, every unit, every checkpoint.'],
+  onboarding: ['Your first week is ready.', 'Start with three days free. Cancel any time.'],
+  plan: ['Pick your level.', 'Free gets you a taste. The rest gets you better.'],
+};
 
-export function PaywallBody({ onDone, onSkip }: { onDone: () => void; onSkip: () => void }) {
+export function PaywallBody({ onDone, onSkip, reason = 'plan' }: { onDone: () => void; onSkip: () => void; reason?: PaywallReason }) {
   const t = useTheme();
-  const goal = useStore((s) => s.goal);
-  const set = useStore((s) => s.set);
-  const [plan, setPlan] = useState<'year' | 'month'>('year');
-  const unit = PATH.units.find((u) => u.id === UNIT_FOR[goal]) ?? PATH.units[0];
-  const days = unit.lessons.slice(0, 3);
+  const current = useTier();
+  const [tier, setTier] = useState<'plus' | 'black'>(reason === 'black' ? 'black' : 'plus');
+  const [products, setProducts] = useState<Product[]>(FALLBACK);
+  const [pick, setPick] = useState<string>(reason === 'black' ? 'kleos_black_annual' : 'kleos_plus_weekly');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
+  useEffect(() => {
+    track('paywall_view', { reason });
+    loadProducts().then(setProducts);
+  }, [reason]);
+
+  const options = products.filter((p) => p.tier === tier);
+  const chosen = options.find((p) => p.id === pick) ?? options[0];
+  const info = TIERS.find((x) => x.key === tier)!;
+  const [h1, h2] = HEAD[reason];
+
+  async function go() {
+    if (!chosen) return;
+    setBusy(true);
+    setErr('');
+    try {
+      const ok = await buy(chosen);
+      if (ok) {
+        play('cleared');
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        onDone();
+      }
+    } catch (e: any) {
+      setErr(e?.message ?? 'Something went wrong.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function doRestore() {
+    setBusy(true);
+    setErr('');
+    try {
+      const p = await restore();
+      if (p !== 'free') onDone();
+      else setErr('No active subscription found on this Apple ID.');
+    } catch (e: any) {
+      setErr(e?.message ?? 'Restore failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
-        <Label>Built from your two takes</Label>
-        <Title size={30} style={{ marginTop: 8 }}>{HEADLINE[goal]}</Title>
-        <Card style={{ marginTop: 26, paddingVertical: 4 }}>
-          {days.map((l, i) => (
-            <Row key={l.id} style={{ paddingVertical: 11, borderTopWidth: i ? 1 : 0, borderColor: t.cardAlt }}>
-              <Label style={{ width: 46 }}>Day {i + 1}</Label>
-              <Body small style={{ flex: 1 }}>{l.title}</Body>
-            </Row>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 6, paddingBottom: 16, gap: 14 }} showsVerticalScrollIndicator={false}>
+        <ArtCard art={tier === 'black' ? 'aurelius' : 'pitt'} height={220} focus="top">
+          <OnBlue kicker={tier === 'black' ? 'Kleos Black' : 'Kleos+'} sub={h2}>{h1}</OnBlue>
+        </ArtCard>
+
+        {/* tier switch */}
+        <View style={{ flexDirection: 'row', backgroundColor: t.card, borderRadius: 999, borderWidth: 1, borderColor: t.line, padding: 4 }}>
+          {(['plus', 'black'] as const).map((k) => (
+            <Pressable
+              key={k}
+              onPress={() => {
+                Haptics.selectionAsync();
+                setTier(k);
+                setPick(k === 'plus' ? 'kleos_plus_weekly' : 'kleos_black_annual');
+              }}
+              style={{ flex: 1, height: 38, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: tier === k ? (k === 'black' ? t.ink : t.accent) : 'transparent' }}
+            >
+              <RNText style={{ fontFamily: font.medium, fontSize: 14, color: tier === k ? '#FFF' : t.ink2 }}>{k === 'plus' ? 'Kleos+' : 'Kleos Black'}</RNText>
+            </Pressable>
           ))}
-          <Row style={{ paddingVertical: 11, borderTopWidth: 1, borderColor: t.cardAlt }}>
-            <Label style={{ width: 46 }}>+4</Label>
-            <Muted small style={{ flex: 1 }}>Checkpoint with a new character, then your first Sunday Letter.</Muted>
-          </Row>
-        </Card>
+        </View>
 
-        <Stack gap={8} style={{ marginTop: 14 }}>
-          {PLANS.map((p) => {
-            const on = plan === p.key;
-            return (
-              <Pressable
-                key={p.key}
-                onPress={() => {
-                  play('select');
-                  Haptics.selectionAsync();
-                  setPlan(p.key);
-                }}
-                style={{ padding: 16, borderRadius: 18, backgroundColor: t.card, borderWidth: on ? 1.5 : 1, borderColor: on ? t.ink : t.line, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
-              >
-                <Stack gap={3}>
-                  <Row gap={8}>
-                    <RNText style={{ fontFamily: font.medium, fontSize: 16, color: t.ink }}>{p.label}</RNText>
-                    {p.trial && <Tag label="3 days free" tone="accent" />}
-                  </Row>
-                  <Muted small>{p.price} · {p.sub}</Muted>
-                </Stack>
-                <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: on ? 0 : 1, borderColor: t.lineStrong, backgroundColor: on ? t.inverse : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                  {on && <Icon d={ICON.check} size={12} color={t.onInverse} stroke={3} />}
-                </View>
-              </Pressable>
-            );
-          })}
-        </Stack>
+        <Animated.View key={tier} entering={FadeIn.duration(250)} style={{ gap: 14 }}>
+          <Body strong>{info.line}</Body>
+          <Stack gap={9}>
+            {info.perks.map((x) => (
+              <Row key={x} gap={10} style={{ alignItems: 'flex-start' }}>
+                <View style={{ marginTop: 3 }}><Icon d={ICON.check} size={14} color={tier === 'black' ? t.ink : t.accent} stroke={2.4} /></View>
+                <Body small style={{ flex: 1 }}>{x}</Body>
+              </Row>
+            ))}
+          </Stack>
 
-        <Card style={{ marginTop: 14, gap: 6 }}>
-          <Row style={{ justifyContent: 'space-between' }}>
-            <Body strong>Kleos Black</Body>
-            <Tag label="Soon" />
-          </Row>
-          <Muted small>For the big moments: rehearsals built from your real interview or date, Heat checkpoints, your monthly Portrait, unlimited voice with Poise.</Muted>
-        </Card>
+          <Stack gap={8}>
+            {options.map((p) => {
+              const on = chosen?.id === p.id;
+              const label = p.period === 'week' ? 'Weekly' : p.period === 'month' ? 'Monthly' : 'Yearly';
+              const per = p.period === 'week' ? 'a week' : p.period === 'month' ? 'a month' : 'a year';
+              return (
+                <Pressable
+                  key={p.id}
+                  onPress={() => {
+                    Haptics.selectionAsync();
+                    setPick(p.id);
+                  }}
+                  style={{ padding: 16, borderRadius: 18, backgroundColor: on ? t.accentSoft : t.card, borderWidth: on ? 1.5 : 1, borderColor: on ? t.accent : t.line, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                >
+                  <Stack gap={3}>
+                    <Row gap={8}>
+                      <RNText style={{ fontFamily: font.medium, fontSize: 16, color: t.ink }}>{label}</RNText>
+                      {p.trial ? <View style={{ backgroundColor: t.accent, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}><RNText style={{ fontFamily: font.mono, fontSize: 10, color: '#FFF' }}>{p.trial.toUpperCase()}</RNText></View> : null}
+                      {p.perWeek ? <View style={{ backgroundColor: t.ink, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}><RNText style={{ fontFamily: font.mono, fontSize: 10, color: '#FFF' }}>{p.perWeek}/WEEK</RNText></View> : null}
+                    </Row>
+                    <Muted small>{p.price} {per}{p.trial ? ` after the free trial` : ''}</Muted>
+                  </Stack>
+                  <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: on ? 0 : 1, borderColor: t.lineStrong, backgroundColor: on ? t.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                    {on && <Icon d={ICON.check} size={12} color="#FFF" stroke={3} />}
+                  </View>
+                </Pressable>
+              );
+            })}
+          </Stack>
+        </Animated.View>
 
-        <Stack gap={6} style={{ marginTop: 14 }}>
-          {['Unlimited live conversations and the full Path', 'Laurels, Cadence and the Sunday Letter', 'Open Floor, Aura Farm and Receipts'].map((x) => (
-            <Row key={x} gap={10}>
-              <Icon d={ICON.check} size={14} color={t.accent} stroke={2.4} />
-              <Body small>{x}</Body>
-            </Row>
-          ))}
-        </Stack>
+        {current !== 'free' ? <Muted small align="center">You’re on {current === 'black' ? 'Kleos Black' : 'Kleos+'}.</Muted> : null}
+        {err ? <Body small color={t.accent}>{err}</Body> : null}
       </ScrollView>
+
       <View style={{ paddingHorizontal: 20, paddingBottom: 10, gap: 10 }}>
-        <Button
-          label={plan === 'year' ? 'Start 3 days free' : 'Subscribe'}
-          sound="select"
-          onPress={() => {
-            set({ trialEndsAt: new Date(Date.now() + 3 * 86400000).toISOString(), onboarded: true });
-            play('cleared');
-            onDone();
-          }}
-        />
-        <Pressable onPress={() => { set({ onboarded: true }); onSkip(); }} hitSlop={10}>
-          <Muted small align="center">{plan === 'year' ? 'We remind you the day before it renews. ' : ''}Not now, continue free</Muted>
-        </Pressable>
+        <Button label={busy ? '' : chosen?.trial ? `Start ${chosen.trial}` : `Continue · ${chosen?.price ?? ''}`} disabled={busy || !chosen} onPress={go} icon={busy ? <ActivityIndicator color="#FFF" /> : undefined} />
+        <Muted small align="center" style={{ fontSize: 11, lineHeight: 15 }}>
+          {chosen?.trial ? `Free for 3 days, then ${chosen.price} a week. ` : ''}Renews automatically until you cancel in Settings › Apple ID › Subscriptions, at least 24 hours before the period ends.
+        </Muted>
+        <Row style={{ justifyContent: 'center' }} gap={16}>
+          <Pressable onPress={doRestore} hitSlop={8}><Muted small>Restore</Muted></Pressable>
+          <Pressable onPress={() => Linking.openURL(`${LEGAL_URL}/terms`)} hitSlop={8}><Muted small>Terms</Muted></Pressable>
+          <Pressable onPress={() => Linking.openURL(`${LEGAL_URL}/privacy`)} hitSlop={8}><Muted small>Privacy</Muted></Pressable>
+          <Pressable onPress={onSkip} hitSlop={8}><Muted small>Not now</Muted></Pressable>
+        </Row>
       </View>
     </View>
   );

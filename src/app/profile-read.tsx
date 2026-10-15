@@ -10,6 +10,8 @@ import { useStore } from '@/state/store';
 import { readProfile } from '@/lib/api';
 import type { ProfileRead } from '@/lib/types';
 import { play } from '@/lib/sound';
+import { spend, refund } from '@/lib/plan';
+import { track } from '@/lib/analytics';
 
 /** Profile Read: screenshots of your Instagram, read the way a stranger would in five seconds. */
 export default function ProfileReadScreen() {
@@ -31,14 +33,20 @@ export default function ProfileReadScreen() {
   }
 
   async function go() {
+    if (!spend('profiles')) {
+      router.push({ pathname: '/paywall', params: { reason: 'profiles' } });
+      return;
+    }
     setBusy(true);
     setErr('');
     try {
       const out = await readProfile({ uris, handle: handle.trim() || undefined });
       setR(out);
+      track('profile_read', { score: out.score });
       s.set({ profileReads: [{ ...out, createdAt: new Date().toISOString() }, ...(s.profileReads ?? [])].slice(0, 20) });
       play('reveal');
     } catch (e: any) {
+      refund('profiles');
       setErr(e?.message ?? 'Poise couldn’t read those screenshots.');
     } finally {
       setBusy(false);

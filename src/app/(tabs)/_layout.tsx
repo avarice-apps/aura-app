@@ -9,9 +9,9 @@ import { play } from '@/lib/sound';
 
 const TABS = [
   { name: 'index', label: 'Today', icon: ICON.home },
-  { name: 'train', label: 'Train', icon: ICON.path },
+  { name: 'live', label: 'Live', icon: ICON.live },
+  { name: 'farm', label: 'Farm', icon: ICON.spark },
   { name: 'poise', label: 'Poise', icon: ICON.poise },
-  { name: 'library', label: 'Library', icon: ICON.library },
   { name: 'progress', label: 'Progress', icon: ICON.trend },
 ] as const;
 

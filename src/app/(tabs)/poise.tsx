@@ -13,6 +13,7 @@ import { prepareMic, speak } from '@/lib/voice';
 import { ALL_MISSIONS } from '@/lib/progress';
 import type { Receipt } from '@/lib/types';
 import { play } from '@/lib/sound';
+import { spend, refund } from '@/lib/plan';
 
 /** Ask Poise: a chat. Tell it what happened; it answers with where the aura went, then offers the next move. */
 export default function PoiseTab() {
@@ -36,6 +37,10 @@ export default function PoiseTab() {
 
   async function submit(audioUri?: string) {
     if (busy) return;
+    if (!spend('poise')) {
+      router.push({ pathname: '/paywall', params: { reason: 'poise' } });
+      return;
+    }
     setBusy(true);
     setErr('');
     play('select');
@@ -50,6 +55,7 @@ export default function PoiseTab() {
       play('reveal');
       if (r.audio) speak(r.audio);
     } catch (e: any) {
+      refund('poise');
       setErr(e?.message ?? 'Poise could not read that.');
     } finally {
       setBusy(false);

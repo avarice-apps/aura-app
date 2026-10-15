@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, Pressable, Text as RNText } from 'react-native';
+import { View, ScrollView, Pressable, Text as RNText, NativeModules, TurboModuleRegistry } from 'react-native';
 import Animated, { FadeInDown, FadeIn, useSharedValue, withTiming, withRepeat, Easing, cancelAnimation } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useAudioRecorder, useAudioRecorderState, RecordingPresets } from 'expo-audio';
@@ -10,7 +10,7 @@ import { startSession, sendTurn, evaluateSession, StartArgs } from '@/lib/api';
 import type { Evaluation, SessionStart } from '@/lib/types';
 import { speak, stopSpeaking, prepareMic } from '@/lib/voice';
 import { play } from '@/lib/sound';
-import { NativeModules, TurboModuleRegistry } from 'react-native';
+import { track } from '@/lib/analytics';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { OFFLINE } from '@/lib/config';
 
@@ -317,6 +317,12 @@ export function liveAvailable() {
  * otherwise the turn-based version (Expo Go, offline demo).
  */
 export function Conversation(props: { args: StartArgs; onDone: (r: ConversationDone) => void; onError?: (e: string) => void; label?: string }) {
+  const kind = props.args.daily_id ? 'daily' : props.args.floor_id ? 'floor' : props.args.room_id ? 'quest' : props.args.lesson ? 'lesson' : props.args.goal ? 'onboarding' : 'other';
+  const onDone = (r: ConversationDone) => {
+    track('call_finished', { kind, rating: r.evaluation?.rating ?? null, insufficient: !!r.evaluation?.insufficient, effort: (r.evaluation as any)?.effort ?? null });
+    props.onDone(r);
+  };
+  props = { ...props, onDone };
   if (liveAvailable()) {
     // Loaded lazily so Expo Go never touches the native WebRTC module.
     // eslint-disable-next-line @typescript-eslint/no-require-imports

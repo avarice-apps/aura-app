@@ -13,6 +13,7 @@ import { generateLesson } from '@/lib/api';
 import { API_URL, OFFLINE } from '@/lib/config';
 import type { Evaluation, Lesson } from '@/lib/types';
 import { play } from '@/lib/sound';
+import { gate } from '@/lib/plan';
 
 type Step = 'brief' | 'generating' | 'talk' | 'result' | 'retry' | 'compare' | 'lock' | 'done';
 type Ev = Evaluation & { scriptAudio?: any };
@@ -38,6 +39,7 @@ export default function LessonScreen() {
   const { unit, lesson: def } = found;
 
   async function begin() {
+    if (!gate('calls')) return;
     setStep('generating');
     setErr('');
     try {
@@ -184,7 +186,7 @@ export default function LessonScreen() {
         {step === 'result' && a?.insufficient && <Button label="Go again. That one didn't count" sound="select" onPress={() => { setA(null); setStep('talk'); }} />}
         {step === 'result' && !a?.insufficient && (
           <>
-            <Button label="Run it again with that change" sound="select" onPress={() => setStep('retry')} />
+            <Button label="Run it again with that change" sound="select" onPress={() => gate('calls') && setStep('retry')} />
             <Button label="Continue" variant="secondary" onPress={() => setStep('lock')} />
           </>
         )}

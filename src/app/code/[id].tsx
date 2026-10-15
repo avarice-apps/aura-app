@@ -30,7 +30,7 @@ export default function Code() {
         </View>
       </ScrollView>
       <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>
-        <Button label="Practise it live" sound="select" onPress={() => router.push('/(tabs)/train')} />
+        <Button label="Practise it live" sound="select" onPress={() => router.push('/(tabs)/live')} />
       </View>
     </Screen>
   );

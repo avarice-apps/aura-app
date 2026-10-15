@@ -190,6 +190,15 @@ async def openai_stream(session_id: str, user_text: str, model: str = "kleos-cha
 
 # ---------------------------------------------------------------- after the call
 
+async def delete_conversation(conversation_id: str) -> None:
+    """Privacy: once measured, the call recording is deleted from ElevenLabs."""
+    try:
+        async with httpx.AsyncClient(timeout=20) as c:
+            await c.delete(f"{API}/convai/conversations/{conversation_id}", headers={"xi-api-key": _key()})
+    except Exception as e:
+        print("delete conversation failed:", repr(e)[:120])
+
+
 async def fetch_conversation(conversation_id: str) -> tuple[dict, bytes | None]:
     async with httpx.AsyncClient(timeout=60) as c:
         meta = None
@@ -237,6 +246,7 @@ async def analyse_call(session_id: str, conversation_id: str) -> None:
         await _measure(s, user_turns, transcript, meta, rec, tmp)
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+        await delete_conversation(conversation_id)
     s["conversation_id"] = conversation_id
 
 

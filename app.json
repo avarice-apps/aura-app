@@ -1,27 +1,57 @@
 {
   "expo": {
     "name": "Kleos",
-    "slug": "aura",
-    "scheme": "aura",
-    "version": "0.1.0",
+    "slug": "kleos",
+    "scheme": "kleos",
+    "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "dark",
-    "backgroundColor": "#06071A",
+    "userInterfaceStyle": "automatic",
+    "backgroundColor": "#FFFFFF",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.avarice.aura",
+      "bundleIdentifier": "com.avarice.kleos",
       "infoPlist": {
-        "NSCameraUsageDescription": "Kleos records a short clip of you answering a prompt so Poise can read how you come across. Clips are measured, never shared, and deleted after they are read.",
-        "NSMicrophoneUsageDescription": "Kleos listens during conversations so the other person can reply and Poise can measure pace, fillers and tone.",
+        "NSCameraUsageDescription": "Kleos uses the camera while you record a take (Aura Farm, Debate Duels) so Poise can read your eye contact and posture. Videos are deleted after they are read.",
+        "NSMicrophoneUsageDescription": "Kleos uses the microphone for live conversations and recorded takes, so the other person can reply and Poise can measure your pace, fillers and tone.",
         "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": [
           "audio"
+        ],
+        "NSPhotoLibraryUsageDescription": "Kleos opens your photo library only when you choose a clip to rate or screenshots of your profile to read."
+      },
+      "buildNumber": "1",
+      "privacyManifests": {
+        "NSPrivacyAccessedAPITypes": [
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "CA92.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryFileTimestamp",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "C617.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategorySystemBootTime",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "35F9.1"
+            ]
+          },
+          {
+            "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryDiskSpace",
+            "NSPrivacyAccessedAPITypeReasons": [
+              "E174.1"
+            ]
+          }
         ]
       }
     },
     "android": {
-      "package": "com.avarice.aura",
+      "package": "com.avarice.kleos",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/splash-icon.png"
@@ -39,8 +69,9 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Kleos records a short clip so Poise can read how you come across.",
-          "microphonePermission": "Kleos listens during conversations to measure your voice."
+          "cameraPermission": "Kleos uses the camera while you record a take (Aura Farm, Debate Duels) so Poise can read your eye contact and posture. Videos are deleted after they are read.",
+          "microphonePermission": "Kleos uses the microphone for live conversations and recorded takes, so the other person can reply and Poise can measure your pace, fillers and tone.",
+          "recordAudioAndroid": true
         }
       ],
       "expo-sharing",
@@ -54,6 +85,15 @@
           "backgroundColor": "#FFFFFF",
           "image": "./assets/splash-icon.png",
           "imageWidth": 140
+        }
+      ],
+      "expo-localization",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Kleos opens your photo library only when you choose a clip to rate or screenshots of your profile to read.",
+          "cameraPermission": "Kleos uses the camera while you record a take (Aura Farm, Debate Duels) so Poise can read your eye contact and posture. Videos are deleted after they are read.",
+          "microphonePermission": "Kleos uses the microphone for live conversations and recorded takes, so the other person can reply and Poise can measure your pace, fillers and tone."
         }
       ]
     ],

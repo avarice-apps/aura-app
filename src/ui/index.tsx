@@ -301,6 +301,11 @@ export const ICON = {
   trend: 'M3 17l6-6 4 4 8-8M15 7h6v6',
   search: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4',
   send: 'M5 12h14M13 6l6 6-6 6',
+  live: 'M4 10v4M8 7v10M12 4v16M16 7v10M20 10v4',
+  spark: 'M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4z',
+  duel: 'M4 20l7-7M20 20l-7-7M4 4l6 6M20 4l-6 6M3 17l4 4M21 17l-4 4',
+  book: 'M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 19V5',
+  bolt: 'M13 3L5 13h6l-1 8 8-10h-6z',
 } as const;
 
 

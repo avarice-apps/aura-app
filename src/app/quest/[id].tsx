@@ -11,6 +11,7 @@ import { useStore } from '@/state/store';
 import { QUESTS, PARTNER, QUEST_CATEGORY } from '@/lib/quests';
 import type { Evaluation } from '@/lib/types';
 import { play } from '@/lib/sound';
+import { gate } from '@/lib/plan';
 
 type Step = 'brief' | 'talk' | 'result' | 'retry' | 'compare';
 type Ev = Evaluation & { scriptAudio?: any };
@@ -120,11 +121,11 @@ export default function QuestScreen() {
       </ScrollView>
 
       <View style={{ paddingHorizontal: 20, paddingBottom: 10, gap: 8 }}>
-        {step === 'brief' && <Button label="Start" sound="select" onPress={() => setStep('talk')} />}
+        {step === 'brief' && <Button label="Start" sound="select" onPress={() => gate('calls') && setStep('talk')} />}
         {step === 'result' && a?.insufficient && <Button label="Go again. That one didn't count" onPress={() => { setA(null); setStep('talk'); }} />}
         {step === 'result' && a && !a.insufficient && (
           <>
-            <Button label="Run it back with that change" sound="select" onPress={() => setStep('retry')} />
+            <Button label="Run it back with that change" sound="select" onPress={() => gate('calls') && setStep('retry')} />
             <Button label="Done" variant="secondary" onPress={() => { save(a); play('cleared'); router.back(); }} />
           </>
         )}
