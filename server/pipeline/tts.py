@@ -5,7 +5,7 @@ import os
 
 import httpx
 
-VOICE_ID = os.environ.get("POISE_VOICE_ID", "T1LJmO1i3U7y9K38NWAy")  # default: Gigi Noir; Rafael picks the final one
+VOICE_ID = os.environ.get("POISE_VOICE_ID", "6RhsStUwC1J5DEn4TbMO")  # Girl Aura, custom voice chosen by Rafael
 
 
 async def speak(text: str, voice_id: str | None = None) -> bytes:
