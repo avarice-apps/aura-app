@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, TextInput, Share, Text as RNText } from 'react-native';
+import { View, ScrollView, TextInput, Share, Linking, Text as RNText } from 'react-native';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
@@ -25,7 +25,11 @@ export default function ProfileReadScreen() {
 
   async function pick() {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
+    if (!perm.granted) {
+      setErr('Kleos needs photo access to pick that. Turn it on in Settings › Kleos › Photos.');
+      if (!perm.canAskAgain) Linking.openSettings();
+      return;
+    }
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsMultipleSelection: true, selectionLimit: 6, quality: 0.8, preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible });
     if (res.canceled) return;
     setUris(res.assets.map((a) => a.uri).slice(0, 6));

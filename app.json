@@ -18,7 +18,8 @@
         "UIBackgroundModes": [
           "audio"
         ],
-        "NSPhotoLibraryUsageDescription": "Kleos opens your photo library only when you choose a clip to rate or screenshots of your profile to read."
+        "NSPhotoLibraryUsageDescription": "Kleos opens your photo library only when you choose a clip to rate or screenshots of your profile to read.",
+        "NSPhotoLibraryAddUsageDescription": "Kleos saves your result cards to Photos only when you choose Save Image."
       },
       "buildNumber": "1",
       "privacyManifests": {

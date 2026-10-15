@@ -11,7 +11,7 @@ import { useStore } from '@/state/store';
 import { QUESTS, PARTNER, QUEST_CATEGORY } from '@/lib/quests';
 import type { Evaluation } from '@/lib/types';
 import { play } from '@/lib/sound';
-import { gate } from '@/lib/plan';
+import { gate, requireTier } from '@/lib/plan';
 
 type Step = 'brief' | 'talk' | 'result' | 'retry' | 'compare';
 type Ev = Evaluation & { scriptAudio?: any };
@@ -52,6 +52,7 @@ export default function QuestScreen() {
       <Screen edges={['top', 'bottom']}>
         {header}
         <Conversation
+          metered
           label={step === 'retry' ? 'Run it back' : q.title}
           args={step === 'retry' ? { attempt_of: sid, room_id: q.id, pressure } : { room_id: q.id, pressure, max_turns: 3 }}
           onDone={({ sessionId, evaluation }) => {
@@ -125,7 +126,7 @@ export default function QuestScreen() {
         {step === 'result' && a?.insufficient && <Button label="Go again. That one didn't count" onPress={() => { setA(null); setStep('talk'); }} />}
         {step === 'result' && a && !a.insufficient && (
           <>
-            <Button label="Run it back with that change" sound="select" onPress={() => gate('calls') && setStep('retry')} />
+            <Button label="Run it back with that change" sound="select" onPress={() => requireTier('plus', 'retry') && gate('calls') && setStep('retry')} />
             <Button label="Done" variant="secondary" onPress={() => { save(a); play('cleared'); router.back(); }} />
           </>
         )}

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Pressable, Text as RNText } from 'react-native';
+import { View, Pressable, Linking, Text as RNText } from 'react-native';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
 import Animated, { FadeIn, useSharedValue, withTiming, useAnimatedStyle } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -18,6 +18,7 @@ export function TakeRecorder({ seconds, kicker, title, sub, onDone, onClose }: {
   const [count, setCount] = useState(3);
   const [left, setLeft] = useState(seconds);
   const ring = useSharedValue(1);
+  const cancelled = useRef(false);
   const ringStyle = useAnimatedStyle(() => ({ width: `${ring.value * 100}%` }));
 
   useEffect(() => {
@@ -26,6 +27,7 @@ export function TakeRecorder({ seconds, kicker, title, sub, onDone, onClose }: {
   }, [camPerm, micPerm, askCam, askMic]);
 
   async function begin() {
+    cancelled.current = false;
     setPhase('countdown');
     for (let c = 3; c >= 1; c--) {
       setCount(c);
@@ -41,6 +43,7 @@ export function TakeRecorder({ seconds, kicker, title, sub, onDone, onClose }: {
     try {
       const v = await cam.current?.recordAsync({ maxDuration: seconds });
       clearInterval(tick);
+      if (cancelled.current) return;
       if (v?.uri) onDone(v.uri);
       else setPhase('ready');
     } catch {
@@ -54,7 +57,7 @@ export function TakeRecorder({ seconds, kicker, title, sub, onDone, onClose }: {
       <View style={{ flex: 1, backgroundColor: t.bg, padding: 24, justifyContent: 'center', gap: 12 }}>
         <Title size={28}>This needs the camera and the mic.</Title>
         <Body color={t.ink2}>Only while you record. The video is deleted as soon as it’s read.</Body>
-        <Button label="Allow" onPress={() => { askCam(); askMic(); }} />
+        <Button label="Allow" onPress={() => ((camPerm && !camPerm.canAskAgain) || (micPerm && !micPerm.canAskAgain) ? Linking.openSettings() : (askCam(), askMic()))} />
         <Button label="Not now" variant="ghost" onPress={onClose} />
       </View>
     );
@@ -64,7 +67,7 @@ export function TakeRecorder({ seconds, kicker, title, sub, onDone, onClose }: {
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       <CameraView ref={cam} style={{ flex: 1 }} facing="front" mode="video" videoQuality="720p" />
       <View style={{ position: 'absolute', top: 54, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between' }}>
-        <IconButton label="Close" onPress={() => { if (phase === 'recording') cam.current?.stopRecording(); onClose(); }}><Icon d={ICON.close} size={16} color="#fff" /></IconButton>
+        <IconButton label="Close" onPress={() => { cancelled.current = true; if (phase === 'recording') cam.current?.stopRecording(); onClose(); }}><Icon d={ICON.close} size={16} color="#fff" /></IconButton>
       </View>
       <View style={{ position: 'absolute', top: 110, left: 20, right: 20, backgroundColor: t.accent, borderRadius: 18, padding: 16, gap: 6 }}>
         <RNText style={{ fontFamily: font.mono, fontSize: 10.5, letterSpacing: 1.4, color: 'rgba(255,255,255,0.75)' }}>{kicker.toUpperCase()}</RNText>

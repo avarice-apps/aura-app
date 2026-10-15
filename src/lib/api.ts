@@ -278,6 +278,12 @@ export async function recordSituationAnswer(id: string, choice: number) {
 
 // ------------------------------------------------------------------ training consent
 
+/** "Delete everything": this install's duels and training clips on the server. */
+export async function deleteServerData(subjectId: string): Promise<void> {
+  if (OFFLINE) return;
+  await postJSON('/privacy/delete', { subject_id: subjectId });
+}
+
 export async function withdrawTraining(subjectId: string): Promise<number> {
   if (OFFLINE) return 0;
   try {
@@ -379,6 +385,7 @@ export async function duelCreate(a: { videoUri: string; topicId: string; name?: 
   const form = new FormData();
   form.append('video', fileField(a.videoUri, 'take.mov', 'video/quicktime'));
   form.append('topic_id', a.topicId);
+  form.append('subject_id', useStore.getState().subjectId);
   if (a.name) form.append('name', a.name);
   form.append('tone', tone());
   return postForm<Duel>('/duel', form, 180000);
@@ -395,6 +402,7 @@ export async function duelAnswer(a: { code: string; videoUri: string; name?: str
   const form = new FormData();
   form.append('video', fileField(a.videoUri, 'take.mov', 'video/quicktime'));
   if (a.name) form.append('name', a.name);
+  form.append('subject_id', useStore.getState().subjectId);
   return postForm<Duel>(`/duel/${encodeURIComponent(a.code.trim().toUpperCase())}/answer`, form, 180000);
 }
 

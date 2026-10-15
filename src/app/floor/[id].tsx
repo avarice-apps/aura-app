@@ -47,6 +47,7 @@ export default function FloorScreen() {
       <Screen edges={['top', 'bottom']}>
         {header}
         <Conversation
+          metered
           key={key}
           label={f.title}
           args={{ floor_id: f.id, pressure }}

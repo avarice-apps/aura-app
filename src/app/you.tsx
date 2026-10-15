@@ -9,7 +9,7 @@ import { useTier, remaining } from '@/lib/plan';
 import { restore } from '@/lib/purchases';
 import { LEGAL_URL } from '@/lib/config';
 import { patterns, UNITS, ROMAN } from '@/lib/progress';
-import { withdrawTraining } from '@/lib/api';
+import { withdrawTraining, deleteServerData } from '@/lib/api';
 import { setSoundsEnabled, play } from '@/lib/sound';
 import { ToneSwitch } from '@/components/ToneSwitch';
 
@@ -25,13 +25,13 @@ export default function YouTab() {
   const golds = UNITS.flatMap((u) => u.lessons).filter((l) => s.laurels[l.id] === 3);
 
   function askDelete() {
-    Alert.alert('Delete everything?', 'Your sessions, receipts, cards and progress on this phone. Any training clips you consented to are withdrawn from the server too.', [
+    Alert.alert('Delete everything?', 'Your sessions, receipts, cards and progress on this phone, plus your duels and any training clips on our server. Your subscription stays.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
-          if (s.trainingConsent) await withdrawTraining(s.subjectId);
+          await deleteServerData(s.subjectId).catch(() => {});
           s.reset();
           router.replace('/onboarding');
         },

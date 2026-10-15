@@ -88,6 +88,8 @@ def _agent_config(public_url: str, tts_model: str = TTS_MODELS[0]) -> dict:
         },
         "platform_settings": {
             "auth": {"enable_auth": True},
+            # Recordings are deleted by us right after the read; anything left behind expires in a day.
+            "privacy": {"record_voice": True, "retention_days": 1},
             "overrides": {
                 "custom_llm_extra_body": True,
                 "conversation_config_override": {
@@ -234,20 +236,22 @@ async def analyse_call(session_id: str, conversation_id: str) -> None:
     s = converse.SESSIONS.get(session_id)
     if not s:
         raise KeyError("session expired")
-    user_turns = [t for t in s["turns"] if t["role"] == "user" and t["text"].strip()]
-    if not user_turns:
-        return
-    meta, rec = await fetch_conversation(conversation_id)
-    transcript = meta.get("transcript") or []
-    if not rec:
-        return
-    tmp = tempfile.mkdtemp(prefix="kleos_live_")
     try:
-        await _measure(s, user_turns, transcript, meta, rec, tmp)
+        user_turns = [t for t in s["turns"] if t["role"] == "user" and t["text"].strip()]
+        if not user_turns:
+            return
+        meta, rec = await fetch_conversation(conversation_id)
+        transcript = meta.get("transcript") or []
+        if not rec:
+            return
+        tmp = tempfile.mkdtemp(prefix="kleos_live_")
+        try:
+            await _measure(s, user_turns, transcript, meta, rec, tmp)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+        s["conversation_id"] = conversation_id
     finally:
-        shutil.rmtree(tmp, ignore_errors=True)
         await delete_conversation(conversation_id)
-    s["conversation_id"] = conversation_id
 
 
 async def _measure(s: dict, user_turns: list[dict], transcript: list[dict], meta: dict, rec: bytes, tmp: str) -> None:

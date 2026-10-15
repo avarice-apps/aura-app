@@ -21,11 +21,11 @@ def privacy() -> str:
     return _page("Privacy Policy", f"""
 <p>Kleos is a practice app for how you come across in conversation. This policy explains what we collect, why, and what we never do. {html.escape(COMPANY)} operates Kleos. Contact: <a href="mailto:{CONTACT}">{CONTACT}</a>.</p>
 <h2>No account, no profile</h2>
-<p>Kleos works without an account. Your progress, scores, transcripts and history are stored on your phone. We give your install a random identifier so purchases and anonymous analytics work. We don’t ask for your name, email or phone number.</p>
+<p>Kleos works without an account. Your progress, scores, transcripts and history are stored on your phone. We give your install a random identifier so purchases and anonymous analytics work. We don’t ask for your email or phone number. If you put a name on a Debate Duel, it’s stored with that duel (see below).</p>
 <h2>What is processed, and for how long</h2>
 <ul>
 <li><b>Live conversations.</b> Your voice is streamed to our voice provider (ElevenLabs) to transcribe it and voice the characters. After the call we download the recording, measure your delivery (pace, fillers, pauses, pitch range), then delete the recording from our provider and our server. We keep the transcript and the measurements only for as long as your session is open on our server (at most a few hours), then they are discarded. The read you see is saved on your phone.</li>
-<li><b>Recorded takes</b> (Aura Farm, Debate Duels). Video is analysed for voice and, if visible, eye contact and posture, then deleted immediately. For Debate Duels we keep the transcript and the measurements of each take, and the verdict, so your opponent can answer later. Duels are deleted after 30 days.</li>
+<li><b>Recorded takes</b> (Aura Farm, Debate Duels). Video is analysed for voice and, if visible, eye contact and posture, then deleted immediately. For Debate Duels we keep the name you entered, the transcript and the measurements of each take, and the verdict, so your opponent can answer later. Duels are deleted after 30 days.</li>
 <li><b>Rate a Clip and Profile Read.</b> We extract a few still frames and the audio transcript (clips) or read the screenshots you choose, send them to our AI provider for the read, and delete them right after. We judge behaviour and presentation, never anyone’s looks, body or identity, and we never try to identify people.</li>
 <li><b>Poise chat.</b> What you type or say is sent to our AI provider to write the reply, and isn’t stored on our server.</li>
 <li><b>Help train Poise</b> (off by default). Only if you turn it on, clips you record are kept under a random id to improve our own model. Turn it off any time in You › Your data to delete them.</li>
@@ -37,7 +37,7 @@ def privacy() -> str:
 <h2>Other people</h2>
 <p>Only record or upload people who agree to it. Aura Farm asks each player to confirm they are 18+ and consent. If someone appears in a clip you rate, Kleos rates the moment, not the person.</p>
 <h2>Your choices</h2>
-<p>Delete everything on your phone in You › Your data › Delete everything. To delete duels or training clips held on our server, email us with your install id (shown in You) and we’ll delete them within 30 days.</p>
+<p>You › Your data › Delete everything erases your history on the phone and deletes your duels and any training clips from our server. You can also email us your install id (shown in You) and we’ll delete anything linked to it within 30 days.</p>
 <h2>Age</h2>
 <p>Kleos is for adults 18 and over. Unfiltered mode contains strong language and frank talk about dating.</p>
 <h2>Changes</h2>

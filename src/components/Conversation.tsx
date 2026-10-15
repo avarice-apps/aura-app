@@ -11,6 +11,7 @@ import type { Evaluation, SessionStart } from '@/lib/types';
 import { speak, stopSpeaking, prepareMic } from '@/lib/voice';
 import { play } from '@/lib/sound';
 import { track } from '@/lib/analytics';
+import { refund } from '@/lib/plan';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { OFFLINE } from '@/lib/config';
 
@@ -316,13 +317,20 @@ export function liveAvailable() {
  * The conversation everyone uses. Live full-duplex voice when the build supports it;
  * otherwise the turn-based version (Expo Go, offline demo).
  */
-export function Conversation(props: { args: StartArgs; onDone: (r: ConversationDone) => void; onError?: (e: string) => void; label?: string }) {
+export function Conversation(props: { args: StartArgs; onDone: (r: ConversationDone) => void; onError?: (e: string) => void; label?: string; metered?: boolean }) {
   const kind = props.args.daily_id ? 'daily' : props.args.floor_id ? 'floor' : props.args.room_id ? 'quest' : props.args.lesson ? 'lesson' : props.args.goal ? 'onboarding' : 'other';
   const onDone = (r: ConversationDone) => {
     track('call_finished', { kind, rating: r.evaluation?.rating ?? null, insufficient: !!r.evaluation?.insufficient, effort: (r.evaluation as any)?.effort ?? null });
     props.onDone(r);
   };
-  props = { ...props, onDone };
+  const userError = props.onError;
+  // A call that never got going (mic denied, server down) gives the free call back.
+  const onError = (e: string) => {
+    if (props.metered) refund('calls');
+    track('call_failed', { kind });
+    userError?.(e);
+  };
+  props = { ...props, onDone, onError };
   if (liveAvailable()) {
     // Loaded lazily so Expo Go never touches the native WebRTC module.
     // eslint-disable-next-line @typescript-eslint/no-require-imports

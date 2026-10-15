@@ -139,14 +139,15 @@ export const useStore = create<State>()(
         set({ composure: c - 1, composureDay: t });
         return true;
       },
-      reset: () => set({ ...initial, subjectId: `s_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}` }),
+      // Wipes history but keeps what isn't the user's content: their subscription, this week's usage and the install id.
+      reset: () => set({ ...initial, plan: get().plan, usage: get().usage, subjectId: get().subjectId }),
     }),
     { name: 'aura-v2', storage: createJSONStorage(() => AsyncStorage) }
   )
 );
 
-export function isPaid(s: Pick<State, 'plan' | 'trialEndsAt'>) {
-  return s.plan !== 'free' || (s.trialEndsAt ? new Date(s.trialEndsAt) > new Date() : false);
+export function isPaid(s: Pick<State, 'plan'>) {
+  return s.plan !== 'free';
 }
 
 export function composureLeft(s: Pick<State, 'composure' | 'composureDay'>) {

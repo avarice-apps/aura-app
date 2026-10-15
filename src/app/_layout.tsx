@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stack, SplashScreen, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -22,14 +22,17 @@ export default function RootLayout() {
 
   const subjectId = useStore((s) => s.subjectId);
   const path = usePathname();
+  // Wait for the saved state before identifying the install, or RevenueCat and PostHog see a new user every launch.
+  const [hydrated, setHydrated] = useState(() => useStore.persist.hasHydrated());
+  useEffect(() => useStore.persist.onFinishHydration(() => setHydrated(true)), []);
   useEffect(() => {
     initSounds();
   }, []);
   useEffect(() => {
-    if (!subjectId) return;
+    if (!hydrated || !subjectId) return;
     initAnalytics(subjectId);
     initPurchases(subjectId);
-  }, [subjectId]);
+  }, [hydrated, subjectId]);
   useEffect(() => {
     screen(path);
   }, [path]);

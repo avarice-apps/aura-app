@@ -56,11 +56,28 @@ export async function loadProducts(): Promise<Product[]> {
   try {
     const o = await Purchases.getOfferings();
     const pkgs: any[] = o?.current?.availablePackages ?? [];
+    // Only promise a free trial to people Apple will actually give one to.
+    let eligible: Record<string, any> = {};
+    try {
+      eligible = await Purchases.checkTrialOrIntroductoryPriceEligibility(pkgs.map((p) => p.product.identifier));
+    } catch {}
+    const ELIGIBLE = 2; // INTRO_ELIGIBILITY_STATUS.INTRO_ELIGIBILITY_STATUS_ELIGIBLE
     const out = FALLBACK.map((f) => {
       const pkg = pkgs.find((p) => p.product?.identifier === f.id);
       if (!pkg) return null;
-      const intro = pkg.product.introPrice;
-      return { ...f, price: pkg.product.priceString, trial: intro && intro.price === 0 ? `${intro.periodNumberOfUnits} ${String(intro.periodUnit).toLowerCase()}${intro.periodNumberOfUnits > 1 ? 's' : ''} free` : undefined, pkg } as Product;
+      const prod = pkg.product;
+      const intro = prod.introPrice;
+      const canTrial = intro && intro.price === 0 && eligible[f.id]?.status === ELIGIBLE;
+      const unit = String(intro?.periodUnit ?? '').toLowerCase();
+      const trial = canTrial ? `${intro.periodNumberOfUnits} ${unit}${intro.periodNumberOfUnits > 1 ? 's' : ''} free` : undefined;
+      let perWeek: string | undefined;
+      if (f.period !== 'week' && typeof prod.price === 'number' && prod.currencyCode) {
+        const weeks = f.period === 'year' ? 52 : 4.33;
+        try {
+          perWeek = new Intl.NumberFormat(undefined, { style: 'currency', currency: prod.currencyCode }).format(prod.price / weeks);
+        } catch {}
+      }
+      return { ...f, price: prod.priceString, trial, perWeek, pkg } as Product;
     }).filter(Boolean) as Product[];
     return out.length ? out : FALLBACK;
   } catch {

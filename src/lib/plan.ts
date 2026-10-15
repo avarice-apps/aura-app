@@ -39,9 +39,9 @@ const week = () => {
   return `${d.getFullYear()}-w${Math.ceil(((d.getTime() - jan1.getTime()) / 86400000 + jan1.getDay() + 1) / 7)}`;
 };
 
-export function tierOf(s: { plan: Tier; trialEndsAt?: string }): Tier {
-  if (s.plan !== 'free') return s.plan;
-  return s.trialEndsAt && new Date(s.trialEndsAt) > new Date() ? 'plus' : 'free';
+/** The plan comes only from RevenueCat entitlements (free trials are Apple's, inside the subscription). */
+export function tierOf(s: { plan: Tier }): Tier {
+  return s.plan ?? 'free';
 }
 
 export function useTier(): Tier {
@@ -84,7 +84,7 @@ export function gate(kind: Metered): boolean {
 }
 
 /** Tier gate for whole features (Black-only rehearsals, Plus-only full reads). */
-export function requireTier(need: Tier, reason: 'black' | 'read' | 'path'): boolean {
+export function requireTier(need: Tier, reason: 'black' | 'read' | 'path' | 'retry'): boolean {
   if (atLeast(tierOf(useStore.getState()), need)) return true;
   router.push({ pathname: '/paywall', params: { reason } });
   return false;

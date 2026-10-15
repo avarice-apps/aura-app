@@ -10,8 +10,11 @@ import { LEGAL_URL } from '@/lib/config';
 import { track } from '@/lib/analytics';
 import { play } from '@/lib/sound';
 
+const PER_SHORT = { week: '/week', month: '/month', year: '/year' } as const;
+const PER_LONG = { week: 'every week', month: 'every month', year: 'every year' } as const;
+
 /** Why the paywall opened; sets the headline so it answers the moment. */
-export type PaywallReason = 'calls' | 'clips' | 'poise' | 'profiles' | 'read' | 'black' | 'path' | 'onboarding' | 'plan';
+export type PaywallReason = 'calls' | 'clips' | 'poise' | 'profiles' | 'read' | 'black' | 'path' | 'retry' | 'onboarding' | 'plan';
 
 const HEAD: Record<PaywallReason, [string, string]> = {
   calls: ['You’ve used this week’s free calls.', 'Kleos+ makes every scene, every day, unlimited.'],
@@ -21,7 +24,8 @@ const HEAD: Record<PaywallReason, [string, string]> = {
   read: ['There’s more to this read.', 'The moment it turned, two ways in, and Poise’s voice note.'],
   black: ['This one is Kleos Black.', 'Rehearse your real situation before it happens.'],
   path: ['The rest of the Path is Kleos+.', 'Every lesson, every unit, every checkpoint.'],
-  onboarding: ['Your first week is ready.', 'Start with three days free. Cancel any time.'],
+  retry: ['Running it back is Kleos+.', 'Try the change straight away, as many times as it takes.'],
+  onboarding: ['Your first week is ready.', 'Unlimited calls, the full read and the whole Path.'],
   plan: ['Pick your level.', 'Free gets you a taste. The rest gets you better.'],
 };
 
@@ -42,7 +46,7 @@ export function PaywallBody({ onDone, onSkip, reason = 'plan' }: { onDone: () =>
   const options = products.filter((p) => p.tier === tier);
   const chosen = options.find((p) => p.id === pick) ?? options[0];
   const info = TIERS.find((x) => x.key === tier)!;
-  const [h1, h2] = HEAD[reason];
+  const [h1, h2] = HEAD[reason] ?? HEAD.plan;
 
   async function go() {
     if (!chosen) return;
@@ -131,7 +135,8 @@ export function PaywallBody({ onDone, onSkip, reason = 'plan' }: { onDone: () =>
                       {p.trial ? <View style={{ backgroundColor: t.accent, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}><RNText style={{ fontFamily: font.mono, fontSize: 10, color: '#FFF' }}>{p.trial.toUpperCase()}</RNText></View> : null}
                       {p.perWeek ? <View style={{ backgroundColor: t.ink, borderRadius: 999, paddingHorizontal: 8, paddingVertical: 2 }}><RNText style={{ fontFamily: font.mono, fontSize: 10, color: '#FFF' }}>{p.perWeek}/WEEK</RNText></View> : null}
                     </Row>
-                    <Muted small>{p.price} {per}{p.trial ? ` after the free trial` : ''}</Muted>
+                    <RNText style={{ fontFamily: font.medium, fontSize: 15, color: t.ink }}>{p.price} {per}</RNText>
+                    {p.trial ? <Muted small>{p.trial}, then {p.price} {per}</Muted> : null}
                   </Stack>
                   <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: on ? 0 : 1, borderColor: t.lineStrong, backgroundColor: on ? t.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                     {on && <Icon d={ICON.check} size={12} color="#FFF" stroke={3} />}
@@ -147,9 +152,9 @@ export function PaywallBody({ onDone, onSkip, reason = 'plan' }: { onDone: () =>
       </ScrollView>
 
       <View style={{ paddingHorizontal: 20, paddingBottom: 10, gap: 10 }}>
-        <Button label={busy ? '' : chosen?.trial ? `Start ${chosen.trial}` : `Continue · ${chosen?.price ?? ''}`} disabled={busy || !chosen} onPress={go} icon={busy ? <ActivityIndicator color="#FFF" /> : undefined} />
+        <Button label={busy ? '' : chosen?.trial ? `Try it free, then ${chosen.price}${PER_SHORT[chosen.period]}` : `Subscribe for ${chosen?.price ?? ''}${chosen ? PER_SHORT[chosen.period] : ''}`} disabled={busy || !chosen} onPress={go} icon={busy ? <ActivityIndicator color="#FFF" /> : undefined} />
         <Muted small align="center" style={{ fontSize: 11, lineHeight: 15 }}>
-          {chosen?.trial ? `Free for 3 days, then ${chosen.price} a week. ` : ''}Renews automatically until you cancel in Settings › Apple ID › Subscriptions, at least 24 hours before the period ends.
+          {chosen ? `${chosen.trial ? `${chosen.trial}, then ` : ''}${chosen.price} ${PER_LONG[chosen.period]}. ` : ''}Payment is charged to your Apple ID. Renews automatically unless cancelled at least 24 hours before the end of the period, in Settings › Apple ID › Subscriptions.
         </Muted>
         <Row style={{ justifyContent: 'center' }} gap={16}>
           <Pressable onPress={doRestore} hitSlop={8}><Muted small>Restore</Muted></Pressable>

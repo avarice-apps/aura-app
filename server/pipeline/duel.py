@@ -22,6 +22,10 @@ def _db() -> sqlite3.Connection:
     os.makedirs(DATA, exist_ok=True)
     c = sqlite3.connect(DB)
     c.execute("create table if not exists duels (id text primary key, code text unique, topic_id text, tone text, name_a text, name_b text, a text, b text, result text, created real)")
+    cols = [r[1] for r in c.execute("pragma table_info(duels)")]
+    for col in ("subject_a", "subject_b"):
+        if col not in cols:
+            c.execute(f"alter table duels add column {col} text")
     c.execute("delete from duels where created < ?", (time.time() - 30 * 86400,))  # privacy policy: 30 days
     return c
 
@@ -37,18 +41,26 @@ def _take(v: dict, p: dict) -> dict:
     return {"voice": {k: v.get(k) for k in keep_v}, "presence": {k: p.get(k) for k in keep_p}}
 
 
-def create(topic_id: str, name: str, tone: str, v: dict, p: dict) -> dict:
+def create(topic_id: str, name: str, tone: str, v: dict, p: dict, subject: str = "") -> dict:
     if topic_id not in TOPICS:
         raise KeyError("unknown topic")
     with _db() as c:
-        for _ in range(5):
+        for _ in range(8):
             did, code = uuid.uuid4().hex[:12], _code()
             try:
-                c.execute("insert into duels values (?,?,?,?,?,?,?,?,?,?)", (did, code, topic_id, tone, name or "Player 1", None, json.dumps(_take(v, p)), None, None, time.time()))
+                c.execute("insert into duels (id, code, topic_id, tone, name_a, name_b, a, b, result, created, subject_a) values (?,?,?,?,?,?,?,?,?,?,?)", (did, code, topic_id, tone, (name or "Player 1")[:40], None, json.dumps(_take(v, p)), None, None, time.time(), subject[:64]))
                 break
             except sqlite3.IntegrityError:
                 continue
+        else:
+            raise RuntimeError("Couldn't create a duel code. Try again.")
     return get(code)
+
+
+def delete_for(subject: str) -> int:
+    """Privacy: delete every duel this install created or answered."""
+    with _db() as c:
+        return c.execute("delete from duels where subject_a = ? or subject_b = ?", (subject, subject)).rowcount
 
 
 def get(code: str) -> dict:
@@ -74,7 +86,7 @@ Return only JSON:
 Scores 0-100, honest, total = round((argument + composure) / 2)."""
 
 
-async def answer(code: str, name: str, v: dict, p: dict) -> dict:
+async def answer(code: str, name: str, v: dict, p: dict, subject: str = "") -> dict:
     d = get(code)
     if d["status"] == "done":
         return d
@@ -104,5 +116,6 @@ B measured: {json.dumps({k: x for k, x in b['voice'].items() if k != 'transcript
 
     res = await _json_call(M_EVAL, JUDGE, user, max_tokens=1200, check=check, allow_slang=tone == "unfiltered")
     with _db() as c:
-        c.execute("update duels set name_b = ?, b = ?, result = ? where code = ?", (name or "Player 2", json.dumps(b), json.dumps(res), d["code"]))
+        # First answer wins; a second, simultaneous answer gets the stored verdict instead of overwriting it.
+        c.execute("update duels set name_b = ?, b = ?, result = ?, subject_b = ? where code = ? and result is null", ((name or "Player 2")[:40], json.dumps(b), json.dumps(res), subject[:64], d["code"]))
     return get(code)

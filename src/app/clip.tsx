@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, TextInput, Share, Text as RNText } from 'react-native';
+import { View, ScrollView, TextInput, Share, Linking, Text as RNText } from 'react-native';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -24,7 +24,11 @@ export default function Clip() {
 
   async function pick() {
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) return;
+    if (!perm.granted) {
+      setErr('Kleos needs photo access to pick that. Turn it on in Settings › Kleos › Photos.');
+      if (!perm.canAskAgain) Linking.openSettings();
+      return;
+    }
     const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['videos'], videoMaxDuration: 90, quality: 0.7 });
     if (res.canceled || !res.assets[0]) return;
     setUri(res.assets[0].uri);

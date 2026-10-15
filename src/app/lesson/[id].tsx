@@ -8,12 +8,12 @@ import { ResultHero, FeedbackCard, HearPoise, CompareCard, Appear, FullRead, Ins
 import { SituationCard, pickSituation } from '@/components/SituationCard';
 import { useTheme } from '@/theme';
 import { useStore } from '@/state/store';
-import { findLesson, UNIT_CATEGORY, laurelFor, weakSpots, ROMAN } from '@/lib/progress';
+import { findLesson, UNIT_CATEGORY, laurelFor, weakSpots, ROMAN, isFreeLesson } from '@/lib/progress';
 import { generateLesson } from '@/lib/api';
 import { API_URL, OFFLINE } from '@/lib/config';
 import type { Evaluation, Lesson } from '@/lib/types';
 import { play } from '@/lib/sound';
-import { gate } from '@/lib/plan';
+import { gate, refund, requireTier } from '@/lib/plan';
 
 type Step = 'brief' | 'generating' | 'talk' | 'result' | 'retry' | 'compare' | 'lock' | 'done';
 type Ev = Evaluation & { scriptAudio?: any };
@@ -39,6 +39,8 @@ export default function LessonScreen() {
   const { unit, lesson: def } = found;
 
   async function begin() {
+    // Locked lessons can also be reached from Today's "Up next"; the tier check lives here, not just in the list.
+    if (found && !isFreeLesson(found.index) && !requireTier('plus', 'path')) return;
     if (!gate('calls')) return;
     setStep('generating');
     setErr('');
@@ -48,6 +50,7 @@ export default function LessonScreen() {
       setLesson(l);
       setStep('talk');
     } catch (e: any) {
+      refund('calls');
       setErr(e?.message ?? 'Could not build the scene.');
       setStep('brief');
     }
@@ -83,6 +86,7 @@ export default function LessonScreen() {
       <Screen edges={['top', 'bottom']}>
         {header}
         <Conversation
+          metered
           label={def.title}
           args={{ lesson, pressure, max_turns: checkpoint ? 3 : 2 }}
           onDone={({ sessionId, evaluation }) => {
@@ -99,6 +103,7 @@ export default function LessonScreen() {
       <Screen edges={['top', 'bottom']}>
         {header}
         <Conversation
+          metered
           label="Take two"
           args={{ attempt_of: sid, lesson: lesson ?? undefined, pressure }}
           onDone={({ evaluation }) => {
@@ -186,7 +191,7 @@ export default function LessonScreen() {
         {step === 'result' && a?.insufficient && <Button label="Go again. That one didn't count" sound="select" onPress={() => { setA(null); setStep('talk'); }} />}
         {step === 'result' && !a?.insufficient && (
           <>
-            <Button label="Run it again with that change" sound="select" onPress={() => gate('calls') && setStep('retry')} />
+            <Button label="Run it again with that change" sound="select" onPress={() => requireTier('plus', 'retry') && gate('calls') && setStep('retry')} />
             <Button label="Continue" variant="secondary" onPress={() => setStep('lock')} />
           </>
         )}

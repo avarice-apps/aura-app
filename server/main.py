@@ -531,7 +531,7 @@ async def make_portrait(request: Request):
 
 
 @app.post("/duel")
-async def duel_create(video: UploadFile = File(...), topic_id: str = Form(...), name: str = Form(""), tone: str = Form("real")):
+async def duel_create(video: UploadFile = File(...), topic_id: str = Form(...), name: str = Form(""), tone: str = Form("real"), subject_id: str = Form("")):
     """Debate Duel, first take. Returns a code to send to the opponent."""
     path = await _save(video, ".mp4")
     try:
@@ -541,9 +541,11 @@ async def duel_create(video: UploadFile = File(...), topic_id: str = Form(...), 
     if (v.get("word_count") or 0) < 8:
         raise HTTPException(422, "Couldn't hear enough of your argument. Try again, closer to the mic.")
     try:
-        return duel.create(topic_id, name, tone, v, p)
+        return duel.create(topic_id, name, tone, v, p, subject_id)
     except KeyError as e:
-        raise HTTPException(404, str(e))
+        raise HTTPException(404, str(e).strip("'\""))
+    except RuntimeError as e:
+        raise HTTPException(503, str(e))
 
 
 @app.get("/duel/{code}")
@@ -555,7 +557,7 @@ async def duel_get(code: str):
 
 
 @app.post("/duel/{code}/answer")
-async def duel_answer(code: str, video: UploadFile = File(...), name: str = Form("")):
+async def duel_answer(code: str, video: UploadFile = File(...), name: str = Form(""), subject_id: str = Form("")):
     """Debate Duel, second take. Poise judges both."""
     try:
         duel.get(code)
@@ -568,7 +570,22 @@ async def duel_answer(code: str, video: UploadFile = File(...), name: str = Form
         os.remove(path)
     if (v.get("word_count") or 0) < 8:
         raise HTTPException(422, "Couldn't hear enough of your argument. Try again, closer to the mic.")
-    return await duel.answer(code, name, v, p)
+    return await duel.answer(code, name, v, p, subject_id)
+
+
+@app.post("/privacy/delete")
+async def privacy_delete(request: Request):
+    """'Delete everything' in the app: removes this install's duels and training clips from the server."""
+    b = await request.json()
+    sid = (b.get("subject_id") or "").strip()
+    if not sid:
+        raise HTTPException(400, "subject_id required")
+    n = duel.delete_for(sid)
+    try:
+        train_store.withdraw(sid)
+    except Exception:
+        pass
+    return {"deleted_duels": n}
 
 
 @app.post("/moment")
