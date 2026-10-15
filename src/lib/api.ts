@@ -14,6 +14,8 @@ export async function submitRead(opts: {
   promptText: string;
   name: string;
   intensity: 'straight' | 'unsparing';
+  trainingConsent?: boolean;
+  subjectId?: string;
   history: { index: number; axes: Axes; tells: string[]; createdAt: string }[];
   onStage?: (stage: string) => void;
 }): Promise<ReadResult> {
@@ -32,6 +34,8 @@ export async function submitRead(opts: {
   form.append('name', opts.name);
   form.append('intensity', opts.intensity);
   form.append('history', JSON.stringify(opts.history));
+  form.append('train_consent', opts.trainingConsent ? '1' : '0');
+  form.append('subject_id', opts.subjectId ?? '');
 
   opts.onStage?.('Uploading');
   const res = await fetch(`${API_URL}/read`, { method: 'POST', body: form });
@@ -56,4 +60,13 @@ export async function scorePressure(opts: { uri: string; promptText: string; sec
 
 export function ttsUrl(text: string) {
   return `${API_URL}/tts?text=${encodeURIComponent(text)}`;
+}
+
+/** Remove this user's clips from the training set. */
+export async function withdrawTraining(subjectId: string) {
+  if (OFFLINE) return { removed: 0 };
+  const form = new FormData();
+  form.append('subject_id', subjectId);
+  const res = await fetch(`${API_URL}/train/withdraw`, { method: 'POST', body: form });
+  return res.json();
 }

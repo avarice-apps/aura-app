@@ -15,14 +15,17 @@ import time
 import uuid
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, HTMLResponse, FileResponse
+from fastapi import Request
 
 from pipeline import audio, face, rubric, poise, tts
+from training import store as train_store, learned
 
 app = FastAPI(title="Aura", version="0.1")
 AUDIO_DIR = os.environ.get("AURA_AUDIO_DIR", os.path.join(tempfile.gettempdir(), "aura-audio"))
 os.makedirs(AUDIO_DIR, exist_ok=True)
 PUBLIC_URL = os.environ.get("AURA_PUBLIC_URL", "http://localhost:8787")
+ADMIN_KEY = os.environ.get("AURA_ADMIN_KEY", "")
 
 
 @app.get("/health")
@@ -58,6 +61,8 @@ async def read(
     history: str = Form("[]"),
     deep: bool = Form(False),
     voice: bool = Form(True),
+    train_consent: str = Form("0"),
+    subject_id: str = Form(""),
 ):
     path = await _save(video, ".mp4")
     try:
@@ -66,6 +71,15 @@ async def read(
         if v["word_count"] < 6:
             raise HTTPException(422, "We couldn't hear enough. Try again, closer to the mic.")
         scores = rubric.score(audio.VoiceFacts(**v), face.PresenceFacts(**p), read_axis=None, n_prior_reads=len(hist))
+        facts = {"voice": {k: x for k, x in v.items() if k != "transcript"}, "presence": p}
+        # learned perception model (if trained) blends into the rubric, weighted by how well it predicts real panels
+        scores["axes"], perceived = learned.blend(scores["axes"], facts)
+        scores["index"] = round(sum(scores["axes"][k] * w for k, w in rubric.AXIS_WEIGHT.items()))
+        if train_consent == "1" and subject_id:
+            try:
+                train_store.save_clip(video_path=path, subject_id=subject_id, prompt_text=prompt_text, features=facts, rubric=scores)
+            except Exception:
+                pass
         out = await poise.verdict(prompt_text=prompt_text, voice=v, presence=p, scores=scores, history=hist, name=name, intensity=intensity, deep=deep)
         if out.get("safety"):
             return JSONResponse({"safety": True, "script": out.get("script", "")}, status_code=200)
@@ -92,7 +106,8 @@ async def read(
             "drill": out["drill"],
             "script": out["script"],
             "audioUrl": audio_url,
-            "facts": {"voice": {k: v_ for k, v_ in v.items() if k != "transcript"}, "presence": p},
+            "facts": facts,
+            "perceived": perceived,
             "model": out.get("model"),
         }
     finally:
@@ -148,3 +163,85 @@ async def tts_get(text: str, voice_id: str | None = None):
             f.write(mp3)
     with open(p, "rb") as f:
         return Response(f.read(), media_type="audio/mpeg")
+
+
+# ---------------- training: consent, panel rating, admin ----------------
+
+@app.post("/train/withdraw")
+async def train_withdraw(subject_id: str = Form(...)):
+    return {"removed": train_store.withdraw(subject_id)}
+
+
+def _admin(key: str):
+    if not ADMIN_KEY or key != ADMIN_KEY:
+        raise HTTPException(403)
+
+
+@app.post("/train/raters")
+async def train_new_rater(label: str = Form(""), admin_key: str = Form(...)):
+    _admin(admin_key)
+    r = train_store.create_rater(label)
+    return {**r, "link": f"{PUBLIC_URL}/rate?token={r['token']}"}
+
+
+@app.get("/train/stats")
+async def train_stats(admin_key: str):
+    _admin(admin_key)
+    return train_store.stats()
+
+
+@app.post("/train/purge")
+async def train_purge(admin_key: str = Form(...)):
+    _admin(admin_key)
+    return {"purged": train_store.purge_expired()}
+
+
+RATE_HTML = os.path.join(os.path.dirname(__file__), "training", "rate.html")
+
+
+@app.get("/rate", response_class=HTMLResponse)
+async def rate_page():
+    with open(RATE_HTML) as f:
+        return f.read()
+
+
+def _rater(token: str):
+    r = train_store.rater_for(token)
+    if not r:
+        raise HTTPException(403, "invalid rater link")
+    return r
+
+
+@app.get("/rate/api/me")
+async def rate_me(token: str):
+    r = _rater(token)
+    with train_store.db() as c:
+        n = c.execute("select count(*) from ratings where rater_id=?", (r["id"],)).fetchone()[0]
+    return {"label": r["label"], "dimensions": train_store.DIMENSIONS, "rated": n}
+
+
+@app.get("/rate/api/next")
+async def rate_next(token: str):
+    r = _rater(token)
+    c = train_store.next_clip(r["id"])
+    return {"clip": dict(c) if c else None}
+
+
+@app.get("/rate/clip/{cid}")
+async def rate_clip(cid: str, token: str):
+    _rater(token)
+    p = train_store.clip_path(cid)
+    if not p or not os.path.exists(p):
+        raise HTTPException(404)
+    return FileResponse(p, media_type="video/mp4")
+
+
+@app.post("/rate/api/submit")
+async def rate_submit(token: str, request: Request):
+    r = _rater(token)
+    body = await request.json()
+    try:
+        train_store.add_rating(body["clip_id"], r["id"], body["dims"], float(body.get("watched_s", 0)))
+    except (ValueError, KeyError) as e:
+        raise HTTPException(422, str(e))
+    return {"ok": True}

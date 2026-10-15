@@ -27,6 +27,8 @@ type State = {
   // gates
   ageConfirmed: boolean;
   biometricConsent: boolean;
+  trainingConsent: boolean;
+  subjectId: string; // anonymous id for training consent and withdrawal
   onboarded: boolean;
   // identity
   name: string;
@@ -55,6 +57,8 @@ type State = {
 const initial = {
   ageConfirmed: false,
   biometricConsent: false,
+  trainingConsent: false,
+  subjectId: `s_${Math.random().toString(36).slice(2)}${Date.now().toString(36)}`,
   onboarded: false,
   name: '',
   intensity: 'straight' as Intensity,

@@ -8,3 +8,6 @@ soundfile
 anthropic
 mediapipe
 opencv-python-headless
+scikit-learn
+joblib
+scipy

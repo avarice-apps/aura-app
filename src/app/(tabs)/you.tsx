@@ -5,6 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { Screen, Display, Label, Body, Gutter, Row, Button } from '@/ui';
 import { color, space } from '@/theme/tokens';
 import { useStore, isPaid } from '@/state/store';
+import { withdrawTraining } from '@/lib/api';
 
 export default function You() {
   const name = useStore((s) => s.name);
@@ -13,6 +14,8 @@ export default function You() {
   const intensity = useStore((s) => s.intensity);
   const verdicts = useStore((s) => s.verdicts);
   const set = useStore((s) => s.set);
+  const trainingConsent = useStore((s) => s.trainingConsent);
+  const subjectId = useStore((s) => s.subjectId);
   const reset = useStore((s) => s.reset);
   const canUnsparing = verdicts.length >= 3;
 
@@ -53,6 +56,16 @@ export default function You() {
           </Section>
 
           <Section title="Your data">
+            <Item
+              label="Help train Aura"
+              value={trainingConsent ? 'On' : 'Off'}
+              hint={trainingConsent ? 'Your Reads may be rated by a paid panel to improve scoring. Turning this off removes your clips from the training set.' : 'Off. Your Reads are never used for training.'}
+              onPress={() => {
+                Haptics.selectionAsync();
+                if (trainingConsent) withdrawTraining(subjectId).catch(() => {});
+                set({ trainingConsent: !trainingConsent });
+              }}
+            />
             <Item label="Clips" value="Auto-delete 30 d" hint="Measured, then gone. Face templates are never stored." />
             <Item label="Witness" value="Off" hint="Let one friend see your Index and streak. No feed." />
             <Item
@@ -62,7 +75,7 @@ export default function You() {
               onPress={() =>
                 Alert.alert('Delete everything?', 'This cannot be undone.', [
                   { text: 'Keep' },
-                  { text: 'Delete', style: 'destructive', onPress: () => { reset(); router.replace('/onboarding'); } },
+                  { text: 'Delete', style: 'destructive', onPress: () => { withdrawTraining(subjectId).catch(() => {}); reset(); router.replace('/onboarding'); } },
                 ])
               }
             />

@@ -16,6 +16,8 @@ export default function Processing() {
   const [error, setError] = useState<string | null>(null);
   const name = useStore((s) => s.name);
   const intensity = useStore((s) => s.intensity);
+  const trainingConsent = useStore((s) => s.trainingConsent);
+  const subjectId = useStore((s) => s.subjectId);
   const verdicts = useStore((s) => s.verdicts);
   const addVerdict = useStore((s) => s.addVerdict);
   const energy = useSharedValue(0);
@@ -34,6 +36,8 @@ export default function Processing() {
           promptText: prompt.text,
           name,
           intensity,
+          trainingConsent,
+          subjectId,
           history: verdicts.slice(0, 4).map((v) => ({ index: v.index, axes: v.axes, tells: v.tells.map((t) => t.title), createdAt: v.createdAt })),
           onStage: (s) => alive && setStage(s),
         });

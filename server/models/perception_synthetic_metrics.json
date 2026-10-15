@@ -1,0 +1,59 @@
+{
+  "n_clips": 600,
+  "features": [
+    "v.wpm",
+    "v.filler_per_min",
+    "v.filler_count",
+    "v.hedge_count",
+    "v.apology_count",
+    "v.pause_count",
+    "v.longest_pause_s",
+    "v.first_word_s",
+    "v.sentence_count",
+    "v.upward_ratio",
+    "v.pitch_median_hz",
+    "v.pitch_variance",
+    "v.energy_cv",
+    "v.trailing_drop",
+    "v.ended_mid_sentence",
+    "v.words_per_s",
+    "p.available",
+    "p.eye_contact_ratio",
+    "p.longest_contact_s",
+    "p.contact_breaks",
+    "p.head_motion",
+    "p.blink_rate_per_min",
+    "p.fidget_events",
+    "p.shoulder_tilt_deg",
+    "p.lean_forward",
+    "p.lean_back",
+    "p.smile_ratio"
+  ],
+  "dims": {
+    "confident": {
+      "cv_r2": 0.741,
+      "cv_spearman": 0.842
+    },
+    "warm": {
+      "cv_r2": 0.368,
+      "cv_spearman": 0.608
+    },
+    "nervous": {
+      "cv_r2": 0.719,
+      "cv_spearman": 0.83
+    },
+    "clear": {
+      "cv_r2": 0.68,
+      "cv_spearman": 0.799
+    },
+    "trust": {
+      "cv_r2": 0.343,
+      "cv_spearman": 0.599
+    },
+    "engage": {
+      "cv_r2": 0.47,
+      "cv_spearman": 0.669
+    }
+  },
+  "synthetic": true
+}

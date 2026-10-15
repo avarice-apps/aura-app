@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aura Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Antonio:wght@200;300&family=Inter:wght@400;500&family=JetBrains+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root { --cobalt:#1414F0; --lilac:#DADCFF; --ink:#06071A; --w72:rgba(255,255,255,.72); --w48:rgba(255,255,255,.48); --w16:rgba(255,255,255,.16); }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--cobalt); color:#fff; font-family:Inter, system-ui, sans-serif; min-height:100vh; }
+  .wrap { max-width:560px; margin:0 auto; padding:24px 16px 64px; }
+  .label { font-family:'JetBrains Mono', monospace; font-size:12px; letter-spacing:1px; text-transform:uppercase; color:var(--w72); }
+  .muted { color:var(--w48); }
+  h1 { font-family:Antonio, sans-serif; font-weight:300; font-size:56px; line-height:.95; margin:16px 0 12px; }
+  h2 { font-family:Antonio, sans-serif; font-weight:300; font-size:28px; line-height:1.05; }
+  p { color:var(--w72); line-height:1.5; font-size:15px; }
+  .row { display:flex; justify-content:space-between; align-items:center; }
+  video { width:100%; aspect-ratio:9/16; max-height:62vh; background:#000; object-fit:cover; margin:20px 0 8px; display:block; }
+  .q { padding:18px 0; border-top:1px solid var(--w16); }
+  .scale { display:grid; grid-template-columns:repeat(7,1fr); gap:6px; margin-top:12px; }
+  .scale button { font-family:'JetBrains Mono', monospace; font-size:14px; padding:12px 0; border:1px solid var(--w16); background:transparent; color:#fff; border-radius:3px; cursor:pointer; }
+  .scale button.on { background:var(--lilac); color:var(--cobalt); border-color:var(--lilac); }
+  .ends { display:flex; justify-content:space-between; margin-top:6px; }
+  .btn { width:100%; padding:18px; background:var(--lilac); color:var(--cobalt); border:0; border-radius:3px; font-family:'JetBrains Mono', monospace; font-size:13px; letter-spacing:1.3px; text-transform:uppercase; cursor:pointer; margin-top:24px; }
+  .btn:disabled { opacity:.4; cursor:default; }
+  .center { min-height:70vh; display:flex; flex-direction:column; justify-content:center; }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+const token = new URLSearchParams(location.search).get('token') || '';
+const app = document.getElementById('app');
+let dims = {}, clip = null, answers = {}, maxWatched = 0, done = 0;
+
+function el(html){ const d=document.createElement('div'); d.innerHTML=html; return d; }
+
+async function boot(){
+  const r = await fetch(`/rate/api/me?token=${encodeURIComponent(token)}`);
+  if(!r.ok){ app.innerHTML = `<div class="center"><div class="label">Aura panel</div><h1>Invalid link.</h1><p>Ask for a new rater link.</p></div>`; return; }
+  const me = await r.json(); dims = me.dimensions; done = me.rated;
+  intro(me);
+}
+
+function intro(me){
+  app.innerHTML = `<div class="center">
+    <div class="label">Aura panel · ${me.label || ''}</div>
+    <h1>Watch.<br>Then say how<br>he came across.</h1>
+    <p>Each clip is under a minute. Watch all of it, then rate six things on a 1–7 scale. There are no right answers. Go with your first impression, as if you'd just met him.</p>
+    <p class="muted" style="margin-top:12px">Clips are private. Do not record, share or discuss them.</p>
+    <button class="btn" onclick="next()">Start</button>
+  </div>`;
+}
+
+async function next(){
+  answers = {}; maxWatched = 0;
+  const r = await fetch(`/rate/api/next?token=${encodeURIComponent(token)}`);
+  const j = await r.json();
+  if(!j.clip){ app.innerHTML = `<div class="center"><div class="label">Aura panel</div><h1>All caught up.</h1><p>You've rated ${done} clips. Thank you. More will appear as they come in.</p></div>`; return; }
+  clip = j.clip; render();
+}
+
+function render(){
+  const qs = Object.entries(dims).map(([k,q]) => `
+    <div class="q" data-k="${k}">
+      <h2>${q}</h2>
+      <div class="scale">${[1,2,3,4,5,6,7].map(n=>`<button data-n="${n}">${n}</button>`).join('')}</div>
+      <div class="ends"><span class="label muted">Not at all</span><span class="label muted">Extremely</span></div>
+    </div>`).join('');
+  app.innerHTML = `
+    <div class="row"><span class="label">Clip ${done+1}</span><span class="label muted">${clip.prompt_text ? 'Prompt: ' + clip.prompt_text : ''}</span></div>
+    <video id="v" src="/rate/clip/${clip.id}?token=${encodeURIComponent(token)}" controls playsinline controlslist="nodownload"></video>
+    <div class="label muted" id="watch">Watch the whole clip to unlock rating</div>
+    <div id="qs" style="margin-top:12px;opacity:.35;pointer-events:none">${qs}</div>
+    <button class="btn" id="submit" disabled>Submit</button>`;
+  const v = document.getElementById('v');
+  v.addEventListener('timeupdate', () => {
+    maxWatched = Math.max(maxWatched, v.currentTime);
+    if (v.duration && maxWatched / v.duration > 0.85) unlock();
+  });
+  v.addEventListener('ended', unlock);
+  document.querySelectorAll('.q').forEach(q => q.querySelectorAll('button').forEach(b => b.onclick = () => {
+    q.querySelectorAll('button').forEach(x=>x.classList.remove('on')); b.classList.add('on');
+    answers[q.dataset.k] = +b.dataset.n; check();
+  }));
+  document.getElementById('submit').onclick = submit;
+}
+
+function unlock(){
+  const q = document.getElementById('qs'); q.style.opacity = 1; q.style.pointerEvents = 'auto';
+  document.getElementById('watch').textContent = 'Rate all six';
+}
+function check(){ document.getElementById('submit').disabled = Object.keys(answers).length !== Object.keys(dims).length; }
+
+async function submit(){
+  const b = document.getElementById('submit'); b.disabled = true;
+  const r = await fetch(`/rate/api/submit?token=${encodeURIComponent(token)}`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ clip_id: clip.id, dims: answers, watched_s: maxWatched }) });
+  if (r.ok) { done++; next(); } else { b.disabled = false; alert('Could not save. Try again.'); }
+}
+boot();
+</script>
+</body>
+</html>

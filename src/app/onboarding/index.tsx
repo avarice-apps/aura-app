@@ -8,7 +8,7 @@ import { Mark } from '@/components/Mark';
 import { color, font, space } from '@/theme/tokens';
 import { useStore } from '@/state/store';
 
-type Step = 'intro' | 'how' | 'age' | 'consent' | 'name' | 'ready';
+type Step = 'intro' | 'how' | 'age' | 'consent' | 'train' | 'name' | 'ready';
 
 const DEMO_AXES = { voice: 70, presence: 82, command: 64, composure: 76, read: 72 };
 
@@ -98,8 +98,28 @@ export default function Onboarding() {
               </Stack>
             </View>
             <Stack gap={space.s} style={{ paddingBottom: space.l }}>
-              <Button label="I consent to analysis" surface="cobalt" onPress={() => { set({ biometricConsent: true }); next('name'); }} />
+              <Button label="I consent to analysis" surface="cobalt" onPress={() => { set({ biometricConsent: true }); next('train'); }} />
               <Body color={color.w48} small align="center">Required to use Aura. Full policy in Settings.</Body>
+            </Stack>
+          </Animated.View>
+        )}
+
+        {step === 'train' && (
+          <Animated.View key="train" entering={FadeIn.duration(600)} exiting={FadeOut.duration(300)} style={styles.fill}>
+            <View style={{ flex: 1, justifyContent: 'center' }}>
+              <Stack gap={space.l}>
+                <Label>Optional</Label>
+                <Display size="d3">Help train{'\n'}Poise's eye.</Display>
+                <Stack gap={space.m}>
+                  <Body color={color.w72}>Aura's scoring is learned from how real people perceive real clips. If you opt in, your Reads may be shown to a small paid panel of raters, who score how you come across. Never published, never sold, never used for ads.</Body>
+                  <Body color={color.w72}>Training clips are kept for up to 12 months, then deleted. You can withdraw in Settings at any time and your clips are removed from the training set.</Body>
+                  <Body color={color.w48} small>Saying no changes nothing about your Reads or your score.</Body>
+                </Stack>
+              </Stack>
+            </View>
+            <Stack gap={space.s} style={{ paddingBottom: space.l }}>
+              <Button label="Yes, use my Reads for training" surface="cobalt" onPress={() => { set({ trainingConsent: true }); next('name'); }} />
+              <Button label="No thanks" variant="secondary" surface="cobalt" onPress={() => { set({ trainingConsent: false }); next('name'); }} />
             </Stack>
           </Animated.View>
         )}
