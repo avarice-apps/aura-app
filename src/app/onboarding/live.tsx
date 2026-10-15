@@ -28,6 +28,7 @@ export default function Live() {
   const [failed, setFailed] = useState(false);
   const [second, setSecond] = useState(false);
   const [noCall, setNoCall] = useState(''); // the call never connected (mic off, server down)
+  const [micDead, setMicDead] = useState(false); // the mic gave nothing: not his fault, so the take doesn't count
 
   // 3 · 2 · 1, felt as much as seen.
   useEffect(() => {
@@ -66,6 +67,12 @@ export default function Live() {
     setStage('cut');
   };
   const toPaywall = () => router.replace('/onboarding/paywall');
+  const again = () => {
+    setMicDead(false);
+    setSecond(false);
+    setCount(3);
+    setStage('intro');
+  };
 
   return (
     <Screen edges={['top', 'bottom']}>
@@ -85,7 +92,11 @@ export default function Live() {
             setFailed(true);
             setStage('cut');
           }}
-          onDone={({ sessionId, evaluation }) => {
+          onDone={({ sessionId, evaluation, micDead: dead }) => {
+            if (dead && evaluation?.insufficient) {
+              setMicDead(true);
+              return;
+            }
             set({ ob: { ...useStore.getState().ob, first: evaluation, firstSession: sessionId } });
             if (!evaluation?.insufficient) addSession({ id: sessionId, kind: 'onboarding', title: 'First conversation', createdAt: new Date().toISOString(), evaluation });
             setReady(true);
@@ -111,17 +122,21 @@ export default function Live() {
         <Animated.View entering={FadeIn.duration(120)} style={[StyleSheet.absoluteFill, { backgroundColor: t.accent, paddingHorizontal: 28, paddingTop: 120, paddingBottom: 48, justifyContent: 'space-between' }]}>
           <View style={{ gap: 26 }}>
             <Animated.View entering={FadeIn.duration(700).delay(350)}>
-              <RNText style={{ fontFamily: font.serif, fontSize: 38, lineHeight: 44, color: WHITE }}>{noCall ? 'The line didn’t connect.' : 'In reality, you aren’t often given second chances.'}</RNText>
+              <RNText style={{ fontFamily: font.serif, fontSize: 38, lineHeight: 44, color: WHITE }}>{micDead ? 'We couldn’t hear you.' : noCall ? 'The line didn’t connect.' : 'In reality, you aren’t often given second chances.'}</RNText>
             </Animated.View>
             {second && (
               <Animated.View entering={FadeIn.duration(800)}>
-                <RNText style={{ fontFamily: font.serifItalic, fontSize: 30, lineHeight: 36, color: SOFT }}>{noCall ? `${noCall} You can do your first call from Today.` : 'That’s why we made Kleos, so you never feel you need one.'}</RNText>
+                <RNText style={{ fontFamily: font.serifItalic, fontSize: 30, lineHeight: 36, color: SOFT }}>{micDead ? 'Your mic gave us nothing, so that one doesn’t count. Check Settings › Kleos › Microphone, then take it again.' : noCall ? `${noCall} You can do your first call from Today.` : 'That’s why we made Kleos, so you never feel you need one.'}</RNText>
               </Animated.View>
             )}
           </View>
           {second && (
             <Animated.View entering={FadeIn.duration(500).delay(400)} style={{ alignItems: 'center', gap: 12 }}>
-              {failed ? (
+              {micDead ? (
+                <Pressable onPress={again} style={{ height: 54, alignSelf: 'stretch', borderRadius: 27, backgroundColor: WHITE, alignItems: 'center', justifyContent: 'center' }}>
+                  <RNText style={{ fontFamily: font.medium, fontSize: 16, color: t.accent }}>Take it again</RNText>
+                </Pressable>
+              ) : failed ? (
                 <Pressable onPress={toPaywall} style={{ height: 54, alignSelf: 'stretch', borderRadius: 27, backgroundColor: WHITE, alignItems: 'center', justifyContent: 'center' }}>
                   <RNText style={{ fontFamily: font.medium, fontSize: 16, color: t.accent }}>Continue</RNText>
                 </Pressable>

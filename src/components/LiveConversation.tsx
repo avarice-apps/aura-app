@@ -289,7 +289,7 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
     }
     play('reveal');
     try {
-      onDone({ sessionId: startRef.current.session_id, evaluation: e, start: startRef.current });
+      onDone({ sessionId: startRef.current.session_id, evaluation: e, start: startRef.current, micDead: listenMs.current >= 4000 && heard.current < DEAD });
     } catch (x: any) {
       console.warn('onDone failed', x);
       setErr('Something went wrong showing your read.');

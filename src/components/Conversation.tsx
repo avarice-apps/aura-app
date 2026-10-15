@@ -35,7 +35,7 @@ const VOICE_PRESET = {
   isMeteringEnabled: true,
 };
 
-export type ConversationDone = { sessionId: string; evaluation: Evaluation & { scriptAudio?: unknown }; start: SessionStart };
+export type ConversationDone = { sessionId: string; evaluation: Evaluation & { scriptAudio?: unknown }; start: SessionStart; /** Live calls: the mic delivered nothing the whole call. */ micDead?: boolean };
 
 /**
  * A live, turn-based voice conversation with a cast character.
