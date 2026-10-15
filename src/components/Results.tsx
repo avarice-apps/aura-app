@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Pressable, Text as RNText } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Body, Card, Icon, ICON, Label, Muted, Num, Row, Stack, Statue, Title, Bar, Tag, Print, Serif } from '@/ui';
-import { font, useTheme, PRINTS } from '@/theme';
+import { Body, Card, Icon, ICON, Label, Muted, Num, Row, Stack, Statue, Title, Bar, Tag, Serif, Halo } from '@/ui';
+import { font, useTheme } from '@/theme';
 import type { Evaluation } from '@/lib/types';
 import { speak, stopSpeaking } from '@/lib/voice';
 import type { AudioSrc } from '@/lib/api';
@@ -26,8 +26,8 @@ export function HearPoise({ src, seconds }: { src: AudioSrc; seconds?: number })
       }}
       style={{ flexDirection: 'row', alignItems: 'center', gap: 12, height: 54, paddingHorizontal: 8, borderRadius: 27, backgroundColor: t.card, borderWidth: 1, borderColor: t.line }}
     >
-      <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: t.inverse, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon d={on ? ICON.stop : ICON.play} size={14} fill={t.onInverse} />
+      <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: t.accent, alignItems: 'center', justifyContent: 'center' }}>
+        <Icon d={on ? ICON.stop : ICON.play} size={14} fill={t.onAccent} />
       </View>
       <Body strong>{on ? 'Poise is speaking' : 'Hear Poise say it'}</Body>
       {seconds ? <Label style={{ marginLeft: 'auto', marginRight: 10 }}>0:{String(seconds).padStart(2, '0')}</Label> : null}
@@ -66,33 +66,37 @@ export function ThoughtTrace({ e }: { e: Evaluation }) {
   );
 }
 
-const PRINT_FOR: Record<string, keyof typeof PRINTS> = {
-  'The Hedge': 'faceHead',
+const STATUE_FOR: Record<string, 'athlete' | 'bust' | 'bustDark' | 'antinoos' | 'head'> = {
+  'The Hedge': 'head',
   'The Apologist': 'bust',
   'The Sprinter': 'athlete',
   'The Statue': 'bustDark',
   'The Pleaser': 'head',
-  'The Blade': 'faceAntinoos',
+  'The Blade': 'antinoos',
   'The Anchor': 'bustDark',
-  'The Current': 'faceAthlete',
+  'The Current': 'athlete',
   'The Storyteller': 'antinoos',
   'The Understated': 'bust',
 };
 
+/** Approved design O5: the dark block, now blue. Archetype, one line, the number, a statue. */
 export function ResultHero({ e, label = 'This answer read as' }: { e: Evaluation; label?: string }) {
   const t = useTheme();
   return (
     <View style={{ height: 210, borderRadius: 24, backgroundColor: t.inverse, overflow: 'hidden' }}>
-      <View style={{ position: 'absolute', right: 0, top: 0, bottom: 0, width: 170 }}>
-        <Print name={PRINT_FOR[e.archetype] ?? 'faceHead'} size={210} radius={0} />
+      <View style={{ position: 'absolute', right: -40, top: -30 }}>
+        <Halo size={270} opacity={0.35} />
       </View>
-      <View style={{ position: 'absolute', left: 18, top: 16, right: 150, gap: 4 }}>
+      <View style={{ position: 'absolute', right: 6, bottom: -12 }}>
+        <Statue name={STATUE_FOR[e.archetype] ?? 'head'} height={176} />
+      </View>
+      <View style={{ position: 'absolute', left: 18, top: 16, width: 180, gap: 3 }}>
         <Label color={t.onInverse2}>{label}</Label>
         <Title size={26} color={t.onInverse}>{e.archetype}</Title>
         <Body small color={t.onInverse2}>{e.archetype_line}</Body>
       </View>
-      <View style={{ position: 'absolute', left: 18, bottom: 14, flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-        <Num value={e.rating} size={56} color={t.onInverse} />
+      <View style={{ position: 'absolute', left: 18, bottom: 12, flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
+        <Num value={e.rating} size={54} color={t.onInverse} />
         <Label color={t.onInverse2}>Aura · this read</Label>
       </View>
     </View>
@@ -226,7 +230,7 @@ export function CompareCard({ a, b }: { a: Evaluation; b: Evaluation }) {
       {b.compare ? <Body>{b.compare}</Body> : null}
       <Row gap={8} style={{ alignItems: 'stretch' }}>
         {[a, b].map((e, i) => (
-          <Card key={i} style={{ flex: 1, padding: 12, borderColor: i ? t.ink : t.line, borderWidth: i ? 1.5 : 1 }}>
+          <Card key={i} style={{ flex: 1, padding: 12, borderColor: i ? t.accent : t.line, borderWidth: i ? 1.5 : 1 }}>
             <Label color={i ? t.ink : t.ink3}>Take {i + 1}</Label>
             <Body small style={{ marginTop: 6 }} color={i ? t.ink : t.ink2}>“{firstUser(e)}”</Body>
             <View style={{ borderTopWidth: 1, borderColor: t.cardAlt, marginTop: 8, paddingTop: 6 }}>
@@ -250,4 +254,32 @@ export function CompareCard({ a, b }: { a: Evaluation; b: Evaluation }) {
 
 export function Appear({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   return <Animated.View entering={FadeInDown.duration(420).delay(delay)}>{children}</Animated.View>;
+}
+
+/** Everything beyond the headline read, folded. Results stay clean; depth is one tap away. */
+export function FullRead({ e, showAlternatives = true }: { e: Evaluation; showAlternatives?: boolean }) {
+  const t = useTheme();
+  const [open, setOpen] = useState(false);
+  const has = e.signal || (e.trace && e.trace.length > 1) || e.turning_point;
+  if (!has) return null;
+  return (
+    <View style={{ gap: 12 }}>
+      <Pressable
+        onPress={() => setOpen(!open)}
+        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', height: 52, paddingHorizontal: 18, borderRadius: 26, borderWidth: 1, borderColor: t.line }}
+      >
+        <Body strong>{open ? 'Hide the full read' : 'See the full read'}</Body>
+        <Icon d={open ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6'} size={16} color={t.ink3} />
+      </Pressable>
+      {open && (
+        <Animated.View entering={FadeInDown.duration(300)} style={{ gap: 12 }}>
+          <SignalCard e={e} />
+          <ThoughtTrace e={e} />
+          <TurningPoint e={e} />
+          {showAlternatives ? <Alternatives e={e} /> : null}
+          {e.axes ? <AxesCard e={e} /> : null}
+        </Animated.View>
+      )}
+    </View>
+  );
 }

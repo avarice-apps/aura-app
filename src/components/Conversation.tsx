@@ -3,7 +3,7 @@ import { View, ScrollView, Pressable, Text as RNText } from 'react-native';
 import Animated, { FadeInDown, FadeIn, useSharedValue, withTiming, withRepeat, Easing, cancelAnimation } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useAudioRecorder, useAudioRecorderState, RecordingPresets } from 'expo-audio';
-import { Body, Label, Muted, Row, Stack, Icon, ICON, Title } from '@/ui';
+import { Body, Muted, Icon, ICON, Tag } from '@/ui';
 import { Mark } from '@/components/Mark';
 import { font, useTheme } from '@/theme';
 import { startSession, sendTurn, evaluateSession, StartArgs } from '@/lib/api';
@@ -161,30 +161,29 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
     <View style={{ flex: 1 }}>
       {start && (
         <Animated.View entering={FadeIn.duration(400)} style={{ marginHorizontal: 20, marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: t.card, borderWidth: 1, borderColor: t.line }}>
-          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: t.inverse, alignItems: 'center', justifyContent: 'center', borderWidth: interest !== null ? 2 : 0, borderColor: interest !== null && interest >= 55 ? t.accent : t.lineStrong }}>
-            <RNText style={{ fontFamily: font.medium, fontSize: 18, color: t.onInverse }}>{start.character.name[0]}</RNText>
+          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: t.accentSoft, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: interest !== null && interest >= 55 ? t.accent : 'transparent' }}>
+            <RNText style={{ fontFamily: font.medium, fontSize: 18, color: t.accent }}>{start.character.name[0]}</RNText>
           </View>
           <View style={{ flex: 1 }}>
             <Body strong>{start.character.name}</Body>
-            <Muted small numberOfLines={1}>{start.character.style}. {start.character.behaviour}</Muted>
+            <Muted small numberOfLines={1}>{start.character.style}</Muted>
           </View>
-          <Label>{['', 'Easy', 'Real', 'Heat'][pressure]}</Label>
+          <Tag label={['', 'Easy', 'Real', 'Heat'][pressure]} />
         </Animated.View>
       )}
 
       {start && (
-        <View style={{ marginHorizontal: 20, marginTop: 10, gap: 4 }}>
-          {label ? <Label>{label}</Label> : null}
-          <Muted small>{start.setting}</Muted>
-          <Body small strong style={{ color: t.accent }}>Goal: {start.goal}</Body>
+        <View style={{ marginHorizontal: 22, marginTop: 12, gap: 4 }}>
+          <Muted small>{label ? `${label} · ` : ''}{start.setting}</Muted>
+          <Body small strong color={t.accent}>{start.goal}</Body>
         </View>
       )}
 
       <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 10, paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
         {msgs.map((m, i) => (
           <Animated.View key={i} entering={FadeInDown.duration(320)} style={{ alignSelf: m.role === 'char' ? 'flex-start' : 'flex-end', maxWidth: '84%' }}>
-            <View style={{ backgroundColor: m.role === 'char' ? t.card : t.inverse, borderWidth: m.role === 'char' ? 1 : 0, borderColor: t.line, borderRadius: 18, borderBottomLeftRadius: m.role === 'char' ? 6 : 18, borderBottomRightRadius: m.role === 'user' ? 6 : 18, paddingHorizontal: 14, paddingVertical: 11 }}>
-              <Body color={m.role === 'char' ? t.ink : t.onInverse}>{m.text}</Body>
+            <View style={{ backgroundColor: m.role === 'char' ? t.card : t.accent, borderWidth: m.role === 'char' ? 1 : 0, borderColor: t.line, borderRadius: 18, borderBottomLeftRadius: m.role === 'char' ? 6 : 18, borderBottomRightRadius: m.role === 'user' ? 6 : 18, paddingHorizontal: 14, paddingVertical: 11 }}>
+              <Body color={m.role === 'char' ? t.ink : t.onAccent}>{m.text}</Body>
             </View>
           </Animated.View>
         ))}
@@ -196,7 +195,7 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
       </ScrollView>
 
       <View style={{ alignItems: 'center', paddingBottom: 18, gap: 10 }}>
-        <Label color={phase === 'error' ? t.accent : t.ink3}>{status}</Label>
+        <Muted small color={phase === 'error' ? t.accent : t.ink2}>{status}</Muted>
         <Pressable
           accessibilityLabel={phase === 'recording' ? 'Finish answer' : 'Start answering'}
           disabled={!(phase === 'yourturn' || phase === 'recording')}
@@ -206,11 +205,11 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
           <View style={{ position: 'absolute' }}>
             <Mark index={phase === 'recording' ? 60 : 40} axes={{ voice: 55, presence: 55, command: 55, composure: 55, read: 55 }} size={170} energy={shared} color={t.markInk} animateIn={false} opacity={phase === 'yourturn' || phase === 'recording' ? 0.75 : 0.35} />
           </View>
-          <View style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: phase === 'yourturn' || phase === 'recording' ? t.inverse : t.lineStrong, alignItems: 'center', justifyContent: 'center' }}>
-            {phase === 'recording' ? <View style={{ width: 22, height: 22, borderRadius: 4, backgroundColor: t.onInverse }} /> : <Icon d={ICON.mic} size={26} color={t.onInverse} />}
+          <View style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: phase === 'yourturn' || phase === 'recording' ? t.accent : t.lineStrong, alignItems: 'center', justifyContent: 'center' }}>
+            {phase === 'recording' ? <View style={{ width: 22, height: 22, borderRadius: 4, backgroundColor: t.onAccent }} /> : <Icon d={ICON.mic} size={26} color={t.onAccent} />}
           </View>
         </Pressable>
-        {phase === 'recording' ? <Title size={20}>{left}s</Title> : <View style={{ height: 22 }} />}
+        {phase === 'recording' ? <Body strong>{left}s</Body> : <View style={{ height: 21 }} />}
       </View>
     </View>
   );

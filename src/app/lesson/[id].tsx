@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { View, ScrollView } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeIn, FadeInDown, ZoomIn } from 'react-native-reanimated';
-import { Screen, Title, Body, Muted, Label, Button, Row, Stack, Print, Pill, IconButton, Icon, ICON, Card, Num } from '@/ui';
+import { Screen, Title, Body, Muted, Label, Button, Row, Stack, Statue, Halo, Pill, IconButton, Icon, ICON, Num } from '@/ui';
 import { Conversation } from '@/components/Conversation';
-import { ResultHero, FeedbackCard, HearPoise, ThoughtTrace, CompareCard, AxesCard, Appear, SignalCard, TurningPoint, Alternatives, Insufficient } from '@/components/Results';
+import { ResultHero, FeedbackCard, HearPoise, CompareCard, Appear, FullRead, Insufficient } from '@/components/Results';
 import { SituationCard, pickSituation } from '@/components/SituationCard';
 import { useTheme } from '@/theme';
 import { useStore } from '@/state/store';
@@ -114,11 +114,12 @@ export default function LessonScreen() {
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
         {(step === 'brief' || step === 'generating') && (
           <Stack gap={16}>
-            <Animated.View entering={FadeIn.duration(600)}>
-              <Print name={checkpoint ? 'faceAntinoos' : 'faceHead'} caption={`#${found.index + 1} ${unit.title}`} />
+            <Animated.View entering={FadeIn.duration(600)} style={{ height: 210, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ position: 'absolute' }}><Halo size={250} opacity={0.5} /></View>
+              <Statue name={checkpoint ? 'antinoos' : 'head'} height={200} />
             </Animated.View>
             <Animated.View entering={FadeInDown.duration(500).delay(150)} style={{ gap: 8 }}>
-              <Title size={34}>{def.title}</Title>
+              <Title size={28}>{def.title}</Title>
               <Body color={t.ink2}>{def.objective}</Body>
             </Animated.View>
             {!OFFLINE && <HearPoise src={`${API_URL}/tts?text=${encodeURIComponent(`Here's the skill. ${def.objective} Keep it short, and let the other person respond.`)}`} />}
@@ -141,11 +142,7 @@ export default function LessonScreen() {
             <Appear><ResultHero e={a} /></Appear>
             <Appear delay={120}><FeedbackCard e={a} /></Appear>
             <Appear delay={240}><HearPoise src={a.scriptAudio ?? a.script_audio} /></Appear>
-            <Appear delay={330}><SignalCard e={a} /></Appear>
-            <Appear delay={420}><ThoughtTrace e={a} /></Appear>
-            <Appear delay={500}><TurningPoint e={a} /></Appear>
-            <Appear delay={580}><Alternatives e={a} /></Appear>
-            <Appear delay={660}><AxesCard e={a} /></Appear>
+            <Appear delay={360}><FullRead e={a} /></Appear>
           </Stack>
         )}
 
@@ -154,8 +151,7 @@ export default function LessonScreen() {
           <Stack gap={12}>
             <Appear><CompareCard a={a} b={b} /></Appear>
             <Appear delay={200}><HearPoise src={b.scriptAudio ?? b.script_audio} /></Appear>
-            <Appear delay={300}><SignalCard e={b} /></Appear>
-            <Appear delay={400}><ThoughtTrace e={b} /></Appear>
+            <Appear delay={320}><FullRead e={b} showAlternatives={false} /></Appear>
           </Stack>
         )}
 
@@ -168,12 +164,12 @@ export default function LessonScreen() {
 
         {step === 'done' && (
           <View style={{ alignItems: 'center', paddingTop: 40, gap: 16 }}>
-            <Animated.View entering={ZoomIn.duration(600)} style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: t.inverse, alignItems: 'center', justifyContent: 'center' }}>
-              <Num value={ROMAN[awarded] || '·'} size={52} color={t.onInverse} />
+            <Animated.View entering={ZoomIn.duration(600)} style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: t.accent, alignItems: 'center', justifyContent: 'center' }}>
+              <Num value={ROMAN[awarded] || '·'} size={44} weight="regular" color={t.onAccent} />
             </Animated.View>
             <Animated.View entering={FadeInDown.delay(300)} style={{ alignItems: 'center', gap: 8 }}>
               <Label>Laurel</Label>
-              <Title size={30} align="center">{def.title} {ROMAN[awarded]}</Title>
+              <Title size={26} align="center">{def.title} {ROMAN[awarded]}</Title>
               <Muted align="center">
                 {awarded >= 3 ? 'Gold. You did it again, on a different day, with a different person. That’s a skill, not a take.' : awarded === 2 ? 'Silver. Do it again on another day to earn gold.' : 'Bronze for doing the work. A take rated 60+ earns silver.'}
               </Muted>

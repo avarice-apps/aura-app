@@ -1,4 +1,4 @@
-// Aura themes. Marble (warm stone, light) and Nocturne (graphite, dark).
+// Aura themes. Light (white + Hermes blue, default) and Nocturne (dark, optional).
 // Every screen reads colours from useTheme(); nothing hard-codes a hex.
 import { useColorScheme } from 'react-native';
 import { useStore } from '@/state/store';
@@ -23,25 +23,25 @@ export type Theme = {
   markInk: string; // Mark rays on bg
 };
 
-/** Gallery Print: paper and cobalt, Hermes lineage. The default. */
+/** Aura Light: the approved onboarding look on white. Hermes blue wherever the designs used black. The default. */
 export const gallery: Theme = {
   name: 'gallery',
   dark: false,
-  bg: '#F1F1EC',
-  card: '#FAFAF7',
-  cardAlt: '#E8E8EE',
-  line: '#DCDCE5',
-  lineStrong: '#C3C4D6',
-  ink: '#0E1150',
-  ink2: '#4A4D78',
-  ink3: '#6B6E95',
-  inverse: '#1515E0',
-  onInverse: '#F1F1EC',
-  onInverse2: '#BFC1FF',
-  accent: '#1515E0',
-  accentSoft: '#E3E4FB',
+  bg: '#FFFFFF',
+  card: '#F6F6F8',
+  cardAlt: '#EDEDF1',
+  line: '#E6E6EC',
+  lineStrong: '#D2D2DB',
+  ink: '#121218',
+  ink2: '#5E5E69',
+  ink3: '#8E8E99',
+  inverse: '#1414E6',
+  onInverse: '#FFFFFF',
+  onInverse2: '#C8CAFF',
+  accent: '#1414E6',
+  accentSoft: '#EDEEFF',
   onAccent: '#FFFFFF',
-  markInk: '#1515E0',
+  markInk: '#1414E6',
 };
 
 /** Night print: deep cobalt-black, for late use. */

@@ -30,7 +30,7 @@ function Bar({ index, go }: { index: number; go: (name: string) => void }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   return (
-    <View style={{ flexDirection: 'row', backgroundColor: t.card, borderTopWidth: 1, borderColor: t.line, paddingTop: 10, paddingBottom: Math.max(insets.bottom, 12) }}>
+    <View style={{ flexDirection: 'row', backgroundColor: t.bg, borderTopWidth: 1, borderColor: t.line, paddingTop: 10, paddingBottom: Math.max(insets.bottom, 12) }}>
       {TABS.map((x, i) => {
         const on = i === index;
         return (

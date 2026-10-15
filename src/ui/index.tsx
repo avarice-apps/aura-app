@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, withSpring } from 'react-native-reanimated';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Line, Circle, Ellipse } from 'react-native-svg';
 import { font, radius, space, useTheme, STATUES, PRINTS } from '@/theme';
 import { play } from '@/lib/sound';
 
@@ -29,10 +29,10 @@ export function Gutter({ children, style, ...p }: ViewProps) {
 
 type TP = TextProps & { color?: string; align?: TextStyle['textAlign'] };
 
-export function Title({ style, color, align, ...p }: TP & { size?: number }) {
+/** Geist medium, tight tracking, generous line height so nothing clips on iOS. */
+export function Title({ style, color, align, size = 28, ...p }: TP & { size?: number }) {
   const t = useTheme();
-  const s = (p.size ?? 30) * 1.18;
-  return <RNText {...p} style={[{ fontFamily: font.display, fontSize: s, lineHeight: s * 1.0, letterSpacing: -s * 0.005, color: color ?? t.ink, textAlign: align }, style]} />;
+  return <RNText {...p} style={[{ fontFamily: font.medium, fontSize: size, lineHeight: Math.round(size * 1.16), letterSpacing: -size * 0.025, color: color ?? t.ink, textAlign: align }, style]} />;
 }
 export function Serif({ style, color, align, italic, ...p }: TP & { size?: number; italic?: boolean }) {
   const t = useTheme();
@@ -41,7 +41,7 @@ export function Serif({ style, color, align, italic, ...p }: TP & { size?: numbe
 }
 export function Num({ style, color, value, size = 72, weight = 'light' }: { style?: StyleProp<TextStyle>; color?: string; value: string | number; size?: number; weight?: 'light' | 'regular' }) {
   const t = useTheme();
-  return <RNText style={[{ fontFamily: weight === 'light' ? font.displayThin : font.display, fontSize: size * 1.12, lineHeight: size * 1.08, letterSpacing: -size * 0.01, color: color ?? t.ink, fontVariant: ['tabular-nums'] }, style]}>{value}</RNText>;
+  return <RNText style={[{ fontFamily: weight === 'light' ? font.light : font.regular, fontSize: size, lineHeight: Math.round(size * 1.12), letterSpacing: -size * 0.045, color: color ?? t.ink, fontVariant: ['tabular-nums'] }, style]}>{value}</RNText>;
 }
 export function Body({ style, color, align, small, strong, ...p }: TP & { small?: boolean; strong?: boolean }) {
   const t = useTheme();
@@ -75,10 +75,10 @@ export function Hairline({ style }: { style?: StyleProp<ViewStyle> }) {
 
 export function Pill({ label, active, onPress, tone }: { label: string; active?: boolean; onPress?: () => void; tone?: 'accent' | 'muted' }) {
   const t = useTheme();
-  const bg = active ? t.inverse : tone === 'accent' ? t.accentSoft : 'transparent';
-  const fg = active ? t.onInverse : tone === 'accent' ? t.accent : t.ink2;
+  const bg = active ? t.accent : tone === 'accent' ? t.accentSoft : t.card;
+  const fg = active ? t.onAccent : tone === 'accent' ? t.accent : t.ink2;
   return (
-    <Pressable onPress={onPress && (() => { play('tap'); Haptics.selectionAsync(); onPress(); })} disabled={!onPress} style={{ backgroundColor: bg, borderWidth: active || tone ? 0 : 1, borderColor: t.lineStrong, paddingHorizontal: 12, paddingVertical: 7, borderRadius: radius.pill }}>
+    <Pressable onPress={onPress && (() => { play('tap'); Haptics.selectionAsync(); onPress(); })} disabled={!onPress} style={{ backgroundColor: bg, borderWidth: active || tone ? 0 : 1, borderColor: t.line, paddingHorizontal: 14, paddingVertical: 8, borderRadius: radius.pill }}>
       <RNText style={{ fontFamily: active ? font.medium : font.regular, fontSize: 12, color: fg }}>{label}</RNText>
     </Pressable>
   );
@@ -95,14 +95,48 @@ export function Tag({ label, tone = 'muted' }: { label: string; tone?: 'muted' |
   );
 }
 
+// ------------------------------------------------------------ structure
+
+/** Section header: a plain title with an optional quiet right-hand note or action. */
+export function Section({ title, note, onNote, style }: { title: string; note?: string; onNote?: () => void; style?: StyleProp<ViewStyle> }) {
+  const t = useTheme();
+  return (
+    <View style={[{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 }, style]}>
+      <RNText style={{ fontFamily: font.medium, fontSize: 17, letterSpacing: -0.3, color: t.ink }}>{title}</RNText>
+      {note ? (
+        <Pressable disabled={!onNote} onPress={onNote} hitSlop={8}>
+          <RNText style={{ fontFamily: onNote ? font.medium : font.mono, fontSize: onNote ? 14 : 11, letterSpacing: onNote ? 0 : 0.6, color: onNote ? t.accent : t.ink3, textTransform: onNote ? 'none' : 'uppercase' }}>{note}</RNText>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+/** Segmented tabs inside a screen. */
+export function Tabs<T extends string>({ value, options, onChange }: { value: T; options: { key: T; label: string }[]; onChange: (k: T) => void }) {
+  const t = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', backgroundColor: t.card, borderRadius: 14, padding: 4, borderWidth: 1, borderColor: t.line }}>
+      {options.map((o) => {
+        const on = o.key === value;
+        return (
+          <Pressable key={o.key} onPress={() => { play('tap'); Haptics.selectionAsync(); onChange(o.key); }} style={{ flex: 1, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? t.bg : 'transparent', shadowColor: '#000', shadowOpacity: on ? 0.06 : 0, shadowRadius: 4, shadowOffset: { width: 0, height: 1 } }}>
+            <RNText style={{ fontFamily: on ? font.medium : font.regular, fontSize: 14, color: on ? t.ink : t.ink2 }}>{o.label}</RNText>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 // ------------------------------------------------------------ buttons
 
 export function Button({ label, onPress, variant = 'primary', disabled, style, icon, sound = 'tap' }: { label: string; onPress?: () => void; variant?: 'primary' | 'secondary' | 'accent' | 'ghost' | 'light'; disabled?: boolean; style?: StyleProp<ViewStyle>; icon?: React.ReactNode; sound?: 'tap' | 'select' | null }) {
   const t = useTheme();
   const s = useSharedValue(1);
   const a = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
-  const bg = variant === 'primary' ? t.inverse : variant === 'accent' ? t.accent : variant === 'light' ? t.onInverse : 'transparent';
-  const fg = variant === 'primary' ? t.onInverse : variant === 'accent' ? t.onAccent : variant === 'light' ? t.inverse : t.ink;
+  const bg = variant === 'primary' || variant === 'accent' ? t.accent : variant === 'light' ? t.onInverse : variant === 'secondary' ? t.card : 'transparent';
+  const fg = variant === 'primary' || variant === 'accent' ? t.onAccent : variant === 'light' ? t.accent : variant === 'ghost' ? t.accent : t.ink;
   return (
     <Pressable
       disabled={disabled}
@@ -117,7 +151,7 @@ export function Button({ label, onPress, variant = 'primary', disabled, style, i
       }}
       style={[{ opacity: disabled ? 0.4 : 1 }, style]}
     >
-      <Animated.View style={[{ height: 54, borderRadius: radius.button, backgroundColor: bg, borderWidth: variant === 'secondary' ? 1 : 0, borderColor: t.lineStrong, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10, paddingHorizontal: 20 }, a]}>
+      <Animated.View style={[{ height: 54, borderRadius: radius.button, backgroundColor: bg, borderWidth: variant === 'secondary' ? 1 : 0, borderColor: t.line, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10, paddingHorizontal: 20 }, a]}>
         {icon}
         <RNText style={{ fontFamily: font.medium, fontSize: 16, color: fg }}>{label}</RNText>
       </Animated.View>
@@ -156,7 +190,7 @@ export function Segments({ total, done }: { total: number; done: number }) {
   return (
     <View style={{ flexDirection: 'row', gap: 4 }}>
       {Array.from({ length: total }).map((_, i) => (
-        <View key={i} style={{ flex: 1, height: 3, borderRadius: 2, backgroundColor: i < done ? t.ink : t.lineStrong }} />
+        <View key={i} style={{ flex: 1, height: 3, borderRadius: 2, backgroundColor: i < done ? t.accent : t.cardAlt }} />
       ))}
     </View>
   );
@@ -171,7 +205,7 @@ export function Bar({ value, max = 100, accent }: { value: number; max?: number;
   const a = useAnimatedStyle(() => ({ width: `${w.value * 100}%` }));
   return (
     <View style={{ height: 4, borderRadius: 2, backgroundColor: t.cardAlt, overflow: 'hidden', flex: 1 }}>
-      <Animated.View style={[{ height: 4, borderRadius: 2, backgroundColor: accent ? t.accent : t.ink }, a]} />
+      <Animated.View style={[{ height: 4, borderRadius: 2, backgroundColor: accent === false ? t.ink : t.accent }, a]} />
     </View>
   );
 }
@@ -179,11 +213,41 @@ export function Bar({ value, max = 100, accent }: { value: number; max?: number;
 // ------------------------------------------------------------ imagery and icons
 
 /** A square cobalt print (Hermes-style), optionally with a mono caption like "#1 READ". */
-export function Print({ name, size, caption, style, radius: r = 6 }: { name: keyof typeof PRINTS; size?: number; caption?: string; style?: StyleProp<any>; radius?: number }) {
+const PRINT_TO_STATUE: Record<keyof typeof PRINTS, keyof typeof STATUES> = { athlete: 'athlete', bust: 'bust', antinoos: 'antinoos', head: 'head', bustDark: 'bustDark', faceAthlete: 'athlete', faceAntinoos: 'antinoos', faceHead: 'head' };
+
+/** Hermes-style halo: fine blue rays and an orbit, drawn behind a statue. Deterministic, so it never flickers. */
+export function Halo({ size, opacity = 0.5, style }: { size: number; opacity?: number; style?: StyleProp<ViewStyle> }) {
+  const t = useTheme();
+  const c = size / 2;
+  const rays = React.useMemo(() => {
+    const out: { x1: number; y1: number; x2: number; y2: number; w: number; o: number }[] = [];
+    const rnd = (n: number) => { const x = Math.sin(n * 12.9898) * 43758.5453; return x - Math.floor(x); };
+    for (let i = 0; i < 72; i++) {
+      const a = (i / 72) * Math.PI * 2 + rnd(i) * 0.05;
+      const r0 = size * (0.16 + rnd(i + 100) * 0.08);
+      const r1 = size * (0.34 + rnd(i + 200) * 0.16);
+      out.push({ x1: c + r0 * Math.cos(a), y1: c + r0 * Math.sin(a), x2: c + r1 * Math.cos(a), y2: c + r1 * Math.sin(a), w: rnd(i + 300) > 0.8 ? 1.4 : 0.8, o: 0.35 + rnd(i + 400) * 0.6 });
+    }
+    return out;
+  }, [size, c]);
+  return (
+    <View pointerEvents="none" style={[{ width: size, height: size, opacity }, style]}>
+      <Svg width={size} height={size}>
+        {rays.map((r, i) => <Line key={i} x1={r.x1} y1={r.y1} x2={r.x2} y2={r.y2} stroke={t.accent} strokeWidth={r.w} strokeOpacity={r.o} />)}
+        <Circle cx={c} cy={c} r={size * 0.3} stroke={t.accent} strokeWidth={1} fill="none" strokeOpacity={0.6} />
+        <Ellipse cx={c} cy={c} rx={size * 0.46} ry={size * 0.16} stroke={t.accent} strokeWidth={1} fill="none" strokeOpacity={0.45} transform={`rotate(-16 ${c} ${c})`} />
+        <Circle cx={c + size * 0.3} cy={c} r={3} fill={t.accent} />
+      </Svg>
+    </View>
+  );
+}
+
+/** Statue visual. Marble cut-out, contained, on whatever surface it sits on. */
+export function Print({ name, size, caption, style }: { name: keyof typeof PRINTS; size?: number; caption?: string; style?: StyleProp<any>; radius?: number }) {
   const t = useTheme();
   return (
     <View style={style}>
-      <Image source={PRINTS[name]} style={size ? { width: size, height: size, borderRadius: r } : { width: '100%', aspectRatio: 1, borderRadius: r }} contentFit="cover" transition={300} />
+      <Image source={STATUES[PRINT_TO_STATUE[name]]} style={size ? { width: size, height: size } : { width: '100%', aspectRatio: 1 }} contentFit="contain" transition={300} />
       {caption ? <RNText style={{ fontFamily: font.mono, fontSize: 11, letterSpacing: 0.6, color: t.ink, marginTop: 8, textTransform: 'uppercase' }}>{caption}</RNText> : null}
     </View>
   );

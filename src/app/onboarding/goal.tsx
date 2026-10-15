@@ -39,7 +39,7 @@ export default function GoalScreen() {
                     Haptics.selectionAsync();
                     setGoal(g.key);
                   }}
-                  style={{ height: 62, borderRadius: 16, paddingHorizontal: 18, backgroundColor: t.card, borderWidth: on ? 1.5 : 1, borderColor: on ? t.ink : t.line, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
+                  style={{ height: 62, borderRadius: 16, paddingHorizontal: 18, backgroundColor: t.card, borderWidth: on ? 1.5 : 1, borderColor: on ? t.accent : t.line, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}
                 >
                   <RNText style={{ fontFamily: on ? font.medium : font.regular, fontSize: 16, color: t.ink }}>{g.label}</RNText>
                   {on ? (

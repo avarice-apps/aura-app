@@ -1,3 +1,4 @@
+import { File as FSFile } from 'expo-file-system';
 import { API_URL, OFFLINE } from './config';
 import type { Evaluation, Lesson, Receipt, ScanResult, SessionStart, TurnResult } from './types';
 import type { Goal } from '@/state/store';
@@ -106,8 +107,9 @@ async function postForm<T>(path: string, form: FormData): Promise<T> {
   return res.json();
 }
 
-function fileField(uri: string, name: string, type: string) {
-  return { uri, name, type } as unknown as Blob;
+/** Expo's global fetch (expo/fetch) only accepts real Blob/File parts in FormData, not RN-style {uri,name,type}. */
+function fileField(uri: string, _name: string, _type: string) {
+  return new FSFile(uri) as unknown as Blob;
 }
 
 // ------------------------------------------------------------------ conversations

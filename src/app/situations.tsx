@@ -35,7 +35,7 @@ export default function Situations() {
       <Row style={{ justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8 }}>
         <IconButton label="Close" onPress={() => router.back()}><Icon d={ICON.close} size={16} /></IconButton>
         <Label>{done}/{ALL_SITUATIONS.length} seen</Label>
-        <Tag label={streak ? `${streak} in a row` : 'Situations'} tone={streak >= 3 ? 'accent' : 'muted'} />
+        {streak ? <Tag label={`${streak} in a row`} tone={streak >= 3 ? 'accent' : 'muted'} /> : <View style={{ width: 40 }} />}
       </Row>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20, gap: 14 }} showsVerticalScrollIndicator={false}>
         <View style={{ gap: 4 }}>
@@ -54,6 +54,7 @@ export default function Situations() {
               setN((x) => x + 1);
               setStreak(right ? streak + 1 : 0);
               s.set({ situationsSeen: [...seen, sit.id] });
+              s.markDaily('situation');
             }}
           />
         </Animated.View>

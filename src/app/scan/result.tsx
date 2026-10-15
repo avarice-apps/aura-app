@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import ViewShot from 'react-native-view-shot';
 import * as Sharing from 'expo-sharing';
-import { Screen, Title, Body, Muted, Label, Button, IconButton, Icon, ICON, Row, Stack, Card, Num, Print, Bar, Tag } from '@/ui';
+import { Screen, Title, Body, Muted, Label, Button, IconButton, Icon, ICON, Row, Stack, Card, Num, Bar, Tag, Statue, Halo } from '@/ui';
 import { font, useTheme } from '@/theme';
 import { useStore } from '@/state/store';
 import { useScan } from '@/state/scanSession';
@@ -13,7 +13,7 @@ import { TIER_LINE } from '@/lib/scanPrompts';
 import type { ScanResult } from '@/lib/types';
 import { play } from '@/lib/sound';
 
-const PRINT_FOR: Record<string, 'faceAthlete' | 'faceAntinoos' | 'faceHead' | 'bust' | 'athlete'> = { Gravity: 'athlete', Magnetic: 'faceAthlete', Composed: 'bust', Present: 'faceHead', Faint: 'faceAntinoos', Static: 'faceAntinoos' };
+const STATUE_FOR: Record<string, 'athlete' | 'antinoos' | 'head' | 'bust'> = { Gravity: 'athlete', Magnetic: 'athlete', Composed: 'bust', Present: 'head', Faint: 'antinoos', Static: 'antinoos' };
 
 /** Processing → trading card → next player / leaderboard. The card is the share unit. */
 export default function ScanResultScreen() {
@@ -39,6 +39,7 @@ export default function ScanResultScreen() {
         setR(full);
         scan.pushResult(full);
         if (isSelf || scan.mode === 'party') addScan(full);
+        useStore.getState().markDaily('scan');
         play('reveal');
       } catch (e: any) {
         setErr(e?.message ?? 'Could not read that clip.');
@@ -66,7 +67,7 @@ export default function ScanResultScreen() {
       <Screen edges={['top', 'bottom']}>
         <View style={{ paddingHorizontal: 20, paddingTop: 8, flex: 1 }}>
           <Label>Round over</Label>
-          <Title size={34}>Leaderboard</Title>
+          <Title size={28}>Leaderboard</Title>
           <Card style={{ marginTop: 14, paddingVertical: 4 }}>
             {sorted.map((x, i) => (
               <Animated.View key={i} entering={FadeInDown.delay(i * 120)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderTopWidth: i ? 1 : 0, borderColor: t.cardAlt }}>
@@ -91,18 +92,21 @@ export default function ScanResultScreen() {
 
   if (!r) {
     return (
-      <Screen edges={['top', 'bottom']} bg={t.inverse}>
+      <Screen edges={['top', 'bottom']}>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, padding: 24 }}>
           {err ? (
             <>
-              <Title size={28} color={t.onInverse} align="center">{err}</Title>
-              <Button label="Back" variant="light" onPress={() => router.back()} />
+              <Title size={24} align="center">{err}</Title>
+              <Button label="Back" onPress={() => router.back()} style={{ alignSelf: 'stretch' }} />
             </>
           ) : (
             <>
-              <Animated.View entering={ZoomIn.duration(600)}><Print name="faceHead" size={140} radius={70} /></Animated.View>
-              <Label color={t.onInverse2}>Reading {who}</Label>
-              <Muted small color={t.onInverse2} align="center">Voice, pace, posture, composure. The clip is deleted the moment this is done.</Muted>
+              <Animated.View entering={ZoomIn.duration(600)} style={{ alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ position: 'absolute' }}><Halo size={240} opacity={0.6} /></View>
+                <Statue name="head" height={180} />
+              </Animated.View>
+              <Body strong>Reading {who}</Body>
+              <Muted small align="center">Voice, pace, posture, composure. The clip is deleted the moment this is done.</Muted>
             </>
           )}
         </View>
@@ -119,8 +123,11 @@ export default function ScanResultScreen() {
       </Row>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 20, gap: 12 }} showsVerticalScrollIndicator={false}>
         <ViewShot ref={shot} options={{ format: 'png', quality: 1 }}>
-          <Animated.View entering={FadeInDown.duration(500)} style={{ borderRadius: 22, backgroundColor: t.inverse, overflow: 'hidden' }}>
-            <Print name={PRINT_FOR[r.tier] ?? 'faceHead'} radius={0} />
+          <Animated.View entering={FadeInDown.duration(500)} style={{ borderRadius: 24, backgroundColor: t.accent, overflow: 'hidden' }}>
+            <View style={{ height: 200, alignItems: 'center', justifyContent: 'flex-end' }}>
+              <View style={{ position: 'absolute', top: -30 }}><Halo size={260} opacity={0.35} /></View>
+              <Statue name={STATUE_FOR[r.tier] ?? 'head'} height={190} />
+            </View>
             <View style={{ padding: 18, gap: 4 }}>
               <Row style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
                 <Stack gap={2}>

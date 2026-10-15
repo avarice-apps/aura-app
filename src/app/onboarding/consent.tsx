@@ -40,7 +40,7 @@ export default function Consent() {
           }}
           style={{ marginTop: 16, flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 }}
         >
-          <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: adult ? t.ink : t.lineStrong, backgroundColor: adult ? t.inverse : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: adult ? t.accent : t.lineStrong, backgroundColor: adult ? t.inverse : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
             {adult && <Icon d={ICON.check} size={13} color={t.onInverse} stroke={3} />}
           </View>
           <Body>I’m 18 or older.</Body>

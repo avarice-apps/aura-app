@@ -47,6 +47,7 @@ type State = {
   activeMission?: string;
   situationsSeen: string[];
   patternsDismissed: string[]; // pattern keys the user removed from their history
+  daily: { day: string; done: string[] }; // today's small things: situation, mission, debrief, scan
   // plan
   plan: 'free' | 'plus';
   trialEndsAt?: string;
@@ -57,6 +58,7 @@ type State = {
   addScan: (r: ScanResult) => void;
   award: (lessonId: string, level: 1 | 2 | 3, xp: number) => void;
   touchDay: () => void;
+  markDaily: (key: string) => void;
   spendComposure: () => boolean;
   reset: () => void;
 };
@@ -85,6 +87,7 @@ const initial = {
   missionsDone: [] as string[],
   situationsSeen: [] as string[],
   patternsDismissed: [] as string[],
+  daily: { day: '', done: [] as string[] },
   plan: 'free' as const,
 };
 
@@ -100,6 +103,12 @@ export const useStore = create<State>()(
         const cur = get().laurels[lessonId] ?? 0;
         set({ laurels: { ...get().laurels, [lessonId]: Math.max(cur, level) as 0 | 1 | 2 | 3 }, xp: get().xp + xp });
       },
+      markDaily: (key) =>
+        set((st) => {
+          const d = today();
+          const done = st.daily?.day === d ? st.daily.done : [];
+          return done.includes(key) ? {} : { daily: { day: d, done: [...done, key] } };
+        }),
       touchDay: () => {
         const t = today();
         const last = get().lastActiveDay;

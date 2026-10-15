@@ -29,7 +29,7 @@ export default function ReceiptScreen() {
   const r = kind === 'compare' ? null : receipts[Number(i ?? 0)];
 
   return (
-    <Screen edges={['top', 'bottom']} bg="#1A1B2E">
+    <Screen edges={['top', 'bottom']} bg={t.card}>
       <Row style={{ justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8 }}>
         <IconButton label="Close" onPress={() => router.back()}><Icon d={ICON.close} size={16} /></IconButton>
       </Row>
@@ -87,8 +87,8 @@ export default function ReceiptScreen() {
         ) : null}
       </ScrollView>
       <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>
-        <Button label="Share the receipt" variant="light" onPress={share} icon={<Icon d={ICON.share} size={16} color={t.inverse} />} />
-        <Muted small align="center" style={{ marginTop: 8 }} color="#B4B6E0">Shares the card only. Never your recording.</Muted>
+        <Button label="Share the receipt" onPress={share} icon={<Icon d={ICON.share} size={16} color={t.onAccent} />} />
+        <Muted small align="center" style={{ marginTop: 8 }}>Shares the card only. Never your recording.</Muted>
       </View>
     </Screen>
   );

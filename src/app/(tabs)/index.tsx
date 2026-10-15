@@ -1,110 +1,114 @@
 import React from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView, Pressable, Text as RNText } from 'react-native';
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Screen, Title, Body, Muted, Label, Card, Row, Stack, Num, Print, ListRow, Icon, ICON, Tag } from '@/ui';
-import { useTheme } from '@/theme';
-import { useStore, auraIndex, isPaid } from '@/state/store';
+import { Screen, Title, Body, Muted, Label, Row, Stack, Num, Statue, Halo, Icon, ICON, Section, Chevron } from '@/ui';
+import { font, useTheme } from '@/theme';
+import { useStore, auraIndex } from '@/state/store';
 import { nextLesson, ALL_MISSIONS } from '@/lib/progress';
 import { play } from '@/lib/sound';
 
-const PRINT_FOR_UNIT: Record<string, 'faceHead' | 'bust' | 'faceAthlete' | 'faceAntinoos' | 'athlete'> = { intro: 'faceHead', stories: 'bust', pushback: 'faceAthlete', dates: 'faceAntinoos', rooms: 'athlete' };
+const TIER = (n: number) => (n >= 85 ? ['Gravity', 'People lean in without knowing why.'] : n >= 72 ? ['Magnetic', 'The room reorganises around you.'] : n >= 60 ? ['Composed', 'Steady. Nothing leaks.'] : n >= 45 ? ['Present', 'You hold attention. You don’t yet direct it.'] : ['Faint', 'The good parts are getting buried.']);
 
+/** Today. Three sections, one primary action: your Index, what's next, three small things. */
 export default function Today() {
   const t = useTheme();
   const s = useStore();
   const idx = auraIndex(s.sessions);
   const next = nextLesson(s.laurels);
-  const laurelCount = Object.values(s.laurels).filter(Boolean).length;
   const hour = new Date().getHours();
-  const evening = hour >= 19 || hour < 3;
+  const evening = hour >= 18 || hour < 3;
   const mission = ALL_MISSIONS.find((m) => m.id === s.activeMission) ?? ALL_MISSIONS.find((m) => !s.missionsDone.includes(m.id))!;
-  const latest = s.receipts[0];
-  const lastEval = s.sessions[0] && (s.sessions[0].retry ?? s.sessions[0].evaluation);
+  const doneToday = s.daily?.day === new Date().toISOString().slice(0, 10) ? s.daily.done : [];
+  const daily = [
+    { key: 'situation', title: 'Situation of the day', sub: 'Ten seconds to read the room', icon: ICON.clock, go: () => router.push('/situations') },
+    { key: 'mission', title: mission.title, sub: 'Field mission · do it for real', icon: ICON.flag, go: () => router.push('/(tabs)/poise') },
+    evening
+      ? { key: 'debrief', title: 'Tonight’s debrief', sub: 'One moment from today, with Poise', icon: ICON.moon, go: () => router.push({ pathname: '/(tabs)/poise', params: { mode: 'debrief' } }) }
+      : { key: 'scan', title: 'Aura Scan', sub: 'Fifteen seconds on camera', icon: ICON.scan, go: () => router.push('/(tabs)/scan') },
+  ];
+  const doneCount = daily.filter((d) => doneToday.includes(d.key)).length;
+  const [tier, line] = TIER(idx ?? 0);
 
   return (
     <Screen>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
-        <Row style={{ justifyContent: 'space-between', paddingTop: 10 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }} showsVerticalScrollIndicator={false}>
+        {/* header */}
+        <Row style={{ justifyContent: 'space-between', paddingTop: 8 }}>
           <Stack gap={2}>
             <Label>{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</Label>
-            <Title size={26}>{hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening'}{s.name ? `, ${s.name}` : ''}</Title>
+            <Title size={24}>{hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening'}{s.name ? `, ${s.name}` : ''}</Title>
           </Stack>
-          {!isPaid(s) && <Pressable onPress={() => router.push('/paywall')}><Tag label="Free" tone="accent" /></Pressable>}
+          <Pressable onPress={() => router.push('/(tabs)/you')} accessibilityLabel="You" style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: t.line, alignItems: 'center', justifyContent: 'center' }}>
+            <RNText style={{ fontFamily: font.medium, fontSize: 15, color: t.ink }}>{(s.name || 'A')[0].toUpperCase()}</RNText>
+          </Pressable>
         </Row>
 
-        {/* Index block: cobalt */}
-        <Animated.View entering={FadeInDown.duration(500)} style={{ marginTop: 16, borderRadius: 22, backgroundColor: t.inverse, overflow: 'hidden', flexDirection: 'row' }}>
-          <View style={{ flex: 1, padding: 18, gap: 4 }}>
-            <Label color={t.onInverse2}>Aura Index</Label>
-            <Row style={{ alignItems: 'baseline' }} gap={8}>
-              <Num value={idx ?? '—'} size={74} color={t.onInverse} />
-              {idx !== null && <Label color={t.onInverse2}>Provisional</Label>}
-            </Row>
-            <Row gap={14} style={{ marginTop: 6 }}>
-              <Stack gap={0}>
-                <Body strong color={t.onInverse}>{s.streak}</Body>
-                <Label color={t.onInverse2}>Day streak</Label>
-              </Stack>
-              <Stack gap={0}>
-                <Body strong color={t.onInverse}>{laurelCount}</Body>
-                <Label color={t.onInverse2}>Laurels</Label>
-              </Stack>
-            </Row>
+        {/* 1 · Index */}
+        <Animated.View entering={FadeInDown.duration(450)} style={{ marginTop: 18, height: 196, borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, overflow: 'hidden' }}>
+          <View style={{ position: 'absolute', right: -60, top: -40 }}><Halo size={290} opacity={0.4} /></View>
+          <View style={{ position: 'absolute', right: 4, bottom: -8 }}><Statue name="bust" height={186} /></View>
+          <View style={{ position: 'absolute', left: 20, top: 18, width: 170, gap: 2 }}>
+            <Label>Aura Index</Label>
+            {idx !== null ? (
+              <>
+                <Num value={idx} size={72} />
+                <Body strong style={{ fontSize: 16 }}>{tier}</Body>
+                <Muted small>{line}</Muted>
+              </>
+            ) : (
+              <>
+                <Title size={22} style={{ marginTop: 10 }}>Not set yet</Title>
+                <Muted small>Your first lesson sets your starting point.</Muted>
+              </>
+            )}
           </View>
-          <Print name="faceAthlete" size={150} radius={0} style={{ alignSelf: 'stretch' }} />
+          {s.streak > 0 && (
+            <View style={{ position: 'absolute', left: 20, bottom: 14, backgroundColor: t.accentSoft, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999 }}>
+              <RNText style={{ fontFamily: font.mono, fontSize: 11, color: t.accent }}>{s.streak}-day streak</RNText>
+            </View>
+          )}
         </Animated.View>
 
-        {/* Next lesson */}
-        <Animated.View entering={FadeInDown.duration(500).delay(100)}>
+        {/* 2 · Up next */}
+        <Animated.View entering={FadeInDown.duration(450).delay(80)} style={{ marginTop: 28 }}>
+          <Section title="Up next" note="Path" onNote={() => router.push('/(tabs)/path')} />
           <Pressable
-            onPress={() => {
-              play('select');
-              router.push({ pathname: '/lesson/[id]', params: { id: next.lesson.id } });
-            }}
-            style={{ marginTop: 14, borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, padding: 14, flexDirection: 'row', gap: 14, alignItems: 'center' }}
+            onPress={() => { play('select'); router.push({ pathname: '/lesson/[id]', params: { id: next.lesson.id } }); }}
+            style={{ borderRadius: 22, backgroundColor: t.accent, padding: 20, gap: 6 }}
           >
-            <Print name={PRINT_FOR_UNIT[next.unit.id] ?? 'faceHead'} size={84} radius={6} />
-            <Stack gap={4} style={{ flex: 1 }}>
-              <Label>#{next.index + 1} {next.unit.title}</Label>
-              <Title size={22}>{next.lesson.title}</Title>
-              <Muted small numberOfLines={2}>{next.lesson.objective}</Muted>
-            </Stack>
-            <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: t.inverse, alignItems: 'center', justifyContent: 'center' }}>
-              <Icon d={ICON.play} size={13} fill={t.onInverse} />
+            <Label color={t.onInverse2}>{next.unit.title} · {next.lesson.checkpoint ? 'Checkpoint' : `Lesson ${next.index + 1}`}</Label>
+            <Title size={24} color={t.onAccent}>{next.lesson.title}</Title>
+            <Body small color={t.onInverse2} numberOfLines={2}>{next.lesson.objective}</Body>
+            <View style={{ marginTop: 10, alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: t.onAccent, borderRadius: 999, paddingHorizontal: 16, height: 40 }}>
+              <Icon d={ICON.play} size={11} fill={t.accent} />
+              <RNText style={{ fontFamily: font.medium, fontSize: 14, color: t.accent }}>Start · 3 min</RNText>
             </View>
           </Pressable>
         </Animated.View>
 
-        <Animated.View entering={FadeInDown.duration(500).delay(200)}>
-          <Card style={{ marginTop: 14, paddingVertical: 4 }}>
-            <ListRow first title="Situation of the day" sub="Ten seconds to read the room" left={<Dot t={t} d={ICON.clock} />} onPress={() => router.push('/situations')} />
-            <ListRow title={`Mission · ${mission.title}`} sub={mission.task} left={<Dot t={t} d={ICON.flag} />} onPress={() => router.push('/(tabs)/poise')} />
-            {evening ? (
-              <ListRow title="Tonight's debrief" sub="Sixty seconds with Poise about one moment from today" left={<Dot t={t} d={ICON.moon} />} onPress={() => router.push({ pathname: '/(tabs)/poise', params: { mode: 'debrief' } })} />
-            ) : (
-              <ListRow title="Aura Scan" sub="Point it at a friend. Party mode for the group." left={<Dot t={t} d={ICON.scan} />} onPress={() => router.push('/(tabs)/scan')} />
-            )}
-          </Card>
+        {/* 3 · Daily */}
+        <Animated.View entering={FadeInDown.duration(450).delay(160)} style={{ marginTop: 28 }}>
+          <Section title="Today" note={`${doneCount} of 3 done`} />
+          <View style={{ borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, paddingHorizontal: 16 }}>
+            {daily.map((d, i) => {
+              const done = doneToday.includes(d.key);
+              return (
+                <Pressable key={d.key} onPress={() => { play('tap'); d.go(); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 14, borderTopWidth: i ? 1 : 0, borderColor: t.cardAlt }}>
+                  <View style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: done ? t.accent : t.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+                    <Icon d={done ? ICON.check : d.icon} size={16} color={done ? t.onAccent : t.accent} stroke={done ? 2.4 : 1.8} />
+                  </View>
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <RNText style={{ fontFamily: font.medium, fontSize: 15, color: done ? t.ink3 : t.ink }} numberOfLines={1}>{d.title}</RNText>
+                    <RNText style={{ fontFamily: font.regular, fontSize: 12, color: t.ink2 }} numberOfLines={1}>{d.sub}</RNText>
+                  </View>
+                  <Chevron />
+                </Pressable>
+              );
+            })}
+          </View>
         </Animated.View>
-
-        {(latest || lastEval) && (
-          <Animated.View entering={FadeInDown.duration(500).delay(300)}>
-            <Card inverse style={{ marginTop: 14, gap: 6 }}>
-              <Label color={t.onInverse2}>Poise</Label>
-              <Body color={t.onInverse}>{latest ? latest.headline : lastEval!.change.text}</Body>
-            </Card>
-          </Animated.View>
-        )}
       </ScrollView>
     </Screen>
-  );
-}
-
-function Dot({ t, d }: { t: ReturnType<typeof useTheme>; d: string }) {
-  return (
-    <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: t.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
-      <Icon d={d} size={16} color={t.accent} />
-    </View>
   );
 }

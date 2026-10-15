@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { View, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Screen, Button, Segments, Stack, Title, Row } from '@/ui';
-import { CompareCard, HearPoise, ThoughtTrace, Appear } from '@/components/Results';
+import { CompareCard, HearPoise, FullRead, Appear } from '@/components/Results';
 import { useStore } from '@/state/store';
 import { play } from '@/lib/sound';
 
@@ -29,7 +29,7 @@ export default function Compare() {
           <Appear><Title size={26}>{better ? "That's what one change does." : b.rating === a.rating ? 'Different, not better yet.' : 'Worth seeing why.'}</Title></Appear>
           <Appear delay={150}><CompareCard a={a} b={b} /></Appear>
           <Appear delay={300}><HearPoise src={b.scriptAudio ?? b.script_audio} /></Appear>
-          <Appear delay={450}><ThoughtTrace e={b} /></Appear>
+          <Appear delay={450}><FullRead e={b} showAlternatives={false} /></Appear>
         </Stack>
       </ScrollView>
       <View style={{ paddingHorizontal: 20, paddingBottom: 10, gap: 8 }}>

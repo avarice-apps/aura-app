@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, ScrollView, Pressable, Text as RNText } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { Body, Button, Card, Icon, ICON, Label, Muted, Row, Stack, Statue, Title, Tag } from '@/ui';
+import { Body, Button, Card, Icon, ICON, Label, Muted, Row, Stack, Title, Tag } from '@/ui';
 import { font, useTheme } from '@/theme';
 import { useStore, Goal } from '@/state/store';
 import { play } from '@/lib/sound';
@@ -28,11 +28,8 @@ export function PaywallBody({ onDone, onSkip }: { onDone: () => void; onSkip: ()
   return (
     <View style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 10, paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
-        <View style={{ position: 'absolute', right: -24, top: 0 }}>
-          <Statue name="bust" height={180} />
-        </View>
         <Label>Built from your two takes</Label>
-        <Title size={30} style={{ marginTop: 8, width: 230 }}>{HEADLINE[goal]}</Title>
+        <Title size={30} style={{ marginTop: 8 }}>{HEADLINE[goal]}</Title>
         <Card style={{ marginTop: 26, paddingVertical: 4 }}>
           {days.map((l, i) => (
             <Row key={l.id} style={{ paddingVertical: 11, borderTopWidth: i ? 1 : 0, borderColor: t.cardAlt }}>

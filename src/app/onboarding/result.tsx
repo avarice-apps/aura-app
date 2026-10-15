@@ -2,7 +2,7 @@ import React from 'react';
 import { View, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Screen, Button, Segments, Stack } from '@/ui';
-import { ResultHero, FeedbackCard, HearPoise, ThoughtTrace, Appear, SignalCard, TurningPoint, Insufficient } from '@/components/Results';
+import { ResultHero, FeedbackCard, HearPoise, Appear, FullRead, Insufficient } from '@/components/Results';
 import { useStore } from '@/state/store';
 
 /** Onboarding 5 · First result: archetype for this answer, two strengths, one change, what they were thinking. */
@@ -30,9 +30,7 @@ export default function Result() {
           <Appear><ResultHero e={e} /></Appear>
           <Appear delay={150}><FeedbackCard e={e} /></Appear>
           <Appear delay={300}><HearPoise src={e.scriptAudio ?? e.script_audio} /></Appear>
-          <Appear delay={400}><SignalCard e={e} /></Appear>
-          <Appear delay={500}><ThoughtTrace e={e} /></Appear>
-          <Appear delay={600}><TurningPoint e={e} /></Appear>
+          <Appear delay={450}><FullRead e={e} showAlternatives={false} /></Appear>
         </Stack>
       </ScrollView>
       <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>

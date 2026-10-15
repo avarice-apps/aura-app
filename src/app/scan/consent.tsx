@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Screen, Title, Body, Muted, Label, Button, IconButton, Icon, ICON, Row, Stack, Print } from '@/ui';
+import { Screen, Title, Body, Muted, Label, Button, IconButton, Icon, ICON, Row, Stack, Statue, Halo } from '@/ui';
 import { useTheme } from '@/theme';
 import { useScan } from '@/state/scanSession';
 import { randomPrompt } from '@/lib/scanPrompts';
@@ -30,12 +30,13 @@ export default function ScanConsent() {
         <View style={{ width: 40 }} />
       </Row>
       <View style={{ flex: 1, paddingHorizontal: 20, justifyContent: 'center', gap: 18 }}>
-        <Animated.View entering={FadeInDown.duration(500)} style={{ alignItems: 'center' }}>
-          <Print name="faceAntinoos" size={140} radius={70} />
+        <Animated.View entering={FadeInDown.duration(500)} style={{ alignItems: 'center', justifyContent: 'center', height: 180 }}>
+          <View style={{ position: 'absolute' }}><Halo size={220} opacity={0.5} /></View>
+          <Statue name="antinoos" height={170} />
         </Animated.View>
         <Animated.View entering={FadeInDown.duration(500).delay(100)} style={{ gap: 8 }}>
           <Label>{upload ? 'Before it’s read' : 'Hand the phone over'}</Label>
-          <Title size={34}>{upload ? 'Whose clip is this?' : `${who}, your turn.`}</Title>
+          <Title size={28}>{upload ? 'Whose clip is this?' : `${who}, your turn.`}</Title>
           <Body color={t.ink2}>
             {upload
               ? 'If it’s you, Poise reads voice, face and posture. If it’s someone else, only voice and posture, and only if they’re fine with it.'

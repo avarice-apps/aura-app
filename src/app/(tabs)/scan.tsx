@@ -3,7 +3,7 @@ import { View, ScrollView, TextInput, Pressable, Text as RNText } from 'react-na
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
-import { Screen, Title, Body, Muted, Label, Card, Row, Stack, Print, Button, Icon, ICON, ListRow, Tag } from '@/ui';
+import { Screen, Title, Body, Muted, Label, Card, Row, Button, Icon, ICON, ListRow, Tag, Statue, Halo, Section } from '@/ui';
 import { font, useTheme } from '@/theme';
 import { useStore } from '@/state/store';
 import { useScan, ScanMode } from '@/state/scanSession';
@@ -43,13 +43,13 @@ export default function ScanTab() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 30 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <Animated.View entering={FadeInDown.duration(500)} style={{ marginTop: 10, borderRadius: 22, backgroundColor: t.inverse, overflow: 'hidden' }}>
-          <Print name="antinoos" radius={0} style={{ width: '100%', aspectRatio: 1.35 }} />
-          <View style={{ padding: 18, gap: 4 }}>
-            <Label color={t.onInverse2}>Aura Scan · Pass the phone</Label>
-            <Title size={30} color={t.onInverse}>A prompt. Fifteen seconds. A reveal.</Title>
-            <Muted small color={t.onInverse2}>Back camera. Hand it round. Everyone gets a card. Nothing is saved unless they choose.</Muted>
-          </View>
+        <View style={{ paddingTop: 8, gap: 6 }}>
+          <Title size={30}>Aura Scan</Title>
+          <Muted small>A prompt, fifteen seconds on camera, a reveal. Pass the phone round.</Muted>
+        </View>
+        <Animated.View entering={FadeInDown.duration(500)} style={{ height: 220, alignItems: 'center', justifyContent: 'center', marginTop: 4 }}>
+          <View style={{ position: 'absolute' }}><Halo size={260} opacity={0.5} /></View>
+          <Statue name="antinoos" height={210} />
         </Animated.View>
 
         <Row gap={8} style={{ marginTop: 16 }}>
@@ -78,19 +78,16 @@ export default function ScanTab() {
         )}
 
         <Button label={mode === 'party' ? 'Start the round' : 'Scan me'} style={{ marginTop: 14 }} onPress={start} disabled={mode === 'party' && names.filter((n) => n.trim()).length < 2} />
-        <Button label="Upload a clip instead" variant="ghost" onPress={upload} icon={<Icon d={ICON.upload} size={16} color={t.ink} />} />
+        <Button label="Upload a clip instead" variant="ghost" onPress={upload} icon={<Icon d={ICON.upload} size={16} color={t.accent} />} />
 
-        <Card style={{ marginTop: 16, gap: 6 }}>
-          <Label>What it reads</Label>
-          <Body small color={t.ink2}>Delivery, composure, command and posture, from how you spoke and held yourself for fifteen seconds. It rates the performance, not the person. No face data is kept, and a clip of someone else is read from voice and posture only.</Body>
-        </Card>
+        <Muted small align="center" style={{ marginTop: 6 }}>Rates the take, not the person. Clips are deleted after they’re read.</Muted>
 
         {scans.length > 0 && (
-          <View style={{ marginTop: 22, gap: 10 }}>
-            <Label>Your cards</Label>
+          <View style={{ marginTop: 28 }}>
+            <Section title="Your cards" note={`${scans.length}`} />
             <Card style={{ paddingVertical: 4 }}>
               {scans.slice(0, 8).map((r, i) => (
-                <ListRow key={i} first={i === 0} title={`${r.name} · ${r.archetype}`} sub={r.prompt} right={<Tag label={`${r.score} · ${r.tier}`} tone="inverse" />} />
+                <ListRow key={i} first={i === 0} title={`${r.name} · ${r.archetype}`} sub={r.prompt} right={<Tag label={`${r.score} · ${r.tier}`} tone="accent" />} />
               ))}
             </Card>
           </View>

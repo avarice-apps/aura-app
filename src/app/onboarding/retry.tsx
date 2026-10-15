@@ -52,17 +52,18 @@ export default function Retry() {
         </Animated.View>
         <Row gap={8} style={{ marginTop: 14 }}>
           <Pill label="Give me a hint" active={show === 'hint'} onPress={() => setShow(show === 'hint' ? null : 'hint')} />
-          {e.example ? <Pill label="Show an example" active={show === 'example'} onPress={() => setShow(show === 'example' ? null : 'example')} /> : null}
+          {e.example ? <Pill label={e.alternatives?.length ? 'Show two examples' : 'Show an example'} active={show === 'example'} onPress={() => setShow(show === 'example' ? null : 'example')} /> : null}
         </Row>
         {show && (
           <Animated.View entering={FadeInDown.duration(300)} style={{ marginTop: 12 }}>
-            <Body color={t.ink2}>{show === 'hint' ? e.hint : `“${e.example}”`}</Body>
-            {show === 'example' && <Muted small style={{ marginTop: 6 }}>Use your own words. The example is support, not a script.</Muted>}
+            {show === 'hint' || !e.alternatives?.length ? (
+              <Body color={t.ink2}>{show === 'hint' ? e.hint : `“${e.example}”`}</Body>
+            ) : (
+              <Alternatives e={e} picked={alt} onPick={(i) => setAlt(alt === i ? undefined : i)} />
+            )}
+            {show === 'example' && <Muted small style={{ marginTop: 8 }}>Use your own words. These are support, not a script.</Muted>}
           </Animated.View>
         )}
-        <View style={{ marginTop: 18 }}>
-          <Alternatives e={e} picked={alt} onPick={(i) => setAlt(alt === i ? undefined : i)} />
-        </View>
         <Stack gap={4} style={{ marginTop: 20 }}>
           <Muted small>The other person won’t know this is your second try. Their reaction depends only on what you say this time.</Muted>
         </Stack>
