@@ -1,0 +1,26 @@
+"""Poise's voice. ElevenLabs text-to-speech."""
+from __future__ import annotations
+
+import os
+
+import httpx
+
+VOICE_ID = os.environ.get("POISE_VOICE_ID", "T1LJmO1i3U7y9K38NWAy")  # default: Gigi Noir; Rafael picks the final one
+
+
+async def speak(text: str, voice_id: str | None = None) -> bytes:
+    key = os.environ["ELEVENLABS_API_KEY"]
+    vid = voice_id or VOICE_ID
+    async with httpx.AsyncClient(timeout=120) as client:
+        r = await client.post(
+            f"https://api.elevenlabs.io/v1/text-to-speech/{vid}",
+            params={"output_format": "mp3_44100_128"},
+            headers={"xi-api-key": key, "Content-Type": "application/json"},
+            json={
+                "text": text,
+                "model_id": "eleven_multilingual_v2",
+                "voice_settings": {"stability": 0.5, "similarity_boost": 0.8, "style": 0.3, "use_speaker_boost": True},
+            },
+        )
+    r.raise_for_status()
+    return r.content
