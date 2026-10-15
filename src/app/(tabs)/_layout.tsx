@@ -9,10 +9,10 @@ import { play } from '@/lib/sound';
 
 const TABS = [
   { name: 'index', label: 'Today', icon: ICON.home },
-  { name: 'path', label: 'Path', icon: ICON.path },
-  { name: 'poise', label: 'Poise', icon: ICON.chat },
-  { name: 'scan', label: 'Scan', icon: ICON.scan },
-  { name: 'you', label: 'You', icon: ICON.user },
+  { name: 'train', label: 'Train', icon: ICON.path },
+  { name: 'poise', label: 'Poise', icon: ICON.poise },
+  { name: 'library', label: 'Library', icon: ICON.library },
+  { name: 'progress', label: 'Progress', icon: ICON.trend },
 ] as const;
 
 export default function TabsLayout() {

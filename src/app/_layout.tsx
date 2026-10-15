@@ -41,6 +41,12 @@ export default function RootLayout() {
         <Stack.Screen name="situations" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="receipt" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="scan" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="aura-scan" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="you" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="missions" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="room/[cat]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="code/[id]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="replay" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="paywall" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
       </Stack>
     </GestureHandlerRootView>

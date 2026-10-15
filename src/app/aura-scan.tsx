@@ -3,7 +3,7 @@ import { View, ScrollView, TextInput, Pressable, Text as RNText } from 'react-na
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as ImagePicker from 'expo-image-picker';
-import { Screen, Title, Body, Muted, Label, Card, Row, Button, Icon, ICON, ListRow, Tag, Statue, Halo, Section } from '@/ui';
+import { Screen, Title, Body, Muted, Label, Card, Row, Button, Icon, ICON, ListRow, Tag, Statue, Halo, Section, IconButton } from '@/ui';
 import { font, useTheme } from '@/theme';
 import { useStore } from '@/state/store';
 import { useScan, ScanMode } from '@/state/scanSession';
@@ -43,7 +43,8 @@ export default function ScanTab() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 30 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <View style={{ paddingTop: 8, gap: 6 }}>
+        <IconButton label="Back" onPress={() => router.back()}><Icon d={ICON.back} size={18} /></IconButton>
+        <View style={{ paddingTop: 12, gap: 6 }}>
           <Title size={30}>Aura Scan</Title>
           <Muted small>A prompt, fifteen seconds on camera, a reveal. Pass the phone round.</Muted>
         </View>

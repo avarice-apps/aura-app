@@ -295,4 +295,9 @@ export const ICON = {
   moon: 'M20 14A8 8 0 1 1 10 4a6 6 0 0 0 10 10z',
   flag: 'M5 21V4h11l-2 4 2 4H5',
   upload: 'M12 16V4M7 9l5-5 5 5M4 20h16',
+  poise: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z',
+  library: 'M5 4h3v16H5zM10 4h3v16h-3zM15.5 4.5l3-.8 3.6 15.5-3 .8z',
+  trend: 'M3 17l6-6 4 4 8-8M15 7h6v6',
+  search: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4',
+  send: 'M5 12h14M13 6l6 6-6 6',
 } as const;

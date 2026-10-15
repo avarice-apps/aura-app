@@ -35,7 +35,7 @@ export default function Compare() {
       <View style={{ paddingHorizontal: 20, paddingBottom: 10, gap: 8 }}>
         <Row gap={8}>
           <Button label="Share" variant="secondary" style={{ flex: 1 }} onPress={() => router.push({ pathname: '/receipt', params: { kind: 'compare' } })} />
-          <Button label="Challenge a friend" variant="secondary" style={{ flex: 1.3 }} onPress={() => router.push('/scan')} />
+          <Button label="Challenge a friend" variant="secondary" style={{ flex: 1.3 }} onPress={() => router.push('/aura-scan')} />
         </Row>
         <Button label="Build my first week" sound="select" onPress={() => router.push('/onboarding/paywall')} />
       </View>

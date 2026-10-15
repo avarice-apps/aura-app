@@ -62,6 +62,8 @@ export type Receipt = {
   headline: string;
   next_time: string;
   drill: string;
+  said_instead?: string;
+  scene?: { character: string; setting: string; opener: string; goal: string };
   receipt_no: string;
   story: string;
   createdAt?: string;

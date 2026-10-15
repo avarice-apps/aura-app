@@ -212,6 +212,8 @@ export async function makeReceipt(a: { text?: string; audioUri?: string; context
       headline: "The story wasn't the costly part. Disappearing after it was.",
       next_time: 'If a story gets cut off, let it go with a smile, then ask someone a question within a minute.',
       drill: 'A 30-second version of one story that ends with a question to the listener.',
+      said_instead: "Anyway, that's the short version. What's the most chaotic job any of you have had?",
+      scene: { character: 'dev', setting: 'Dinner with friends. You are mid-story when someone starts a new topic.', opener: 'Wait, sorry, did anyone else see the game last night?', goal: 'Let the story go gracefully and stay in the conversation.' },
       receipt_no: String(Math.floor(Math.random() * 9000) + 1000),
       story: a.text ?? '(voice)',
       audio: DEMO_AUDIO.poise_receipt,

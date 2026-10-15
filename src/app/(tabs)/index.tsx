@@ -24,10 +24,10 @@ export default function Today() {
   const doneToday = s.daily?.day === new Date().toISOString().slice(0, 10) ? s.daily.done : [];
   const daily = [
     { key: 'situation', title: 'Situation of the day', sub: 'Ten seconds to read the room', icon: ICON.clock, go: () => router.push('/situations') },
-    { key: 'mission', title: mission.title, sub: 'Field mission · do it for real', icon: ICON.flag, go: () => router.push('/(tabs)/poise') },
+    { key: 'mission', title: mission.title, sub: 'Field mission · do it for real', icon: ICON.flag, go: () => router.push('/missions') },
     evening
       ? { key: 'debrief', title: 'Tonight’s debrief', sub: 'One moment from today, with Poise', icon: ICON.moon, go: () => router.push({ pathname: '/(tabs)/poise', params: { mode: 'debrief' } }) }
-      : { key: 'scan', title: 'Aura Scan', sub: 'Fifteen seconds on camera', icon: ICON.scan, go: () => router.push('/(tabs)/scan') },
+      : { key: 'scan', title: 'Aura Scan', sub: 'Fifteen seconds on camera', icon: ICON.scan, go: () => router.push('/aura-scan') },
   ];
   const doneCount = daily.filter((d) => doneToday.includes(d.key)).length;
   const [tier, line] = TIER(idx ?? 0);
@@ -41,7 +41,7 @@ export default function Today() {
             <Label>{new Date().toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</Label>
             <Title size={24}>{hour < 12 ? 'Morning' : hour < 18 ? 'Afternoon' : 'Evening'}{s.name ? `, ${s.name}` : ''}</Title>
           </Stack>
-          <Pressable onPress={() => router.push('/(tabs)/you')} accessibilityLabel="You" style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: t.line, alignItems: 'center', justifyContent: 'center' }}>
+          <Pressable onPress={() => router.push('/you')} accessibilityLabel="You" style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: t.line, alignItems: 'center', justifyContent: 'center' }}>
             <RNText style={{ fontFamily: font.medium, fontSize: 15, color: t.ink }}>{(s.name || 'A')[0].toUpperCase()}</RNText>
           </Pressable>
         </Row>
@@ -74,7 +74,7 @@ export default function Today() {
 
         {/* 2 · Up next */}
         <Animated.View entering={FadeInDown.duration(450).delay(80)} style={{ marginTop: 28 }}>
-          <Section title="Up next" note="Path" onNote={() => router.push('/(tabs)/path')} />
+          <Section title="Up next" note="Train" onNote={() => router.push('/(tabs)/train')} />
           <Pressable
             onPress={() => { play('select'); router.push({ pathname: '/lesson/[id]', params: { id: next.lesson.id } }); }}
             style={{ borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, padding: 20, gap: 6 }}

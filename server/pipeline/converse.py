@@ -552,7 +552,9 @@ Return only JSON:
  "total": int,
  "headline": str (one sentence: the real insight, e.g. 'The story wasn't the expensive part. The silence after it was.'),
  "next_time": str (one concrete action),
- "drill": str (a 3-minute practice idea for the app)}
+ "said_instead": str (one line he could have said at the key moment, in his own voice, natural, under 25 words),
+ "drill": str (a 3-minute practice idea for the app),
+ "scene": {"character": one of mara|theo|dev|julian|ines|kai, "setting": str (the moment, re-staged as a practice scene, one sentence), "opener": str (the other person's first line, under 20 words), "goal": str (under 14 words)}}
 Points are on the playful meme scale: small beats +-10..40, big ones +-80..250. total = sum. Be fair: credit what he did well. Never judge looks, never encourage anything manipulative or disrespectful. No slang (alpha, sigma, mog, rizz). If the story involves harm, distress or danger, set lines to [] and use headline to respond kindly and suggest real support."""
 
 

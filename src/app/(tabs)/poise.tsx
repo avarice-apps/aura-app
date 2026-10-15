@@ -1,48 +1,53 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, ScrollView, TextInput, Pressable, KeyboardAvoidingView, Platform, Text as RNText } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import { useAudioRecorder, RecordingPresets } from 'expo-audio';
 import * as Haptics from 'expo-haptics';
-import { Screen, Title, Body, Muted, Label, Row, Button, Icon, ICON, Tabs, Section, Chevron } from '@/ui';
+import { Body, Muted, Label, Icon, ICON, Halo } from '@/ui';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { font, useTheme } from '@/theme';
 import { useStore } from '@/state/store';
 import { makeReceipt } from '@/lib/api';
 import { prepareMic, speak } from '@/lib/voice';
 import { ALL_MISSIONS } from '@/lib/progress';
+import type { Receipt } from '@/lib/types';
 import { play } from '@/lib/sound';
 
-type Pane = 'ask' | 'missions' | 'receipts';
-
-/** Poise. Three panes, one at a time: ask about a moment, real-life missions, your receipts. */
+/** Ask Poise: a chat. Tell it what happened; it answers with where the aura went, then offers the next move. */
 export default function PoiseTab() {
   const t = useTheme();
-  const params = useLocalSearchParams<{ mode?: string }>();
+  const params = useLocalSearchParams<{ mode?: string; mission?: string }>();
   const s = useStore();
-  const [pane, setPane] = useState<Pane>('ask');
   const [text, setText] = useState('');
   const [recording, setRecording] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
-  const [context, setContext] = useState<string>(params.mode === 'debrief' ? 'Nightly debrief: one moment from today.' : '');
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  const mission = ALL_MISSIONS.find((m) => m.id === s.activeMission);
-  const open = ALL_MISSIONS.filter((m) => !s.missionsDone.includes(m.id) && m.id !== s.activeMission);
+  const [open, setOpen] = useState<Record<string, 'said' | 'drill' | undefined>>({});
+  const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, sampleRate: 22050, numberOfChannels: 1, bitRate: 64000 });
+  const scroll = useRef<ScrollView>(null);
+  const mission = ALL_MISSIONS.find((m) => m.id === (params.mission ?? ''));
+  const context = mission ? `Field mission: ${mission.task}` : params.mode === 'debrief' ? 'Nightly debrief: one moment from today.' : '';
+  const thread = [...s.receipts].reverse(); // oldest first, like a chat
+
+  useEffect(() => {
+    setTimeout(() => scroll.current?.scrollToEnd({ animated: false }), 80);
+  }, [s.receipts.length, busy]);
 
   async function submit(audioUri?: string) {
+    if (busy) return;
     setBusy(true);
     setErr('');
+    play('select');
     try {
       const r = await makeReceipt({ text: text.trim() || undefined, audioUri, context });
-      const rec = { ...r, createdAt: new Date().toISOString(), missionId: mission && context.startsWith('Field mission') ? mission.id : undefined };
+      const rec = { ...r, createdAt: new Date().toISOString(), missionId: mission?.id };
       s.addReceipt(rec);
-      if (rec.missionId) s.set({ missionsDone: [...s.missionsDone, rec.missionId], activeMission: undefined });
+      if (mission) s.set({ missionsDone: Array.from(new Set([...s.missionsDone, mission.id])), activeMission: undefined });
       s.touchDay();
-      s.markDaily(rec.missionId ? 'mission' : 'debrief');
+      s.markDaily(mission ? 'mission' : 'debrief');
       setText('');
-      setContext('');
       play('reveal');
-      router.push({ pathname: '/receipt', params: { i: '0' } });
       if (r.audio) speak(r.audio);
     } catch (e: any) {
       setErr(e?.message ?? 'Poise could not read that.');
@@ -56,7 +61,6 @@ export default function PoiseTab() {
       if (!(await prepareMic())) return;
       await recorder.prepareToRecordAsync();
       recorder.record();
-      play('select');
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       setRecording(true);
     } else {
@@ -66,108 +70,166 @@ export default function PoiseTab() {
     }
   }
 
-  const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+  const canSend = text.trim().split(/\s+/).filter(Boolean).length >= 5;
 
   return (
-    <Screen>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <View style={{ paddingHorizontal: 20, paddingTop: 8, gap: 14 }}>
-          <Title size={30}>Poise</Title>
-          <Tabs<Pane> value={pane} onChange={setPane} options={[{ key: 'ask', label: 'Ask' }, { key: 'missions', label: 'Missions' }, { key: 'receipts', label: 'Receipts' }]} />
+    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={60}>
+        {/* Header */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, borderBottomWidth: 1, borderColor: t.line }}>
+          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: t.card, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+            <Halo size={64} opacity={0.9} />
+            <View style={{ position: 'absolute', width: 10, height: 10, borderRadius: 5, backgroundColor: t.accent }} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <RNText style={{ fontFamily: font.medium, fontSize: 18, color: t.ink }}>Poise</RNText>
+            <Muted small>Tell me what happened. I’ll tell you where the aura went.</Muted>
+          </View>
+          <Pressable onPress={() => router.push('/missions')} hitSlop={8} accessibilityLabel="Field missions" style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: t.line, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon d={ICON.flag} size={16} color={t.ink} />
+          </Pressable>
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 20, paddingBottom: 36 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-          {pane === 'ask' && (
-            <Animated.View entering={FadeInDown.duration(300)} style={{ gap: 14 }}>
-              <View style={{ gap: 4 }}>
-                <Body strong style={{ fontSize: 17 }}>{context.startsWith('Night') ? 'Tonight’s debrief' : context ? 'Mission debrief' : 'What happened?'}</Body>
-                <Muted small>Describe a real moment. Poise tells you where the aura went, line by line.</Muted>
-              </View>
-              <View style={{ borderRadius: 20, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, padding: 16 }}>
-                <TextInput
-                  value={text}
-                  onChangeText={setText}
-                  multiline
-                  placeholder="Dinner last night. I told a long story and someone changed the subject halfway…"
-                  placeholderTextColor={t.ink3}
-                  style={{ minHeight: 120, fontFamily: font.regular, fontSize: 16, lineHeight: 23, color: t.ink, textAlignVertical: 'top' }}
-                />
-              </View>
-              <Row gap={10}>
-                <Pressable onPress={toggleMic} accessibilityLabel={recording ? 'Stop and send' : 'Say it out loud'} style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: recording ? t.accent : t.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon d={recording ? ICON.stop : ICON.mic} size={20} color={recording ? t.onAccent : t.accent} fill={recording ? t.onAccent : undefined} />
-                </Pressable>
-                <Button label={busy ? 'Reading it…' : 'Get my receipt'} disabled={busy || (!recording && words < 5)} style={{ flex: 1 }} onPress={() => submit()} />
-              </Row>
-              {recording ? <Muted small>Recording. Tap the square when you’re done.</Muted> : null}
-              {err ? <Body small color={t.accent}>{err}</Body> : null}
-              {context ? (
-                <Pressable onPress={() => setContext('')} hitSlop={8}>
-                  <Muted small>Not a debrief? Clear it.</Muted>
-                </Pressable>
-              ) : null}
+        <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 14, paddingBottom: 24 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+          {thread.length === 0 && !context && (
+            <Animated.View entering={FadeIn.duration(500)}>
+              <PoiseBubble>
+                <Body>Describe a real moment. A dinner, a date, a meeting, a text you sent. Out loud or typed.</Body>
+                <Muted small style={{ marginTop: 6 }}>I’ll break it into where you gained and lost aura, and what to do next time.</Muted>
+              </PoiseBubble>
             </Animated.View>
           )}
 
-          {pane === 'missions' && (
-            <Animated.View entering={FadeInDown.duration(300)} style={{ gap: 24 }}>
-              {mission ? (
-                <View style={{ borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, padding: 20, gap: 8 }}>
-                  <Label color={t.accent}>Active · {mission.skill}</Label>
-                  <Title size={22}>{mission.title}</Title>
-                  <Body small color={t.ink2}>{mission.task}</Body>
-                  <Pressable
-                    onPress={() => { setContext(`Field mission: ${mission.task}`); setPane('ask'); play('select'); }}
-                    style={{ marginTop: 8, alignSelf: 'flex-start', backgroundColor: t.accent, borderRadius: 999, paddingHorizontal: 16, height: 40, justifyContent: 'center' }}
-                  >
-                    <RNText style={{ fontFamily: font.medium, fontSize: 14, color: t.onAccent }}>I did it · debrief me</RNText>
-                  </Pressable>
-                </View>
-              ) : (
-                <Muted small>Pick one. Do it in real life this week, then tell Poise how it went.</Muted>
-              )}
-              <View>
-                <Section title={mission ? 'Up after this' : 'Missions'} note={`${s.missionsDone.length} done`} />
-                <View style={{ borderRadius: 20, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, paddingHorizontal: 16 }}>
-                  {open.slice(0, 5).map((m, i) => (
-                    <Pressable key={m.id} onPress={() => { s.set({ activeMission: m.id }); play('select'); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, borderTopWidth: i ? 1 : 0, borderColor: t.cardAlt }}>
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <RNText style={{ fontFamily: font.medium, fontSize: 15, color: t.ink }}>{m.title}</RNText>
-                        <RNText style={{ fontFamily: font.regular, fontSize: 12, color: t.ink2 }} numberOfLines={2}>{m.task}</RNText>
-                      </View>
-                      <RNText style={{ fontFamily: font.medium, fontSize: 13, color: t.accent }}>Start</RNText>
-                    </Pressable>
-                  ))}
-                </View>
-              </View>
-            </Animated.View>
-          )}
+          {thread.map((r, i) => (
+            <Exchange
+              key={`${r.receipt_no}-${i}`}
+              r={r}
+              open={open[r.receipt_no]}
+              onOpen={(k) => setOpen((o) => ({ ...o, [r.receipt_no]: o[r.receipt_no] === k ? undefined : k }))}
+              onReplay={() => router.push({ pathname: '/replay', params: { i: String(s.receipts.indexOf(r)) } })}
+              onReceipt={() => router.push({ pathname: '/receipt', params: { i: String(s.receipts.indexOf(r)) } })}
+            />
+          ))}
 
-          {pane === 'receipts' && (
-            <Animated.View entering={FadeInDown.duration(300)}>
-              {s.receipts.length === 0 ? (
-                <View style={{ alignItems: 'center', paddingTop: 40, gap: 8 }}>
-                  <Body strong>No receipts yet</Body>
-                  <Muted small align="center">Tell Poise about a real moment in Ask. Each one becomes a receipt you can keep or share.</Muted>
-                </View>
-              ) : (
-                <View style={{ borderRadius: 20, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, paddingHorizontal: 16 }}>
-                  {s.receipts.map((r, i) => (
-                    <Pressable key={i} onPress={() => router.push({ pathname: '/receipt', params: { i: String(i) } })} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, borderTopWidth: i ? 1 : 0, borderColor: t.cardAlt }}>
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <RNText style={{ fontFamily: font.medium, fontSize: 15, color: t.ink }}>{r.title}</RNText>
-                        <RNText style={{ fontFamily: font.regular, fontSize: 12, color: t.ink2 }} numberOfLines={1}>{r.headline}</RNText>
-                      </View>
-                      <RNText style={{ fontFamily: font.monoMedium, fontSize: 13, color: r.total >= 0 ? t.accent : t.ink }}>{r.total > 0 ? '+' : ''}{r.total}</RNText>
-                      <Chevron />
-                    </Pressable>
-                  ))}
-                </View>
-              )}
+          {context ? (
+            <Animated.View entering={FadeIn.duration(400)}>
+              <PoiseBubble>
+                <Label color={t.accent}>{mission ? 'Mission debrief' : 'Tonight’s debrief'}</Label>
+                <Body style={{ marginTop: 4 }}>{mission ? `${mission.title}. How did it go? Tell me what you said and how they reacted.` : 'One moment from today. What happened, and what did you say?'}</Body>
+              </PoiseBubble>
+            </Animated.View>
+          ) : null}
+
+          {busy && (
+            <Animated.View entering={FadeIn} style={{ alignSelf: 'flex-start' }}>
+              <PoiseBubble>
+                <Muted small>Reading it…</Muted>
+              </PoiseBubble>
             </Animated.View>
           )}
+          {err ? <Body small color={t.accent}>{err}</Body> : null}
         </ScrollView>
+
+        {/* Composer */}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 10, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 12, borderTopWidth: 1, borderColor: t.line, backgroundColor: t.bg }}>
+          <View style={{ flex: 1, minHeight: 50, maxHeight: 130, borderRadius: 25, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, paddingHorizontal: 18, justifyContent: 'center' }}>
+            {recording ? (
+              <Muted small>Listening… tap the square when you’re done.</Muted>
+            ) : (
+              <TextInput value={text} onChangeText={setText} multiline placeholder="Describe a situation…" placeholderTextColor={t.ink3} style={{ fontFamily: font.regular, fontSize: 15, lineHeight: 21, color: t.ink, paddingVertical: 13 }} />
+            )}
+          </View>
+          {canSend && !recording ? (
+            <Pressable onPress={() => submit()} accessibilityLabel="Send" style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: t.accent, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon d={ICON.send} size={20} color={t.onAccent} stroke={2.2} />
+            </Pressable>
+          ) : (
+            <Pressable onPress={toggleMic} accessibilityLabel={recording ? 'Stop and send' : 'Tell it out loud'} style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: t.accent, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon d={recording ? ICON.stop : ICON.mic} size={20} color={t.onAccent} fill={recording ? t.onAccent : undefined} />
+            </Pressable>
+          )}
+        </View>
       </KeyboardAvoidingView>
-    </Screen>
+    </SafeAreaView>
+  );
+}
+
+function PoiseBubble({ children }: { children: React.ReactNode }) {
+  const t = useTheme();
+  return <View style={{ alignSelf: 'stretch', backgroundColor: t.card, borderWidth: 1, borderColor: t.line, borderRadius: 20, padding: 16 }}>{children}</View>;
+}
+
+function Exchange({ r, open, onOpen, onReplay, onReceipt }: { r: Receipt; open?: 'said' | 'drill'; onOpen: (k: 'said' | 'drill') => void; onReplay: () => void; onReceipt: () => void }) {
+  const t = useTheme();
+  return (
+    <Animated.View entering={FadeInDown.duration(400)} style={{ gap: 12 }}>
+      {/* You */}
+      <View style={{ alignSelf: 'flex-end', maxWidth: '88%', backgroundColor: t.accent, borderRadius: 20, borderBottomRightRadius: 6, paddingHorizontal: 16, paddingVertical: 12 }}>
+        <Body color={t.onAccent} style={{ fontFamily: font.medium }}>{r.story}</Body>
+      </View>
+
+      {/* Poise */}
+      <PoiseBubble>
+        <Body style={{ fontSize: 16, lineHeight: 23 }}>{r.headline}</Body>
+        <Pressable onPress={onReceipt} style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 14, paddingBottom: 8, borderBottomWidth: 1, borderColor: t.cardAlt }}>
+          <Label>Aura ledger</Label>
+          <RNText style={{ fontFamily: font.mono, fontSize: 12, color: r.total >= 0 ? t.accent : t.ink }}>Net {r.total > 0 ? '+' : ''}{r.total}</RNText>
+        </Pressable>
+        {r.lines.map((l, k) => (
+          <View key={k} style={{ flexDirection: 'row', gap: 14, paddingVertical: 10, borderBottomWidth: k < r.lines.length - 1 ? 1 : 0, borderColor: t.cardAlt }}>
+            <RNText style={{ fontFamily: font.mono, fontSize: 12, width: 36, color: l.points >= 0 ? t.accent : t.ink2 }}>{l.points > 0 ? '+' : ''}{l.points}</RNText>
+            <Body small style={{ flex: 1 }}>{l.text}</Body>
+          </View>
+        ))}
+        <View style={{ marginTop: 12, backgroundColor: t.cardAlt, borderRadius: 14, padding: 14, gap: 4 }}>
+          <Label>Next time</Label>
+          <Body small>{r.next_time}</Body>
+        </View>
+      </PoiseBubble>
+
+      {open === 'said' && r.said_instead ? (
+        <Animated.View entering={FadeInDown.duration(300)}>
+          <PoiseBubble>
+            <Label color={t.accent}>You could have said</Label>
+            <RNText style={{ fontFamily: font.serifItalic, fontSize: 20, lineHeight: 26, color: t.ink, marginTop: 6 }}>“{r.said_instead}”</RNText>
+            <Muted small style={{ marginTop: 6 }}>In your words, not these. It’s the shape that matters.</Muted>
+          </PoiseBubble>
+        </Animated.View>
+      ) : null}
+      {open === 'drill' ? (
+        <Animated.View entering={FadeInDown.duration(300)}>
+          <PoiseBubble>
+            <Label color={t.accent}>Your drill</Label>
+            <Body style={{ marginTop: 4 }}>{r.drill}</Body>
+            <Pressable onPress={onReplay} style={{ marginTop: 12, alignSelf: 'flex-start', backgroundColor: t.accent, borderRadius: 999, paddingHorizontal: 16, height: 38, justifyContent: 'center' }}>
+              <RNText style={{ fontFamily: font.medium, fontSize: 14, color: t.onAccent }}>Practise it live</RNText>
+            </Pressable>
+          </PoiseBubble>
+        </Animated.View>
+      ) : null}
+
+      {/* Next moves */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {r.said_instead ? <Chip label="What should I have said?" on={open === 'said'} onPress={() => onOpen('said')} /> : null}
+        <Chip label="Replay it as a roleplay" onPress={onReplay} />
+        <Chip label="Make it a drill" on={open === 'drill'} onPress={() => onOpen('drill')} />
+      </View>
+    </Animated.View>
+  );
+}
+
+function Chip({ label, onPress, on }: { label: string; onPress: () => void; on?: boolean }) {
+  const t = useTheme();
+  return (
+    <Pressable
+      onPress={() => {
+        play('tap');
+        Haptics.selectionAsync();
+        onPress();
+      }}
+      style={{ paddingHorizontal: 14, height: 38, borderRadius: 19, borderWidth: 1, borderColor: on ? t.accent : t.line, backgroundColor: on ? t.accentSoft : t.bg, justifyContent: 'center' }}
+    >
+      <RNText style={{ fontFamily: font.regular, fontSize: 13, color: on ? t.accent : t.ink }}>{label}</RNText>
+    </Pressable>
   );
 }

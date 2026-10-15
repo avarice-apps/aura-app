@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, ScrollView, TextInput, Pressable, Switch, Alert, Text as RNText } from 'react-native';
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Screen, Body, Muted, Label, Card, Row, Stack, ListRow, Pill, Num, Tag, Serif, Section } from '@/ui';
+import { Screen, Body, Muted, Label, Card, Row, Stack, ListRow, Pill, Num, Tag, Serif, Section, IconButton, Icon, ICON } from '@/ui';
 import { font, useTheme } from '@/theme';
 import { useStore, isPaid, auraIndex, ThemePref } from '@/state/store';
 import { patterns, UNITS, ROMAN } from '@/lib/progress';
@@ -39,7 +39,8 @@ export default function YouTab() {
   return (
     <Screen>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 30 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <View style={{ paddingTop: 8, gap: 4 }}>
+        <IconButton label="Back" onPress={() => router.back()}><Icon d={ICON.back} size={18} /></IconButton>
+        <View style={{ paddingTop: 12, gap: 4 }}>
           <Label>{paid ? 'Kleos+' : 'Free plan'}{s.trialEndsAt && paid ? ' · trial' : ''}</Label>
           <TextInput value={s.name} onChangeText={(v) => s.set({ name: v })} placeholder="Your name" placeholderTextColor={t.ink3} style={{ fontFamily: font.medium, fontSize: 30, letterSpacing: -0.8, color: t.ink, padding: 0 }} />
         </View>

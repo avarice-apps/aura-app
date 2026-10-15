@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Pressable, Text as RNText } from 'react-native';
 import Animated, { FadeIn, FadeInDown, useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { Body, Label, Muted, Row, Stack, Title } from '@/ui';
+import { Body, Label, Muted, Row, Stack, Statue } from '@/ui';
 import { font, useTheme } from '@/theme';
 import { play } from '@/lib/sound';
 import { recordSituationAnswer, situationStats } from '@/lib/api';
@@ -22,6 +22,7 @@ export type Situation = {
 export const ALL_SITUATIONS = SITUATIONS as Situation[];
 export const CATEGORY_LABEL: Record<string, string> = { intro: 'Introductions', dating: 'Dating', work: 'Work', group: 'Friends & groups', status: 'Status', conflict: 'Conflict', recovery: 'Recovery', hosting: 'Hosting' };
 const MIN_N_FOR_STATS = 200;
+const STATUE_FOR: Record<string, 'head' | 'athlete' | 'bust' | 'antinoos' | 'bustDark'> = { intro: 'head', dating: 'antinoos', work: 'bust', group: 'athlete', status: 'bustDark', conflict: 'bust', recovery: 'head', hosting: 'athlete' };
 const SECONDS = 12;
 
 export function SituationCard({ s, onAnswered, timed = true }: { s: Situation; onAnswered?: (correct: boolean, delta: number) => void; timed?: boolean }) {
@@ -73,14 +74,18 @@ export function SituationCard({ s, onAnswered, timed = true }: { s: Situation; o
   return (
     <Stack gap={14}>
       {timed && (
-        <View style={{ height: 3, borderRadius: 2, backgroundColor: t.lineStrong, overflow: 'hidden' }}>
-          <Animated.View style={[{ height: 3, backgroundColor: t.ink }, barStyle]} />
+        <View style={{ height: 3, borderRadius: 2, backgroundColor: t.cardAlt, overflow: 'hidden' }}>
+          <Animated.View style={[{ height: 3, backgroundColor: t.accent }, barStyle]} />
         </View>
       )}
-      <Stack gap={6}>
-        <Body small strong color={t.accent}>{s.title}</Body>
-        <Title size={21} style={{ fontFamily: font.regular, letterSpacing: -0.2, lineHeight: 28 }}>{s.scene}</Title>
-      </Stack>
+      <View style={{ borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, padding: 18, paddingRight: 104, minHeight: 170, overflow: 'hidden' }}>
+        <View pointerEvents="none" style={{ position: 'absolute', right: -6, bottom: -10 }}>
+          <Statue name={STATUE_FOR[s.category] ?? 'bust'} height={150} />
+        </View>
+        <Label style={{ marginBottom: 8 }}>{s.title}</Label>
+        <RNText style={{ fontFamily: font.regular, fontSize: 19, lineHeight: 26, letterSpacing: -0.2, color: t.ink }}>{s.scene}</RNText>
+      </View>
+      <RNText style={{ fontFamily: font.medium, fontSize: 15, color: t.ink }}>What do you do?</RNText>
       <Stack gap={8}>
         {s.options.map((o, i) => {
           const isBest = picked !== null && i === s.best;
@@ -93,10 +98,13 @@ export function SituationCard({ s, onAnswered, timed = true }: { s: Situation; o
               disabled={picked !== null}
               onPressIn={() => picked === null && play('select')}
               onPress={() => choose(i)}
-              style={{ minHeight: 56, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 11, backgroundColor: isBest ? t.accentSoft : t.card, borderWidth: isBest || isWrong ? 1.5 : 1, borderColor: isBest ? t.accent : isWrong ? t.ink : t.line, opacity: dim ? 0.55 : 1, overflow: 'hidden' }}
+              style={{ minHeight: 56, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 11, backgroundColor: isBest ? t.accentSoft : t.card, borderWidth: isBest || isWrong ? 1.5 : 1, borderColor: isBest ? t.accent : isWrong ? t.ink2 : t.line, opacity: dim ? 0.55 : 1, overflow: 'hidden' }}
             >
               {p !== null && <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${p}%`, backgroundColor: t.cardAlt, opacity: 0.6 }} />}
-              <Row gap={10}>
+              <Row gap={12}>
+                <View style={{ width: 30, height: 30, borderRadius: 15, borderWidth: 1, borderColor: isBest ? t.accent : t.lineStrong, backgroundColor: isBest ? t.accent : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                  <RNText style={{ fontFamily: font.mono, fontSize: 12, color: isBest ? t.onAccent : t.ink2 }}>{'ABCD'[i]}</RNText>
+                </View>
                 <Body small style={{ flex: 1 }}>{o.text}</Body>
                 {picked !== null && (
                   <Stack gap={0} style={{ alignItems: 'flex-end' }}>

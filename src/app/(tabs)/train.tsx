@@ -3,7 +3,7 @@ import { View, ScrollView, Pressable, Text as RNText } from 'react-native';
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { Screen, Title, Muted, Section, Icon, ICON, Bar } from '@/ui';
+import { Screen, Title, Muted, Section, Icon, ICON, Row } from '@/ui';
 import { font, useTheme } from '@/theme';
 import { useStore, isPaid } from '@/state/store';
 import { UNITS, ROMAN, isFreeLesson, nextLesson } from '@/lib/progress';
@@ -22,12 +22,27 @@ export default function Path() {
     <Screen>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 36 }} showsVerticalScrollIndicator={false}>
         <View style={{ paddingTop: 8, gap: 6 }}>
-          <Title size={30}>The Path</Title>
+          <Title size={30}>Train</Title>
+        </View>
+        <Row gap={10} style={{ marginTop: 14 }}>
+          {[
+            { k: 'sit', label: 'Situations', sub: 'Ten seconds to read the room', icon: ICON.clock, go: () => router.push('/situations') },
+            { k: 'scan', label: 'Aura Scan', sub: 'Fifteen seconds on camera', icon: ICON.scan, go: () => router.push('/aura-scan') },
+          ].map((x) => (
+            <Pressable key={x.k} onPress={() => { play('select'); x.go(); }} style={{ flex: 1, borderRadius: 20, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, padding: 14, gap: 10 }}>
+              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: t.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon d={x.icon} size={16} color={t.accent} />
+              </View>
+              <View style={{ gap: 2 }}>
+                <RNText style={{ fontFamily: font.medium, fontSize: 15, color: t.ink }}>{x.label}</RNText>
+                <RNText style={{ fontFamily: font.regular, fontSize: 12, color: t.ink2 }}>{x.sub}</RNText>
+              </View>
+            </Pressable>
+          ))}
+        </Row>
+        <View style={{ marginTop: 28, gap: 6 }}>
+          <Section title="The Path" note={`${done}/${total}`} style={{ marginBottom: 0 }} />
           <Muted small>Every lesson is a new live conversation, built around you.</Muted>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 8 }}>
-            <Bar value={done} max={total} />
-            <RNText style={{ fontFamily: font.mono, fontSize: 11, color: t.ink3 }}>{done}/{total}</RNText>
-          </View>
         </View>
 
         {UNITS.map((u, ui) => {
