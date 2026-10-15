@@ -13,7 +13,8 @@ import { prepareMic, speak } from '@/lib/voice';
 import { ALL_MISSIONS } from '@/lib/progress';
 import type { Receipt } from '@/lib/types';
 import { play } from '@/lib/sound';
-import { spend, refund } from '@/lib/plan';
+import { spend, refund, gate } from '@/lib/plan';
+import { liveAvailable } from '@/components/Conversation';
 
 /** Ask Poise: a chat. Tell it what happened; it answers with where the aura went, then offers the next move. */
 export default function PoiseTab() {
@@ -76,7 +77,7 @@ export default function PoiseTab() {
     }
   }
 
-  const canSend = text.trim().split(/\s+/).filter(Boolean).length >= 5;
+  const canSend = text.trim().split(/\s+/).filter(Boolean).length >= 3;
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
@@ -89,19 +90,25 @@ export default function PoiseTab() {
           </View>
           <View style={{ flex: 1 }}>
             <RNText style={{ fontFamily: font.medium, fontSize: 18, color: t.ink }}>Poise</RNText>
-            <Muted small>Tell me what happened. I’ll tell you where the aura went.</Muted>
+            <Muted small>Tell me what happened, or ask me anything.</Muted>
           </View>
           <Pressable onPress={() => router.push('/missions')} hitSlop={8} accessibilityLabel="Field missions" style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: t.line, alignItems: 'center', justifyContent: 'center' }}>
             <Icon d={ICON.flag} size={16} color={t.ink} />
           </Pressable>
+          {liveAvailable() ? (
+            <Pressable onPress={() => { if (gate('calls')) router.push('/poise-live'); }} hitSlop={8} accessibilityLabel="Talk to Poise" style={{ height: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: t.accent, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Icon d={ICON.live} size={15} color={t.onAccent} />
+              <RNText style={{ fontFamily: font.medium, fontSize: 13, color: t.onAccent }}>Talk</RNText>
+            </Pressable>
+          ) : null}
         </View>
 
         <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 14, paddingBottom: 24 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
           {thread.length === 0 && !context && (
             <Animated.View entering={FadeIn.duration(500)}>
               <PoiseBubble>
-                <Body>Describe a real moment. A dinner, a date, a meeting, a text you sent. Out loud or typed.</Body>
-                <Muted small style={{ marginTop: 6 }}>I’ll break it into where you gained and lost aura, and what to do next time.</Muted>
+                <Body>Describe a real moment: a dinner, a date, a meeting, a text you sent. Or ask me anything: what to wear Saturday, how to reply to her, how to ask for the raise.</Body>
+                <Muted small style={{ marginTop: 6 }}>Stories get an aura ledger. Questions get a straight answer. Tap Talk to do it out loud.</Muted>
               </PoiseBubble>
             </Animated.View>
           )}
@@ -142,7 +149,7 @@ export default function PoiseTab() {
             {recording ? (
               <Muted small>Listening… tap the square when you’re done.</Muted>
             ) : (
-              <TextInput value={text} onChangeText={setText} multiline placeholder="Describe a situation…" placeholderTextColor={t.ink3} style={{ fontFamily: font.regular, fontSize: 15, lineHeight: 21, color: t.ink, paddingVertical: 13 }} />
+              <TextInput value={text} onChangeText={setText} multiline placeholder="What happened, or what do you want to know?" placeholderTextColor={t.ink3} style={{ fontFamily: font.regular, fontSize: 15, lineHeight: 21, color: t.ink, paddingVertical: 13 }} />
             )}
           </View>
           {canSend && !recording ? (
@@ -175,23 +182,33 @@ function Exchange({ r, open, onOpen, onReplay, onReceipt }: { r: Receipt; open?:
       </View>
 
       {/* Poise */}
+      {r.advice ? (
+        <PoiseBubble>
+          <Body style={{ fontSize: 16, lineHeight: 23 }}>{r.advice}</Body>
+        </PoiseBubble>
+      ) : (
       <PoiseBubble>
         <Body style={{ fontSize: 16, lineHeight: 23 }}>{r.headline}</Body>
-        <Pressable onPress={onReceipt} style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 14, paddingBottom: 8, borderBottomWidth: 1, borderColor: t.cardAlt }}>
-          <Label>Aura ledger</Label>
-          <RNText style={{ fontFamily: font.mono, fontSize: 12, color: r.total >= 0 ? t.accent : t.ink }}>Net {r.total > 0 ? '+' : ''}{r.total}</RNText>
-        </Pressable>
+        {r.lines.length > 0 ? (
+          <Pressable onPress={onReceipt} style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 14, paddingBottom: 8, borderBottomWidth: 1, borderColor: t.cardAlt }}>
+            <Label>Aura ledger</Label>
+            <RNText style={{ fontFamily: font.mono, fontSize: 12, color: r.total >= 0 ? t.accent : t.ink }}>Net {r.total > 0 ? '+' : ''}{r.total}</RNText>
+          </Pressable>
+        ) : null}
         {r.lines.map((l, k) => (
           <View key={k} style={{ flexDirection: 'row', gap: 14, paddingVertical: 10, borderBottomWidth: k < r.lines.length - 1 ? 1 : 0, borderColor: t.cardAlt }}>
             <RNText style={{ fontFamily: font.mono, fontSize: 12, width: 36, color: l.points >= 0 ? t.accent : t.ink2 }}>{l.points > 0 ? '+' : ''}{l.points}</RNText>
             <Body small style={{ flex: 1 }}>{l.text}</Body>
           </View>
         ))}
-        <View style={{ marginTop: 12, backgroundColor: t.cardAlt, borderRadius: 14, padding: 14, gap: 4 }}>
-          <Label>Next time</Label>
-          <Body small>{r.next_time}</Body>
-        </View>
+        {r.next_time ? (
+          <View style={{ marginTop: 12, backgroundColor: t.cardAlt, borderRadius: 14, padding: 14, gap: 4 }}>
+            <Label>Next time</Label>
+            <Body small>{r.next_time}</Body>
+          </View>
+        ) : null}
       </PoiseBubble>
+      )}
 
       {open === 'said' && r.said_instead ? (
         <Animated.View entering={FadeInDown.duration(300)}>
@@ -214,12 +231,14 @@ function Exchange({ r, open, onOpen, onReplay, onReceipt }: { r: Receipt; open?:
         </Animated.View>
       ) : null}
 
-      {/* Next moves */}
+      {/* Next moves (stories only) */}
+      {!r.advice && r.lines.length > 0 && (
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {r.said_instead ? <Chip label="What should I have said?" on={open === 'said'} onPress={() => onOpen('said')} /> : null}
         <Chip label="Replay it as a roleplay" onPress={onReplay} />
         <Chip label="Make it a drill" on={open === 'drill'} onPress={() => onOpen('drill')} />
       </View>
+      )}
     </Animated.View>
   );
 }

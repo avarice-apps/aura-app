@@ -54,23 +54,44 @@ function usageNow() {
   return s.usage?.week === w ? s.usage : { week: w, calls: 0, clips: 0, poise: 0, profiles: 0 };
 }
 
+/** Extra live calls earned through invites. They never expire and are only used once the week's are gone. */
+export function bonusCalls(): number {
+  const c = useStore.getState().credits ?? { granted: 0, used: 0 };
+  return Math.max(0, c.granted - c.used);
+}
+
 export function remaining(kind: Metered): number {
   const s = useStore.getState();
-  return Math.max(0, LIMITS[tierOf(s)][kind] - usageNow()[kind]);
+  const weekly = Math.max(0, LIMITS[tierOf(s)][kind] - usageNow()[kind]);
+  return kind === 'calls' ? weekly + bonusCalls() : weekly;
 }
 
 /** Try to use one of a metered feature. Returns false (and nothing is spent) when the week's allowance is gone. */
 export function spend(kind: Metered): boolean {
-  if (remaining(kind) <= 0) return false;
+  const s = useStore.getState();
   const u = usageNow();
-  useStore.getState().set({ usage: { ...u, [kind]: u[kind] + 1 } });
-  return true;
+  if (LIMITS[tierOf(s)][kind] - u[kind] > 0) {
+    s.set({ usage: { ...u, [kind]: u[kind] + 1 }, lastSpent: { kind, bonus: false } });
+    return true;
+  }
+  if (kind === 'calls' && bonusCalls() > 0) {
+    const c = s.credits ?? { granted: 0, used: 0 };
+    s.set({ credits: { ...c, used: c.used + 1 }, lastSpent: { kind, bonus: true } });
+    return true;
+  }
+  return false;
 }
 
 /** Give one back (the call failed to start, the upload errored). */
 export function refund(kind: Metered) {
+  const s = useStore.getState();
+  if (kind === 'calls' && s.lastSpent?.kind === 'calls' && s.lastSpent.bonus) {
+    const c = s.credits ?? { granted: 0, used: 0 };
+    s.set({ credits: { ...c, used: Math.max(0, c.used - 1) }, lastSpent: undefined });
+    return;
+  }
   const u = usageNow();
-  useStore.getState().set({ usage: { ...u, [kind]: Math.max(0, u[kind] - 1) } });
+  s.set({ usage: { ...u, [kind]: Math.max(0, u[kind] - 1) }, lastSpent: undefined });
 }
 
 export const atLeast = (t: Tier, need: Tier) => (need === 'free' ? true : need === 'plus' ? t !== 'free' : t === 'black');

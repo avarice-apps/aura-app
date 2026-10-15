@@ -1,6 +1,7 @@
 import { API_URL, OFFLINE } from './config';
 import type { Duel, Evaluation, Lesson, Moment, ProfileRead, Receipt, ScanResult, SessionStart, TurnResult } from './types';
 import { useStore, type Goal } from '@/state/store';
+import { File, Directory, Paths } from 'expo-file-system';
 import { QUESTS } from './quests';
 
 const tone = () => useStore.getState().tone ?? 'real';
@@ -24,7 +25,14 @@ function profile() {
     evs.forEach((e) => e.archetype && (counts[e.archetype] = (counts[e.archetype] ?? 0) + 1));
     const archetype = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0] ?? '';
     const recent_changes = evs.slice(0, 3).map((e) => e.change?.text).filter(Boolean);
-    return { calls: evs.length, avg_rating: avg, weakest, recent_changes, archetype };
+    const now = Date.now();
+    const met = Object.fromEntries(
+      Object.entries(useStore.getState().met ?? {})
+        .sort((a, b) => b[1].at.localeCompare(a[1].at))
+        .slice(0, 12)
+        .map(([name, m]) => [name, { note: m.note, days: Math.max(0, Math.floor((now - Date.parse(m.at)) / 86400000)) }]),
+    );
+    return { calls: evs.length, avg_rating: avg, weakest, recent_changes, archetype, met };
   } catch {
     return undefined;
   }
@@ -160,7 +168,7 @@ function fileField(uri: string, name: string, type: string) {
 
 // ------------------------------------------------------------------ conversations
 
-export type StartArgs = { goal?: Goal; room_id?: string; lesson?: Lesson; floor_id?: string; daily_id?: string; pressure?: number; attempt_of?: string; max_turns?: number };
+export type StartArgs = { goal?: Goal; room_id?: string; lesson?: Lesson; floor_id?: string; daily_id?: string; pressure?: number; attempt_of?: string; max_turns?: number; poise?: boolean };
 
 export async function startSession(a: StartArgs): Promise<SessionStart & { openerAudio: AudioSrc }> {
   if (OFFLINE) {
@@ -172,7 +180,7 @@ export async function startSession(a: StartArgs): Promise<SessionStart & { opene
     const lessonScene = a.lesson ? { setting: a.lesson.setting, opener: a.lesson.opener, goal: a.lesson.goal } : q ? { setting: q.setting, opener: q.opener, goal: q.goal } : null;
     return { session_id: `demo_${Date.now()}`, character: sc.character, setting: lessonScene?.setting ?? sc.setting, goal: lessonScene?.goal ?? sc.goal, opener: lessonScene?.opener ?? sc.opener, max_turns: 2, pressure: a.pressure ?? 1, openerAudio: lessonScene ? undefined : DEMO_AUDIO[`open_${g}` as keyof typeof DEMO_AUDIO] };
   }
-  const r = await postJSON<SessionStart>('/session/start', { ...a, tone: tone(), profile: a.goal ? undefined : profile() });
+  const r = await postJSON<SessionStart>('/session/start', { ...a, tone: tone(), profile: a.goal ? undefined : profile(), subject: useStore.getState().subjectId });
   return { ...r, openerAudio: r.opener_audio };
 }
 
@@ -326,7 +334,7 @@ export async function withdrawTraining(subjectId: string): Promise<number> {
 export type LiveStart = SessionStart & { agent_id: string; conversation_token: string; overrides: any; speakers?: { name: string; role: string }[] };
 
 export async function liveStart(a: StartArgs): Promise<LiveStart> {
-  return postJSON<LiveStart>('/live/start', { ...a, tone: tone(), profile: a.goal ? undefined : profile() });
+  return postJSON<LiveStart>('/live/start', { ...a, tone: tone(), profile: a.goal ? undefined : profile(), subject: useStore.getState().subjectId });
 }
 
 export async function liveState(sessionId: string): Promise<{ done: boolean; leaving?: boolean; turns: number; interest: number | null; trust: number | null }> {
@@ -438,4 +446,69 @@ export type Portrait = { headline: string; in_a_room: string; strengths: string[
 export async function makePortrait(history: unknown[]): Promise<Portrait> {
   if (OFFLINE) throw new Error('The Portrait needs the Kleos server.');
   return postJSON<Portrait>('/portrait', { history, tone: tone() });
+}
+
+
+// ------------------------------------------------------------------ invites, clips, challenges, camera
+
+export type Me = { code: string; credits: number; friends: number; friends_paid: number; used_code: string | null; terms: { you_get: number; you_get_paid: number; they_get: number } };
+
+/** Sync invite code and earned call credits from the server. Safe to call often. */
+export async function syncMe(): Promise<Me | null> {
+  if (OFFLINE) return null;
+  const st = useStore.getState();
+  try {
+    const r = await fetch(`${API_URL}/me?subject=${encodeURIComponent(st.subjectId)}`);
+    if (!r.ok) return null;
+    const me: Me = await r.json();
+    st.set({ credits: { granted: me.credits, used: Math.min(st.credits?.used ?? 0, me.credits) }, invite: { code: me.code, usedCode: me.used_code ?? undefined, friends: me.friends } });
+    return me;
+  } catch {
+    return null;
+  }
+}
+
+export async function redeemCode(code: string): Promise<string> {
+  const r = await postJSON<{ message: string }>('/redeem', { subject: useStore.getState().subjectId, code });
+  syncMe();
+  return r.message;
+}
+
+export const inviteLink = (code: string) => `${API_URL}/i/${code}`;
+
+/** Render the Aura Replay clip for a finished call and download it. Returns a local file uri. */
+export async function makeClip(sessionId: string): Promise<string> {
+  const { url } = await postJSON<{ url: string }>(`/clip/${sessionId}`, {});
+  const dir = new Directory(Paths.cache, 'clips');
+  if (!dir.exists) dir.create();
+  const dest = new File(dir, `kleos-${sessionId}.mp4`);
+  if (dest.exists) dest.delete();
+  const f = await File.downloadFileAsync(url, dest);
+  return f.uri;
+}
+
+/** Camera stills taken during a live call, measured for eye contact before the read. */
+export async function uploadFrames(sessionId: string, uris: string[]): Promise<void> {
+  if (!uris.length) return;
+  const form = new FormData();
+  uris.slice(-60).forEach((u, i) => form.append('frames', fileField(u, `f${i}.jpg`, 'image/jpeg')));
+  await postForm(`/live/${sessionId}/frames`, form, 60000);
+}
+
+export type Challenge = { code: string; kind: 'daily' | 'floor'; ref_id: string; title: string; a_name: string; a_rating: number; a_verdict: string; b_name?: string; b_rating?: number; b_verdict?: string; done: boolean; winner?: 'a' | 'b' | 'tie' };
+
+export async function createChallenge(a: { kind: 'daily' | 'floor'; ref_id: string; title: string; rating: number; verdict: string }): Promise<Challenge> {
+  const st = useStore.getState();
+  return postJSON<Challenge>('/challenge', { ...a, subject: st.subjectId, name: st.name || 'Someone' });
+}
+
+export async function getChallenge(code: string): Promise<Challenge> {
+  const r = await fetch(`${API_URL}/challenge/${code}`);
+  if (!r.ok) throw new Error((await r.json().catch(() => ({})))?.detail ?? 'No challenge with that code.');
+  return r.json();
+}
+
+export async function answerChallenge(code: string, rating: number, verdict: string): Promise<Challenge> {
+  const st = useStore.getState();
+  return postJSON<Challenge>(`/challenge/${code}/answer`, { subject: st.subjectId, name: st.name || 'Your friend', rating, verdict });
 }

@@ -6,7 +6,8 @@ import { useAudioRecorder, useAudioRecorderState, RecordingPresets } from 'expo-
 import { Body, Muted, Icon, ICON, Tag } from '@/ui';
 import { Mark } from '@/components/Mark';
 import { font, useTheme } from '@/theme';
-import { startSession, sendTurn, evaluateSession, StartArgs } from '@/lib/api';
+import { startSession, sendTurn, evaluateSession, syncMe, StartArgs } from '@/lib/api';
+import { useStore } from '@/state/store';
 import type { Evaluation, SessionStart } from '@/lib/types';
 import { speak, stopSpeaking, prepareMic } from '@/lib/voice';
 import { play } from '@/lib/sound';
@@ -318,13 +319,20 @@ export function liveAvailable() {
  * otherwise the turn-based version (Expo Go, offline demo).
  */
 export function Conversation(props: { args: StartArgs; onDone: (r: ConversationDone) => void; onError?: (e: string) => void; label?: string; metered?: boolean; timeLimit?: number; onEnded?: () => void; onLeave?: () => void; onReadFailed?: (m: string) => void }) {
-  const kind = props.args.daily_id ? 'daily' : props.args.floor_id ? 'floor' : props.args.room_id ? 'quest' : props.args.lesson ? 'lesson' : props.args.goal ? 'onboarding' : 'other';
+  const kind = props.args.poise ? 'poise' : props.args.daily_id ? 'daily' : props.args.floor_id ? 'floor' : props.args.room_id ? 'quest' : props.args.lesson ? 'lesson' : props.args.goal ? 'onboarding' : 'other';
   // Capture the caller's handler first: `props` is reassigned below, and reading props.onDone at call time
   // would call this wrapper again, forever ("Maximum call stack size exceeded").
   const userDone = props.onDone;
   const onDone = (r: ConversationDone) => {
     try {
       track('call_finished', { kind, rating: r.evaluation?.rating ?? null, insufficient: !!r.evaluation?.insufficient, effort: (r.evaluation as any)?.effort ?? null });
+      // Recurring characters: remember what this person would remember about you next time.
+      const ev: any = r.evaluation;
+      if (ev?.memory && ev?.character && !ev.insufficient && !props.args.goal) {
+        const st = useStore.getState();
+        st.set({ met: { ...(st.met ?? {}), [ev.character]: { note: String(ev.memory).slice(0, 160), at: new Date().toISOString() } } });
+      }
+      if (!ev?.insufficient) syncMe(); // a first real call can unlock invite credits
     } catch {}
     userDone(r);
   };

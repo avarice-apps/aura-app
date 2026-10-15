@@ -60,6 +60,8 @@ export type Evaluation = {
 };
 
 export type Receipt = {
+  /** Set when he asked for advice instead of telling a story: Poise's answer, no ledger. */
+  advice?: string;
   title: string;
   lines: { text: string; points: number }[];
   total: number;

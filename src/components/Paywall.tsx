@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, ScrollView, Pressable, Text as RNText, Linking, ActivityIndicator } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
 import { Body, Button, Icon, ICON, Muted, Row, Stack, ArtCard, OnBlue } from '@/ui';
 import { font, useTheme } from '@/theme';
 import { TIERS, useTier } from '@/lib/plan';
@@ -17,7 +18,7 @@ const PER_LONG = { week: 'every week', month: 'every month', year: 'every year' 
 export type PaywallReason = 'calls' | 'clips' | 'poise' | 'profiles' | 'read' | 'black' | 'path' | 'retry' | 'onboarding' | 'plan';
 
 const HEAD: Record<PaywallReason, [string, string]> = {
-  calls: ['You’ve used this week’s free calls.', 'Kleos+ makes every scene, every day, unlimited.'],
+  calls: ['You’ve used this week’s free calls.', 'Kleos+ makes every scene, every day, unlimited. Or invite a friend: you both get extra calls.'],
   clips: ['That was this week’s free clip.', 'Rate every fumble you see. Unlimited with Kleos+.'],
   poise: ['Poise is out of free debriefs this week.', 'Tell her about every date, meeting and night out.'],
   profiles: ['That was your free Profile Read.', 'Re-read your page after every change.'],
@@ -160,6 +161,7 @@ export function PaywallBody({ onDone, onSkip, reason = 'plan' }: { onDone: () =>
           <Pressable onPress={doRestore} hitSlop={8}><Muted small>Restore</Muted></Pressable>
           <Pressable onPress={() => Linking.openURL(`${LEGAL_URL}/terms`)} hitSlop={8}><Muted small>Terms</Muted></Pressable>
           <Pressable onPress={() => Linking.openURL(`${LEGAL_URL}/privacy`)} hitSlop={8}><Muted small>Privacy</Muted></Pressable>
+          {reason === 'calls' ? <Pressable onPress={() => router.push('/invite')} hitSlop={8}><Muted small>Invite a friend</Muted></Pressable> : null}
           <Pressable onPress={onSkip} hitSlop={8}><Muted small>Not now</Muted></Pressable>
         </Row>
       </View>

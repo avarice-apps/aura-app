@@ -9,7 +9,9 @@ import asyncio
 import hashlib
 import json
 import os
+import re
 import shutil
+import subprocess
 import tempfile
 import time
 import uuid
@@ -18,7 +20,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, Response, HTMLResponse, FileResponse, StreamingResponse
 from fastapi import Request
 
-from pipeline import audio, face, rubric, poise, tts, converse, live, vision, duel, legal
+from pipeline import audio, face, rubric, poise, tts, converse, live, vision, duel, legal, referrals, clips
 from training import store as train_store, learned
 
 app = FastAPI(title="Aura", version="0.1")
@@ -28,7 +30,7 @@ app = FastAPI(title="Aura", version="0.1")
 # Every expensive endpoint costs real money (models, voice). Cap requests per client so nobody can use the
 # server as a free AI proxy or run up the bill. Generous for real use; ElevenLabs' /llm calls are exempt
 # (they're authenticated with the agent secret and already bounded by the live session).
-_EXPENSIVE = ("/read", "/pressure", "/scan", "/live/", "/session/", "/situations/", "/lesson", "/ledger", "/portrait", "/duel", "/moment", "/profile")
+_EXPENSIVE = ("/read", "/pressure", "/scan", "/live/", "/session/", "/situations/", "/lesson", "/ledger", "/portrait", "/duel", "/moment", "/profile", "/clip/", "/redeem", "/challenge")
 _LIMITS = ((120, 600), (1000, 86400))  # per IP: 120 per 10 minutes, 1000 per day (campus wifi shares IPs)
 _hits: dict[str, list[float]] = {}
 
@@ -320,7 +322,7 @@ async def live_start(request: Request):
     """Start a live voice session: our session + a one-time ElevenLabs token + per-session overrides."""
     b = await request.json()
     try:
-        out = converse.start(room_id=b.get("room_id"), goal=b.get("goal"), lesson=b.get("lesson"), floor_id=b.get("floor_id"), daily_id=b.get("daily_id"), pressure=int(b.get("pressure", 2)), max_turns=b.get("max_turns"), attempt_of=b.get("attempt_of"), tone=b.get("tone", "real"), live=True, profile=b.get("profile"))
+        out = converse.start(room_id=b.get("room_id"), goal=b.get("goal"), lesson=b.get("lesson"), floor_id=b.get("floor_id"), daily_id=b.get("daily_id"), pressure=int(b.get("pressure", 2)), max_turns=b.get("max_turns"), attempt_of=b.get("attempt_of"), tone=b.get("tone", "real"), live=True, profile=b.get("profile"), poise=bool(b.get("poise")))
     except KeyError as e:
         raise HTTPException(410, f"That scene isn't available: {e}")
     except ValueError as e:
@@ -333,6 +335,7 @@ async def live_start(request: Request):
         print("live start failed:", repr(e)[:300])
         raise HTTPException(502, "Couldn't open the live line. Check the server's ElevenLabs key and credits, then try again.")
     sid = out["session_id"]
+    converse.SESSIONS[sid]["subject"] = str(b.get("subject") or "")[:64]
     return {**out, "agent_id": agent_id, "conversation_token": token, "overrides": {"agent": {"prompt": {"prompt": f"[[kleos:{sid}]]"}, "firstMessage": out["opener"]}, "tts": {"voiceId": out["character"]["voice"]}}}
 
 
@@ -348,6 +351,13 @@ async def live_state(sid: str):
 
 async def _read_back(sid: str, cid: str | None, voice: bool) -> dict:
     s = converse.SESSIONS[sid]
+    if s["spec"].get("poise"):
+        # A talk with Poise has no score. Just make sure ElevenLabs forgets it.
+        if cid:
+            asyncio.create_task(live.delete_conversation(cid))
+        out = {"poise": True, "turns": [{"role": t["role"], "text": t["text"]} for t in s["turns"]]}
+        s["evaluation"] = out
+        return out
     if s.get("pending_user"):  # he hung up mid-thought after an "Mm-hm": his words still count
         frag = s.pop("pending_user")
         s["turns"].append({"role": "user", "text": frag, "facts": converse.text_facts(frag)})
@@ -356,6 +366,7 @@ async def _read_back(sid: str, cid: str | None, voice: bool) -> dict:
         # then read the call anyway (voice axes stay neutral without it). The analysis keeps running in the
         # background so the recording is still deleted.
         analysis = asyncio.create_task(live.analyse_call(sid, cid))
+        s["analysis_task"] = analysis
         try:
             await asyncio.wait_for(asyncio.shield(analysis), timeout=float(os.environ.get("KLEOS_AUDIO_WAIT", "6")))
         except asyncio.TimeoutError:
@@ -365,6 +376,11 @@ async def _read_back(sid: str, cid: str | None, voice: bool) -> dict:
         except Exception as e:
             print("live analysis failed:", e)
     out = await converse.evaluate(sid)
+    if s.get("subject") and not out.get("insufficient"):
+        try:
+            referrals.activate(s["subject"])
+        except Exception as e:
+            print("referral activation failed:", e)
     if voice and out.get("script"):
         out["script_audio"] = _voice_url(out["script"], tts.VOICE_ID)
     s["evaluation"] = out
@@ -437,6 +453,7 @@ async def session_start(request: Request):
     b = await request.json()
     try:
         out = converse.start(room_id=b.get("room_id"), goal=b.get("goal"), lesson=b.get("lesson"), floor_id=b.get("floor_id"), daily_id=b.get("daily_id"), pressure=int(b.get("pressure", 1)), max_turns=b.get("max_turns") or (8 if (b.get("floor_id") or b.get("daily_id")) else None), attempt_of=b.get("attempt_of"), tone=b.get("tone", "real"), profile=b.get("profile"))
+        converse.SESSIONS[out["session_id"]]["subject"] = str(b.get("subject") or "")[:64]
     except KeyError as e:
         raise HTTPException(410, str(e))
     except ValueError as e:
@@ -525,8 +542,8 @@ async def make_ledger(text: str = Form(""), context: str = Form(""), tone: str =
             story = _cap(v.get("transcript") or text, 3000)
         finally:
             os.remove(path)
-    if len(story.split()) < 5:
-        raise HTTPException(422, "I didn’t catch enough of that. Tell me what happened in a few sentences." if audio_file is not None else "Give me a bit more. What happened, who was there, what did you say?")
+    if len(story.split()) < 3:
+        raise HTTPException(422, "I didn’t catch enough of that. Say it again, a bit slower." if audio_file is not None else "Give me a bit more: what happened, or what do you want to know?")
     out = await converse.ledger(story, context, tone)
     out["story"] = story
     return out
@@ -616,6 +633,190 @@ async def duel_answer(code: str, video: UploadFile = File(...), name: str = Form
     return await duel.answer(code, name, v, p, subject_id)
 
 
+# ---------------------------------------------------------------- camera during live calls
+
+@app.post("/live/{sid}/frames")
+async def live_frames(sid: str, frames: list[UploadFile] = File(...)):
+    """Optional: stills from the front camera during the call (one every few seconds). Measured for eye contact
+    and stillness, then deleted. Sent before /finish so the read can use them."""
+    s = converse.SESSIONS.get(sid)
+    if s is None:
+        raise HTTPException(410, "That call expired.")
+    tmp = tempfile.mkdtemp(prefix="kleos_cam_")
+    try:
+        n = 0
+        for f in frames[:60]:
+            raw = await f.read()
+            jpg = _as_jpeg(raw)
+            if not jpg:
+                continue
+            with open(os.path.join(tmp, f"f{n:03d}.jpg"), "wb") as fh:
+                fh.write(jpg)
+            n += 1
+        if n < 3:
+            return {"camera": None}
+        vid = os.path.join(tmp, "cam.mp4")
+        await asyncio.to_thread(subprocess.run, ["ffmpeg", "-y", "-loglevel", "error", "-framerate", "1", "-i", os.path.join(tmp, "f%03d.jpg"),
+                                                 "-vf", "scale=640:-2,format=yuv420p", "-c:v", "libx264", "-preset", "ultrafast", vid], check=True, timeout=60)
+        p = await asyncio.to_thread(face.analyse, vid, 1.0, True)
+        d = p.to_dict()
+        if not d.get("available") or d.get("face_found_ratio", 0) < 0.3:
+            return {"camera": None}
+        s["camera"] = {k: d.get(k) for k in ("frames_analysed", "face_found_ratio", "eye_contact_ratio", "contact_breaks", "gaze_down_ratio", "head_motion", "shoulder_tilt_deg", "lean", "smile_ratio")}
+        return {"camera": {"eye_contact": d.get("eye_contact_ratio")}}
+    except Exception as e:
+        print("camera analysis failed:", repr(e)[:200])
+        return {"camera": None}
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+# ---------------------------------------------------------------- Aura Replay clips
+
+@app.post("/clip/{sid}")
+async def make_clip(sid: str):
+    s = converse.SESSIONS.get(sid)
+    if s is None or not s.get("evaluation") or s["evaluation"].get("poise") or s["evaluation"].get("insufficient"):
+        raise HTTPException(410, "That call has expired. Clips can be made for about two hours after a call.")
+    task = s.get("analysis_task")
+    if task is not None and not task.done():
+        try:
+            await asyncio.wait_for(asyncio.shield(task), timeout=20)
+        except Exception:
+            pass
+    try:
+        path = await clips.make(sid, s, s["evaluation"], tts_bytes=lambda t: tts.speak(t))
+    except Exception as e:
+        print("clip failed:", repr(e)[:200])
+        raise HTTPException(502, "Couldn't make the clip. Try again.")
+    return {"url": f"{PUBLIC_URL}/clips/{os.path.basename(path)}"}
+
+
+@app.get("/clips/{name}")
+async def get_clip(name: str):
+    if not re.fullmatch(r"s_[0-9a-f]{12}\.mp4", name):
+        raise HTTPException(404)
+    p = os.path.join(clips.CLIP_DIR, name)
+    if not os.path.exists(p):
+        raise HTTPException(404, "That clip has expired.")
+    return FileResponse(p, media_type="video/mp4", filename="kleos-aura-replay.mp4")
+
+
+# ---------------------------------------------------------------- referrals and ambassadors
+
+@app.get("/me")
+async def me(subject: str):
+    if not subject or len(subject) > 64:
+        raise HTTPException(400, "subject required")
+    return referrals.me(subject)
+
+
+@app.post("/redeem")
+async def redeem(request: Request):
+    b = await request.json()
+    try:
+        return referrals.redeem(str(b.get("subject") or "")[:64], str(b.get("code") or ""))
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+
+
+@app.post("/webhooks/revenuecat")
+async def revenuecat_webhook(request: Request):
+    expected = os.environ.get("REVENUECAT_WEBHOOK_AUTH", "")
+    if not expected or request.headers.get("authorization", "") not in (expected, f"Bearer {expected}"):
+        raise HTTPException(401)
+    return referrals.revenue_event(await request.json())
+
+
+@app.post("/admin/ambassadors")
+async def admin_add_ambassador(request: Request):
+    _admin(request.headers.get("x-admin-key", ""))
+    b = await request.json()
+    try:
+        a = referrals.create_ambassador(b.get("code", ""), b.get("name", ""), float(b.get("pct", referrals.AMBASSADOR_PCT)))
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    k = referrals.dashboard_key(a["code"])
+    return {**a, "invite_link": f"{PUBLIC_URL}/i/{a['code']}", "dashboard": f"{PUBLIC_URL}/a/{a['code']}?k={k}"}
+
+
+@app.get("/admin/ambassadors")
+async def admin_list_ambassadors(request: Request):
+    _admin(request.headers.get("x-admin-key", ""))
+    return referrals.all_ambassadors()
+
+
+def _page(title: str, body: str) -> HTMLResponse:
+    return HTMLResponse(f"""<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{title}</title><link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Geist:wght@400;500&family=Geist+Mono&display=swap" rel="stylesheet">
+<style>body{{margin:0;background:#1608F2;color:#fff;font-family:Geist,system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center}}
+main{{max-width:420px;padding:32px 24px}}h1{{font-family:'Instrument Serif',serif;font-weight:400;font-size:52px;line-height:1;margin:12px 0 16px}}
+.k{{font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:2px;opacity:.75}}p{{color:#D6D2FF;line-height:1.5}}
+a.b{{display:block;text-align:center;background:#fff;color:#1608F2;text-decoration:none;font-weight:500;padding:16px;border-radius:999px;margin-top:20px}}
+.code{{font-family:'Geist Mono',monospace;font-size:32px;letter-spacing:6px;margin:8px 0}}table{{width:100%;border-collapse:collapse;margin-top:16px}}
+td{{padding:10px 0;border-top:1px solid rgba(255,255,255,.25)}}td:last-child{{text-align:right;font-family:'Geist Mono',monospace}}</style></head>
+<body><main>{body}</main></body></html>""")
+
+
+@app.get("/i/{code}")
+async def invite_page(code: str):
+    import html as _h
+    c = _h.escape(re.sub(r"[^A-Za-z0-9]", "", code).upper()[:16])
+    store = os.environ.get("KLEOS_APP_STORE_URL", "https://apps.apple.com/")
+    return _page("You're invited to Kleos", f"""<div class="k">KLEOS · INVITE</div><h1>Someone thinks you should hear the truth.</h1>
+<p>Kleos puts you in live conversations and tells you honestly how you came across. Use this code in the app for {referrals.INVITEE_CALLS} extra live calls.</p>
+<div class="code">{c}</div><a class="b" href="kleos://invite/{c}">Open in Kleos</a><a class="b" style="background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5)" href="{store}">Get the app</a>""")
+
+
+@app.get("/a/{code}")
+async def ambassador_page(code: str, k: str = ""):
+    import html as _h
+    if not hmac_eq(k, referrals.dashboard_key(code)):
+        raise HTTPException(404)
+    st = referrals.ambassador_stats(code)
+    if not st:
+        raise HTTPException(404)
+    rows = "".join(f"<tr><td>{a}</td><td>{b}</td></tr>" for a, b in [("Code", st["code"]), ("Signed up with your code", st["signups"]), ("Finished a call", st["active"]), ("Subscribed", st["paying"]), ("Earned so far", f"${st['earned']:.2f}"), ("Ready to pay out", f"${st['payable']:.2f}")])
+    return _page("Kleos ambassador", f"""<div class="k">KLEOS · AMBASSADOR</div><h1>{_h.escape(st['name'] or st['code'])}</h1>
+<p>You earn {int(st['pct']*100)}% of what each subscriber you bring pays in their first 30 days, after Apple's fee, up to ${referrals.AMBASSADOR_CAP_USD:.0f} per subscriber. Payouts are monthly once the 30 days have passed.</p>
+<table>{rows}</table><p style="margin-top:20px">Your link: {PUBLIC_URL}/i/{st['code']}</p>""")
+
+
+def hmac_eq(a: str, b: str) -> bool:
+    import hmac as _hm
+    return _hm.compare_digest((a or "").encode(), (b or "").encode())
+
+
+# ---------------------------------------------------------------- scene challenges
+
+@app.post("/challenge")
+async def challenge_create(request: Request):
+    b = await request.json()
+    try:
+        return referrals.challenge_create(b.get("kind", ""), str(b.get("ref_id", "")), str(b.get("title", "")), str(b.get("subject", ""))[:64], str(b.get("name", "")), int(b.get("rating", 0)), str(b.get("verdict", "")))
+    except (ValueError, TypeError) as e:
+        raise HTTPException(422, str(e))
+
+
+@app.get("/challenge/{code}")
+async def challenge_get(code: str):
+    try:
+        return referrals.challenge_get(code)
+    except KeyError as e:
+        raise HTTPException(404, str(e))
+
+
+@app.post("/challenge/{code}/answer")
+async def challenge_answer(code: str, request: Request):
+    b = await request.json()
+    try:
+        return referrals.challenge_answer(code, str(b.get("subject", ""))[:64], str(b.get("name", "")), int(b.get("rating", 0)), str(b.get("verdict", "")))
+    except KeyError as e:
+        raise HTTPException(404, str(e))
+    except (ValueError, TypeError) as e:
+        raise HTTPException(409, str(e))
+
+
 @app.post("/privacy/delete")
 async def privacy_delete(request: Request):
     """'Delete everything' in the app: removes this install's duels and training clips from the server."""
@@ -624,6 +825,10 @@ async def privacy_delete(request: Request):
     if not sid:
         raise HTTPException(400, "subject_id required")
     n = duel.delete_for(sid)
+    try:
+        referrals.delete_for(sid)
+    except Exception:
+        pass
     try:
         train_store.withdraw(sid)
     except Exception:

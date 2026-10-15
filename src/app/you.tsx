@@ -107,7 +107,8 @@ export default function YouTab() {
             ))}
           </Row>
           <Card style={{ paddingVertical: 4 }}>
-            <ListRow first title="Conversation style" sub="Unfiltered is funny, blunt and swears" right={<ToneSwitch />} />
+            <ListRow first title="Invite friends" sub={`Free live calls for you both${s.invite?.code ? ` · code ${s.invite.code}` : ''}`} onPress={() => router.push('/invite')} />
+            <ListRow title="Conversation style" sub="Unfiltered is funny, blunt and swears" right={<ToneSwitch />} />
             <ListRow title="Sounds" sub="The reveal after a read" right={<Switch value={s.sounds} onValueChange={(v) => { s.set({ sounds: v }); setSoundsEnabled(v); }} trackColor={{ true: t.accent }} />} />
             <ListRow title={`Plan · ${tier === 'black' ? 'Kleos Black' : tier === 'plus' ? 'Kleos+' : 'Free'}`} sub={tier === 'free' ? `${remaining('calls')} free call${remaining('calls') === 1 ? '' : 's'} left this week` : 'Manage in Settings › Apple ID › Subscriptions'} onPress={() => router.push({ pathname: '/paywall', params: { reason: 'plan' } })} />
             <ListRow title="Restore purchases" sub="Bought Kleos on another phone?" onPress={async () => { try { const p = await restore(); Alert.alert(p === 'free' ? 'Nothing to restore' : 'Restored', p === 'free' ? 'No active Kleos subscription on this Apple ID.' : `You’re on ${p === 'black' ? 'Kleos Black' : 'Kleos+'}.`); } catch (e: any) { Alert.alert('Restore failed', e?.message ?? 'Try again.'); } }} />

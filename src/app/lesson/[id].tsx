@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeIn, FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { Screen, Title, Body, Muted, Label, Button, Row, Stack, Statue, Halo, Pill, IconButton, Icon, ICON, Num } from '@/ui';
 import { Conversation } from '@/components/Conversation';
+import { AfterRead } from '@/components/AfterRead';
 import { ResultHero, FeedbackCard, HearPoise, CompareCard, Appear, FullRead, Insufficient } from '@/components/Results';
 import { SituationCard, pickSituation } from '@/components/SituationCard';
 import { useTheme } from '@/theme';
@@ -150,6 +151,7 @@ export default function LessonScreen() {
             <Appear delay={120}><FeedbackCard e={a} /></Appear>
             <Appear delay={240}><HearPoise src={a.scriptAudio ?? a.script_audio} /></Appear>
             <Appear delay={360}><FullRead e={a} /></Appear>
+            <Appear delay={480}><AfterRead sessionId={sid} e={a} /></Appear>
           </Stack>
         )}
 

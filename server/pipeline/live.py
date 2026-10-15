@@ -244,6 +244,15 @@ async def analyse_call(session_id: str, conversation_id: str) -> None:
         transcript = meta.get("transcript") or []
         if not rec:
             return
+        # Kept for at most two hours so he can make an Aura Replay clip of the moment it turned; then deleted.
+        from . import clips
+        try:
+            clips.gc()
+            with open(clips.rec_path(session_id), "wb") as f:
+                f.write(rec)
+            s["rec_times"] = [{"role": m.get("role"), "message": m.get("message"), "time_in_call_secs": m.get("time_in_call_secs")} for m in transcript]
+        except OSError as e:
+            print("could not keep recording for clip:", e)
         tmp = tempfile.mkdtemp(prefix="kleos_live_")
         try:
             await _measure(s, user_turns, transcript, meta, rec, tmp)

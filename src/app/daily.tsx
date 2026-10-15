@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Screen, Body, Muted, Label, Button, Row, Stack, Pill, IconButton, Icon, ICON, Card, ArtCard, OnBlue } from '@/ui';
 import { Conversation } from '@/components/Conversation';
+import { AfterRead } from '@/components/AfterRead';
 import { ResultHero, FeedbackCard, HearPoise, Appear, FullRead, Insufficient } from '@/components/Results';
 import { font, useTheme } from '@/theme';
 import { useStore } from '@/state/store';
@@ -24,6 +25,7 @@ export default function DailyQuest() {
   const [pressure, setPressure] = useState(2);
   const [step, setStep] = useState<Step>('brief');
   const [ev, setEv] = useState<Ev | null>(null);
+  const [sid, setSid] = useState('');
 
   const header = (
     <Row style={{ justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8 }}>
@@ -45,6 +47,7 @@ export default function DailyQuest() {
           onDone={({ sessionId, evaluation }) => {
             const e = evaluation as Ev;
             setEv(e);
+            setSid(sessionId);
             s.set({ dailyQuestDone: Array.from(new Set([...(s.dailyQuestDone ?? []), today()])) });
             if (!e.insufficient) {
               s.addSession({ id: sessionId, kind: 'room', title: d.title, createdAt: new Date().toISOString(), evaluation: e });
@@ -99,6 +102,7 @@ export default function DailyQuest() {
                 <Appear delay={120}><FeedbackCard e={ev} /></Appear>
                 <Appear delay={240}><HearPoise src={ev.scriptAudio ?? ev.script_audio} /></Appear>
                 <Appear delay={360}><FullRead e={ev} /></Appear>
+                <Appear delay={480}><AfterRead sessionId={sid} e={ev} challenge={{ kind: 'daily', ref_id: d.id, title: d.title }} /></Appear>
               </>
             )}
             <Muted small align="center">A new one tomorrow.</Muted>

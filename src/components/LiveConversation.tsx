@@ -4,10 +4,13 @@ import Animated, { FadeIn, FadeInDown, useSharedValue, withTiming, withRepeat, E
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { ConversationProvider, useConversation } from '@elevenlabs/react-native';
-import { Body, Muted, Tag } from '@/ui';
+import { CameraView, useCameraPermissions } from 'expo-camera';
+import { File } from 'expo-file-system';
+import { Body, Muted, Tag, Icon, ICON } from '@/ui';
 import { Mark } from '@/components/Mark';
 import { font, useTheme } from '@/theme';
-import { liveStart, liveFinish, liveState, StartArgs, LiveStart } from '@/lib/api';
+import { liveStart, liveFinish, liveState, uploadFrames, StartArgs, LiveStart } from '@/lib/api';
+import { useStore } from '@/state/store';
 import type { ConversationDone } from '@/components/Conversation';
 import { prepareMic } from '@/lib/voice';
 import { play } from '@/lib/sound';
@@ -82,6 +85,13 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
   const leavingRef = useRef(false);
   const startRef = useRef<LiveStart | null>(null);
   const convId = useRef('');
+  const isPoise = !!args.poise;
+  // Optional front camera: a still every few seconds, measured for eye contact after the call, then deleted.
+  const cameraOn = useStore((st) => st.cameraOn) && !isPoise;
+  const setStore = useStore((st) => st.set);
+  const [camPerm, askCam] = useCameraPermissions();
+  const cam = useRef<CameraView>(null);
+  const frames = useRef<string[]>([]);
 
   // Callbacks below run long after this render; they reach the latest finish/fail through this ref.
   const act = useRef({ finish: () => {}, fail: (_m: string) => {} });
@@ -166,6 +176,30 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
       clearInterval(clock);
     };
   }, [phase, conv, energy]);
+
+  useEffect(() => {
+    if (!cameraOn || phase !== 'live' || !camPerm?.granted) return;
+    let busy = false;
+    const id = setInterval(async () => {
+      if (busy || !cam.current) return;
+      busy = true;
+      try {
+        const pic = await cam.current.takePictureAsync({ quality: 0.25, shutterSound: false, skipProcessing: true });
+        if (pic?.uri) frames.current = [...frames.current, pic.uri].slice(-60);
+      } catch {}
+      busy = false;
+    }, 3000);
+    return () => clearInterval(id);
+  }, [cameraOn, phase, camPerm?.granted]);
+
+  async function toggleCamera() {
+    if (cameraOn) {
+      setStore({ cameraOn: false });
+      return;
+    }
+    const p = camPerm?.granted ? camPerm : await askCam();
+    if (p?.granted) setStore({ cameraOn: true });
+  }
 
   useEffect(() => {
     if (phase === 'connecting' || phase === 'evaluating') idle.value = withRepeat(withTiming(0.45, { duration: 1300, easing: Easing.inOut(Easing.sin) }), -1, true);
@@ -258,6 +292,17 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
     try {
       onEnded?.();
     } catch {}
+    if (frames.current.length >= 3 && startRef.current) {
+      setPhase('evaluating');
+      const shots = frames.current;
+      frames.current = [];
+      await Promise.race([uploadFrames(startRef.current.session_id, shots).catch(() => {}), new Promise((r) => setTimeout(r, 8000))]);
+      shots.forEach((u) => {
+        try {
+          new File(u).delete(); // stills never stay on the phone either
+        } catch {}
+      });
+    }
     await readBack(id);
   }
 
@@ -279,7 +324,9 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
     phase === 'connecting'
       ? 'Connecting'
       : phase === 'evaluating'
-        ? 'Call ended. Poise is reading it back'
+        ? isPoise
+          ? 'Call ended'
+          : 'Call ended. Poise is reading it back'
         : phase === 'error'
           ? err
           : leaving
@@ -302,6 +349,11 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
             </Body>
             <Muted small numberOfLines={1}>{start.character.style}</Muted>
           </View>
+          {!isPoise && phase !== 'error' ? (
+            <Pressable onPress={toggleCamera} hitSlop={8} accessibilityLabel={cameraOn ? 'Turn camera off' : 'Turn camera on'} style={{ width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: cameraOn ? t.accent : t.line, backgroundColor: cameraOn ? t.accentSoft : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon d={ICON.scan} size={14} color={cameraOn ? t.accent : t.ink2} />
+            </Pressable>
+          ) : null}
           {phase === 'live' ? <Tag label={clock} tone={timeLimit && shown <= 10 ? 'inverse' : 'accent'} /> : <Tag label="Live" tone="accent" />}
         </Animated.View>
       )}
@@ -311,6 +363,11 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
         </View>
       )}
 
+      {cameraOn && camPerm?.granted && (phase === 'live' || phase === 'connecting') ? (
+        <View style={{ position: 'absolute', right: 20, top: 150, width: 84, height: 112, borderRadius: 14, overflow: 'hidden', zIndex: 5, borderWidth: 1, borderColor: t.line, backgroundColor: t.card }}>
+          <CameraView ref={cam} style={{ flex: 1 }} facing="front" mirror animateShutter={false} />
+        </View>
+      ) : null}
       <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 10, paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
         {msgs.map((m, i) => {
           const showName = !m.mine && (m.who !== name || present.length > 0) && msgs[i - 1]?.who !== m.who;
@@ -333,7 +390,7 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
         </View>
         {phase === 'live' ? (
           <Pressable onPress={finish} hitSlop={10} style={{ paddingHorizontal: 20, height: 40, borderRadius: 20, backgroundColor: turns > 0 ? t.ink : t.card, borderWidth: turns > 0 ? 0 : 1, borderColor: t.line, justifyContent: 'center' }}>
-            <RNText style={{ fontFamily: font.medium, fontSize: 14, color: turns > 0 ? t.bg : t.ink2 }}>{turns > 0 ? 'End call and get my read' : 'Hang up'}</RNText>
+            <RNText style={{ fontFamily: font.medium, fontSize: 14, color: turns > 0 ? t.bg : t.ink2 }}>{isPoise ? 'End call' : turns > 0 ? 'End call and get my read' : 'Hang up'}</RNText>
           </Pressable>
         ) : phase === 'error' ? (
           <View style={{ flexDirection: 'row', gap: 10 }}>

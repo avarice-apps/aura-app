@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Screen, Body, Muted, Label, Button, Row, Stack, Pill, IconButton, Icon, ICON, Card, ArtCard, OnBlue } from '@/ui';
 import { Conversation } from '@/components/Conversation';
+import { AfterRead } from '@/components/AfterRead';
 import { ResultHero, FeedbackCard, HearPoise, Appear, FullRead, Insufficient } from '@/components/Results';
 import { font, useTheme } from '@/theme';
 import { useStore } from '@/state/store';
@@ -30,6 +31,7 @@ export default function Rehearse() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [ev, setEv] = useState<Ev | null>(null);
+  const [sid, setSid] = useState('');
   const black = tier === 'black';
 
   async function build() {
@@ -65,6 +67,7 @@ export default function Rehearse() {
           onDone={({ sessionId, evaluation }) => {
             const e = evaluation as Ev;
             setEv(e);
+            setSid(sessionId);
             if (!e.insufficient) {
               s.addSession({ id: sessionId, kind: 'room', title: 'Rehearsal', createdAt: new Date().toISOString(), evaluation: e });
               s.touchDay();
@@ -135,6 +138,7 @@ export default function Rehearse() {
             <Appear delay={120}><FeedbackCard e={ev} /></Appear>
             <Appear delay={240}><HearPoise src={ev.scriptAudio ?? ev.script_audio} /></Appear>
             <Appear delay={360}><FullRead e={ev} /></Appear>
+            <Appear delay={480}><AfterRead sessionId={sid} e={ev} /></Appear>
           </Stack>
         ))}
       </ScrollView>

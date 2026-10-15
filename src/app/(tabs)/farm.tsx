@@ -6,14 +6,26 @@ import { Screen, Title, Muted, Section, Icon, ICON, Row, ArtCard, OnBlue, Chevro
 import { font, useTheme } from '@/theme';
 import { useStore } from '@/state/store';
 import { play } from '@/lib/sound';
+import { getChallenge } from '@/lib/api';
 
 /** Farm: the social side. Farm-offs, Debate Duels, rating moments, reading profiles. Mostly free; built to be shared. */
 export default function Farm() {
   const t = useTheme();
   const s = useStore();
   const [code, setCode] = useState('');
+  // One box for both: scene challenges and debate duels share the 5-character code format.
+  async function join(c: string) {
+    setCode('');
+    try {
+      await getChallenge(c);
+      router.push({ pathname: '/challenge/[code]', params: { code: c } });
+    } catch {
+      router.push({ pathname: '/duel/[code]', params: { code: c } });
+    }
+  }
   const recent = [
     ...(s.duels ?? []).map((d) => ({ k: `d${d.code}`, title: d.topic, sub: `Duel ${d.code} · ${d.result ? 'judged' : 'waiting'}`, at: d.createdAt, go: () => router.push({ pathname: '/duel/[code]', params: { code: d.code } }) })),
+    ...(s.challenges ?? []).map((c) => ({ k: `c${c.code}`, title: c.title, sub: `Challenge ${c.code}`, at: c.createdAt, go: () => router.push({ pathname: '/challenge/[code]', params: { code: c.code } }) })),
     ...(s.moments ?? []).map((m, i) => ({ k: `m${i}`, title: m.title, sub: `Clip · ${m.total > 0 ? '+' : ''}${m.total} aura`, at: m.createdAt ?? '', go: () => router.push('/clip') })),
     ...(s.scans ?? []).slice(0, 10).map((r, i) => ({ k: `s${i}`, title: `${r.name} · ${r.archetype}`, sub: `Farm-off · ${r.score} ${r.tier}`, at: (r as any).createdAt ?? '', go: () => router.push('/aura-scan') })),
   ]
@@ -48,13 +60,13 @@ export default function Farm() {
               <TextInput
                 value={code}
                 onChangeText={(v) => setCode(v.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5))}
-                placeholder="Have a duel code?"
+                placeholder="Have a code?"
                 placeholderTextColor="rgba(255,255,255,0.65)"
                 autoCapitalize="characters"
                 autoCorrect={false}
                 style={{ flex: 1, fontFamily: code ? font.mono : font.regular, fontSize: 15, letterSpacing: code ? 3 : 0, color: '#FFF' }}
               />
-              <Pressable disabled={code.length < 5} onPress={() => { router.push({ pathname: '/duel/[code]', params: { code } }); setCode(''); }} style={{ height: 34, paddingHorizontal: 14, borderRadius: 10, backgroundColor: code.length === 5 ? '#FFF' : 'rgba(255,255,255,0.2)', justifyContent: 'center' }}>
+              <Pressable disabled={code.length < 5} onPress={() => join(code)} style={{ height: 34, paddingHorizontal: 14, borderRadius: 10, backgroundColor: code.length === 5 ? '#FFF' : 'rgba(255,255,255,0.2)', justifyContent: 'center' }}>
                 <RNText style={{ fontFamily: font.medium, fontSize: 13, color: code.length === 5 ? t.accent : 'rgba(255,255,255,0.7)' }}>Join</RNText>
               </Pressable>
             </View>

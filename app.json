@@ -12,7 +12,7 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.avarice.kleos",
       "infoPlist": {
-        "NSCameraUsageDescription": "Kleos uses the camera while you record a take (Aura Farm, Debate Duels) so Poise can read your eye contact and posture. Videos are deleted after they are read.",
+        "NSCameraUsageDescription": "Kleos uses the camera when you record a take (Aura Farm, Debate Duels), or if you turn it on during a live call to read your eye contact. Stills are measured, then deleted.",
         "NSMicrophoneUsageDescription": "Kleos uses the microphone for live conversations and recorded takes, so the other person can reply and Poise can measure your pace, fillers and tone.",
         "ITSAppUsesNonExemptEncryption": false,
         "UIBackgroundModes": [

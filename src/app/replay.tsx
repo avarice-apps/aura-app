@@ -5,6 +5,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Screen, Title, Body, Label, Button, Row, Stack, IconButton, Icon, ICON, Card } from '@/ui';
 import { ReactiveStatue } from '@/components/ReactiveStatue';
 import { Conversation } from '@/components/Conversation';
+import { AfterRead } from '@/components/AfterRead';
 import { ResultHero, FeedbackCard, HearPoise, Appear, FullRead, Insufficient } from '@/components/Results';
 import { useTheme } from '@/theme';
 import { useStore } from '@/state/store';
@@ -27,6 +28,7 @@ export default function Replay() {
   const lesson = sceneLesson ?? generated;
   const [step, setStep] = useState<Step>('brief');
   const [ev, setEv] = useState<Ev | null>(null);
+  const [sid, setSid] = useState('');
   const [err, setErr] = useState('');
 
   useEffect(() => {
@@ -58,6 +60,7 @@ export default function Replay() {
           args={{ lesson, pressure: 2, max_turns: 3 }}
           onDone={({ sessionId, evaluation }) => {
             setEv(evaluation as Ev);
+            setSid(sessionId);
             s.addSession({ id: sessionId, kind: 'room', title: `Replay: ${r.title}`, createdAt: new Date().toISOString(), evaluation });
             s.touchDay();
             setStep('result');
@@ -94,6 +97,7 @@ export default function Replay() {
             <Appear delay={120}><FeedbackCard e={ev} /></Appear>
             <Appear delay={240}><HearPoise src={ev.scriptAudio ?? ev.script_audio} /></Appear>
             <Appear delay={360}><FullRead e={ev} /></Appear>
+            <Appear delay={480}><AfterRead sessionId={sid} e={ev} /></Appear>
           </Stack>
         ))}
       </ScrollView>

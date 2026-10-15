@@ -59,6 +59,14 @@ type State = {
   trialEndsAt?: string;
   usage: { week: string; calls: number; clips: number; poise: number; profiles: number };
   duels: { id: string; code: string; topic: string; role: 'a' | 'b'; createdAt: string; result?: any }[];
+  // referrals: extra live calls earned (granted by the server) and how many have been used
+  credits: { granted: number; used: number };
+  invite: { code?: string; usedCode?: string; friends?: number };
+  // what recurring characters remember about you (name -> note)
+  met: Record<string, { note: string; at: string }>;
+  cameraOn: boolean;
+  lastSpent?: { kind: string; bonus: boolean };
+  challenges: { code: string; title: string; createdAt: string; mine: boolean }[];
   // actions
   set: (p: Partial<State>) => void;
   addSession: (r: SessionRecord) => void;
@@ -104,6 +112,11 @@ const initial = {
   plan: 'free' as 'free' | 'plus' | 'black',
   usage: { week: '', calls: 0, clips: 0, poise: 0, profiles: 0 },
   duels: [] as { id: string; code: string; topic: string; role: 'a' | 'b'; createdAt: string; result?: any }[],
+  credits: { granted: 0, used: 0 },
+  invite: {} as { code?: string; usedCode?: string; friends?: number },
+  met: {} as Record<string, { note: string; at: string }>,
+  cameraOn: false,
+  challenges: [] as { code: string; title: string; createdAt: string; mine: boolean }[],
 };
 
 export const useStore = create<State>()(
@@ -140,7 +153,7 @@ export const useStore = create<State>()(
         return true;
       },
       // Wipes history but keeps what isn't the user's content: their subscription, this week's usage and the install id.
-      reset: () => set({ ...initial, plan: get().plan, usage: get().usage, subjectId: get().subjectId }),
+      reset: () => set({ ...initial, plan: get().plan, usage: get().usage, subjectId: get().subjectId, credits: get().credits, invite: get().invite }),
     }),
     { name: 'aura-v2', storage: createJSONStorage(() => AsyncStorage) }
   )

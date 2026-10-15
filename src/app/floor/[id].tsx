@@ -5,6 +5,7 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Screen, Title, Body, Muted, Label, Button, Row, Stack, Pill, IconButton, Icon, ICON, Tag, Card } from '@/ui';
 import { ReactiveStatue } from '@/components/ReactiveStatue';
 import { Conversation } from '@/components/Conversation';
+import { AfterRead } from '@/components/AfterRead';
 import { ResultHero, FeedbackCard, HearPoise, Appear, FullRead, Insufficient } from '@/components/Results';
 import { useTheme } from '@/theme';
 import { useStore } from '@/state/store';
@@ -28,6 +29,7 @@ export default function FloorScreen() {
   const [pressure, setPressure] = useState(2);
   const [step, setStep] = useState<Step>('brief');
   const [ev, setEv] = useState<Ev | null>(null);
+  const [sid, setSid] = useState('');
   const [key, setKey] = useState(0);
   if (!f) return null;
   const who = [PARTNER[f.primary] ?? f.primary, ...Object.keys(f.roles)];
@@ -54,6 +56,7 @@ export default function FloorScreen() {
           onDone={({ sessionId, evaluation }) => {
             const e = evaluation as Ev;
             setEv(e);
+            setSid(sessionId);
             if (!e.insufficient) {
               s.addSession({ id: sessionId, kind: 'room', title: f.title, createdAt: new Date().toISOString(), evaluation: e });
               s.touchDay();
@@ -105,6 +108,7 @@ export default function FloorScreen() {
             <Appear delay={120}><FeedbackCard e={ev} /></Appear>
             <Appear delay={240}><HearPoise src={ev.scriptAudio ?? ev.script_audio} /></Appear>
             <Appear delay={360}><FullRead e={ev} /></Appear>
+            <Appear delay={480}><AfterRead sessionId={sid} e={ev} challenge={{ kind: 'floor', ref_id: f.id, title: f.title }} /></Appear>
           </Stack>
         ))}
       </ScrollView>

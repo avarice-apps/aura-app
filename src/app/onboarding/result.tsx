@@ -2,12 +2,14 @@ import React from 'react';
 import { View, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { Screen, Button, Segments, Stack } from '@/ui';
+import { AfterRead } from '@/components/AfterRead';
 import { ResultHero, FeedbackCard, HearPoise, Appear, FullRead, Insufficient } from '@/components/Results';
 import { useStore } from '@/state/store';
 
 /** Onboarding 5 · First result. No retry here: in real life there isn't one. Next is the paywall. */
 export default function Result() {
   const e = useStore((s) => s.ob.first) as any;
+  const sid = useStore((s) => s.ob.firstSession);
   if (!e) return null;
   if (e.insufficient) {
     return (
@@ -31,6 +33,7 @@ export default function Result() {
           <Appear delay={150}><FeedbackCard e={e} /></Appear>
           <Appear delay={300}><HearPoise src={e.scriptAudio ?? e.script_audio} /></Appear>
           <Appear delay={450}><FullRead e={e} showAlternatives={false} /></Appear>
+          <Appear delay={600}><AfterRead sessionId={sid} e={e} /></Appear>
         </Stack>
       </ScrollView>
       <View style={{ paddingHorizontal: 20, paddingBottom: 10 }}>
