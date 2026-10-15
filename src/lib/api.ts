@@ -1,4 +1,3 @@
-import { File as FSFile } from 'expo-file-system';
 import { API_URL, OFFLINE } from './config';
 import type { Evaluation, Lesson, Receipt, ScanResult, SessionStart, TurnResult } from './types';
 import type { Goal } from '@/state/store';
@@ -101,15 +100,34 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
   return res.json();
 }
 
-async function postForm<T>(path: string, form: FormData): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, { method: 'POST', body: form });
-  if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.detail ?? `Request failed (${res.status})`);
-  return res.json();
+/**
+ * Multipart uploads go through XMLHttpRequest, not fetch. Expo installs expo/fetch as the global fetch,
+ * and it rejects React Native file parts ({ uri, name, type }) with "Unsupported FormDataPart implementation".
+ * RN's XHR streams those file parts natively on iOS and Android.
+ */
+function postForm<T>(path: string, form: FormData, timeoutMs = 120000): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `${API_URL}${path}`);
+    xhr.timeout = timeoutMs;
+    xhr.responseType = 'text';
+    xhr.onload = () => {
+      let body: any = {};
+      try {
+        body = JSON.parse(xhr.responseText || '{}');
+      } catch {}
+      if (xhr.status >= 200 && xhr.status < 300) resolve(body as T);
+      else reject(new Error(body?.detail ?? `Request failed (${xhr.status})`));
+    };
+    xhr.onerror = () => reject(new Error('Network error. Is the server running?'));
+    xhr.ontimeout = () => reject(new Error('The server took too long. Try again.'));
+    xhr.send(form);
+  });
 }
 
-/** Expo's global fetch (expo/fetch) only accepts real Blob/File parts in FormData, not RN-style {uri,name,type}. */
-function fileField(uri: string, _name: string, _type: string) {
-  return new FSFile(uri) as unknown as Blob;
+/** React Native file part. Sent via XHR (see postForm). */
+function fileField(uri: string, name: string, type: string) {
+  return { uri, name, type } as unknown as Blob;
 }
 
 // ------------------------------------------------------------------ conversations
