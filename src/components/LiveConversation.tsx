@@ -92,6 +92,7 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
   const [camPerm, askCam] = useCameraPermissions();
   const cam = useRef<CameraView>(null);
   const frames = useRef<string[]>([]);
+  const heard = useRef(0); // loudest mic level so far; stays ~0 if the mic is blocked
 
   // Callbacks below run long after this render; they reach the latest finish/fail through this ref.
   const act = useRef({ finish: () => {}, fail: (_m: string) => {} });
@@ -166,6 +167,7 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
     if (phase !== 'live') return;
     const id = setInterval(() => {
       try {
+        if (!conv.isSpeaking) heard.current = Math.max(heard.current, conv.getInputVolume() || 0);
         const v = conv.isSpeaking ? conv.getOutputVolume() : conv.getInputVolume();
         energy.value = withTiming(Math.min(1, (v || 0) * 2.2), { duration: 90 });
       } catch {}
@@ -329,7 +331,9 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
           : 'Call ended. Poise is reading it back'
         : phase === 'error'
           ? err
-          : leaving
+          : turns === 0 && secs >= 10 && heard.current < 0.02
+            ? 'I can’t hear you. Is screen recording using the mic?'
+            : leaving
             ? `${name} is leaving`
             : speaking
               ? 'They’re talking. Cut in whenever you want'
