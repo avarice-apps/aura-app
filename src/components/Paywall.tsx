@@ -80,7 +80,7 @@ export function PaywallBody({ onDone, onSkip }: { onDone: () => void; onSkip: ()
         </Card>
 
         <Stack gap={6} style={{ marginTop: 14 }}>
-          {['Unlimited live conversations and the full Path', 'Laurels, Cadence and the Sunday Letter', 'Aura Scan, Receipts and Circles'].map((x) => (
+          {['Unlimited live conversations and the full Path', 'Laurels, Cadence and the Sunday Letter', 'Open Floor, Aura Farm and Receipts'].map((x) => (
             <Row key={x} gap={10}>
               <Icon d={ICON.check} size={14} color={t.accent} stroke={2.4} />
               <Body small>{x}</Body>

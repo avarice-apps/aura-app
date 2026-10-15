@@ -52,7 +52,18 @@ def llm_secret() -> str:
     return d["secret"]
 
 
-def _agent_config(public_url: str) -> dict:
+# Every voice that can speak in a scene. Text tagged <Label>...</Label> is spoken in that voice;
+# untagged text uses the session's main character (the per-call voice override).
+def _supported_voices() -> list[dict]:
+    out = [{"label": c["name"], "voice_id": c["voice"], "description": f'{c["name"]}: {c["style"]}'} for c in converse.CAST.values()]
+    out += [{"label": e["label"], "voice_id": e["voice"], "description": e["sketch"]} for e in converse.EXTRAS.values()]
+    return out[:9]
+
+
+TTS_MODELS = ["eleven_v3_conversational", "eleven_flash_v2"]
+
+
+def _agent_config(public_url: str, tts_model: str = TTS_MODELS[0]) -> dict:
     return {
         "name": "Kleos Live",
         "conversation_config": {
@@ -69,9 +80,9 @@ def _agent_config(public_url: str) -> dict:
                     },
                 },
             },
-            "tts": {"voice_id": "EXAVITQu4vr4xnSDxMaL", "model_id": "eleven_flash_v2"},
-            "turn": {"turn_timeout": 12, "turn_eagerness": "normal"},
-            "conversation": {"max_duration_seconds": 420, "client_events": ["audio", "interruption", "agent_response", "user_transcript", "agent_response_correction"]},
+            "tts": {"voice_id": "EXAVITQu4vr4xnSDxMaL", "model_id": tts_model, "supported_voices": _supported_voices()},
+            "turn": {"turn_timeout": 9, "turn_eagerness": "normal"},
+            "conversation": {"max_duration_seconds": 1200, "client_events": ["audio", "interruption", "agent_response", "user_transcript", "agent_response_correction"]},
         },
         "platform_settings": {
             "auth": {"enable_auth": True},
@@ -89,16 +100,26 @@ def _agent_config(public_url: str) -> dict:
 async def ensure_agent(public_url: str) -> str:
     """Create the shared live agent once, and point its brain at this server's current public URL."""
     d = _load()
-    cfg = _agent_config(public_url)
+    last = None
     async with httpx.AsyncClient(timeout=30) as c:
-        if d.get("agent_id"):
-            r = await c.patch(f"{API}/convai/agents/{d['agent_id']}", headers={"xi-api-key": _key()}, json=cfg)
-            if r.status_code < 300:
-                return d["agent_id"]
-        r = await c.post(f"{API}/convai/agents/create", headers={"xi-api-key": _key()}, json=cfg)
-        r.raise_for_status()
-        d["agent_id"] = r.json()["agent_id"]
-        _save(d)
+        # Expressive voices first; fall back to Flash if the account can't use them.
+        for model in TTS_MODELS:
+            cfg = _agent_config(public_url, model)
+            if d.get("agent_id"):
+                r = await c.patch(f"{API}/convai/agents/{d['agent_id']}", headers={"xi-api-key": _key()}, json=cfg)
+                if r.status_code < 300:
+                    return d["agent_id"]
+                if r.status_code == 404:
+                    d.pop("agent_id")
+            if not d.get("agent_id"):
+                r = await c.post(f"{API}/convai/agents/create", headers={"xi-api-key": _key()}, json=cfg)
+                if r.status_code < 300:
+                    d["agent_id"] = r.json()["agent_id"]
+                    _save(d)
+                    return d["agent_id"]
+            last = r
+            print(f"live agent: {model} rejected ({r.status_code}): {r.text[:200]}")
+        last.raise_for_status()
         return d["agent_id"]
 
 
@@ -129,6 +150,19 @@ def last_user_text(messages: list[dict]) -> str:
                 c = " ".join(p.get("text", "") for p in c if isinstance(p, dict))
             return (c or "").strip()
     return ""
+
+
+def rollback_if_retry(session_id: str, text: str) -> None:
+    """ElevenLabs may re-ask for a reply when his turn turns out longer than first transcribed.
+    If the new text repeats or extends the last thing he said, replace that exchange instead of adding a duplicate."""
+    s = converse.SESSIONS.get(session_id)
+    if not s or not text or len(s["turns"]) < 3:
+        return
+    *_, u, ch = s["turns"]
+    if u["role"] == "user" and ch["role"] == "char" and u["text"] and text.strip().lower().startswith(u["text"].strip().lower()[:40]):
+        s["turns"] = s["turns"][:-2]
+        if s.get("beat") and ch.get("beat_used"):
+            s["beat"] -= 1
 
 
 async def openai_stream(session_id: str, user_text: str, model: str = "kleos-character"):

@@ -49,6 +49,9 @@ type State = {
   activeMission?: string;
   situationsSeen: string[];
   questsDone: string[];
+  dailyQuestDone: string[]; // dates (YYYY-MM-DD) a Daily Side Quest was played
+  moments: import('@/lib/types').Moment[];
+  profileReads: import('@/lib/types').ProfileRead[];
   patternsDismissed: string[]; // pattern keys the user removed from their history
   daily: { day: string; done: string[] }; // today's small things: situation, mission, debrief, scan
   // plan
@@ -91,6 +94,9 @@ const initial = {
   missionsDone: [] as string[],
   situationsSeen: [] as string[],
   questsDone: [] as string[],
+  dailyQuestDone: [] as string[],
+  moments: [] as import('@/lib/types').Moment[],
+  profileReads: [] as import('@/lib/types').ProfileRead[],
   patternsDismissed: [] as string[],
   daily: { day: '', done: [] as string[] },
   plan: 'free' as const,

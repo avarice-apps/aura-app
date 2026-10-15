@@ -11,12 +11,33 @@ import type { ConversationDone } from '@/components/Conversation';
 import { prepareMic } from '@/lib/voice';
 import { play } from '@/lib/sound';
 
-type Msg = { role: 'char' | 'user'; text: string };
-type Phase = 'connecting' | 'live' | 'wrapping' | 'evaluating' | 'error';
+type Msg = { who: string; mine: boolean; text: string };
+type Phase = 'connecting' | 'live' | 'evaluating' | 'error';
+
+const SPEAKER = /<([A-Z][a-zA-Z]+)>([\s\S]*?)<\/\1>/g;
+const CUE = /\[(?:laughs|laughing|sighs|whispers|excited|slow|chuckles|pause|scoffs|gasps)[^\]]*\]\s*/gi;
+
+/** Split a reply like "Hey. <Sasha>Who's this?</Sasha>" into one caption per speaker, voice cues removed. */
+export function splitSpeakers(text: string, primary: string): { who: string; text: string }[] {
+  const out: { who: string; text: string }[] = [];
+  let pos = 0;
+  const clean = (x: string) => x.replace(CUE, '').replace(/<\/?[A-Za-z]+>/g, '').replace(/\*[^*]*\*?/g, '').replace(/\s{2,}/g, ' ').trim();
+  for (const m of text.matchAll(SPEAKER)) {
+    const before = clean(text.slice(pos, m.index));
+    if (before) out.push({ who: primary, text: before });
+    const said = clean(m[2]);
+    if (said) out.push({ who: m[1], text: said });
+    pos = (m.index ?? 0) + m[0].length;
+  }
+  const rest = clean(text.slice(pos));
+  if (rest) out.push({ who: primary, text: rest });
+  return out;
+}
 
 /**
- * Full-duplex live conversation. ElevenLabs streams the audio both ways (interruptions, natural turn-taking);
- * every character reply comes from our engine on the server. Poise evaluates after hang-up.
+ * Full-duplex live conversation. ElevenLabs streams the audio both ways (interruptions, natural turn-taking,
+ * several voices); every line comes from our scene engine on the server. It keeps going until you end it,
+ * or until the person you're talking to walks off. Poise reads it back after.
  */
 export function LiveConversation(props: { args: StartArgs; onDone: (r: ConversationDone) => void; onError?: (e: string) => void; label?: string }) {
   return (
@@ -31,13 +52,17 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
   const [phase, setPhase] = useState<Phase>('connecting');
   const [start, setStart] = useState<LiveStart | null>(null);
   const [msgs, setMsgs] = useState<Msg[]>([]);
+  const [present, setPresent] = useState<string[]>([]);
   const [interest, setInterest] = useState<number | null>(null);
+  const [leaving, setLeaving] = useState(false);
+  const [secs, setSecs] = useState(0);
+  const [turns, setTurns] = useState(0);
   const [err, setErr] = useState('');
   const energy = useSharedValue(0);
   const idle = useSharedValue(0);
   const scroll = useRef<ScrollView>(null);
-  const userTurns = useRef(0);
   const ending = useRef(false);
+  const leavingRef = useRef(false);
   const startRef = useRef<LiveStart | null>(null);
   const convId = useRef('');
 
@@ -48,29 +73,48 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     },
     onMessage: (m) => {
-      const role: Msg['role'] = (m as any).role === 'user' || m.source === 'user' ? 'user' : 'char';
+      const mine = (m as any).role === 'user' || m.source === 'user';
       const text = (m.message || '').trim();
-      if (!text) return;
-      setMsgs((x) => [...x, { role, text }]);
-      if (role === 'user') userTurns.current += 1;
-      else if (startRef.current && userTurns.current > 0) {
+      if (!text || ending.current) return;
+      const primary = startRef.current?.character.name ?? '';
+      if (mine) {
+        setMsgs((x) => [...x, { who: 'You', mine: true, text }]);
+        setTurns((n) => n + 1);
+        return;
+      }
+      const parts = splitSpeakers(text, primary);
+      setMsgs((x) => [...x, ...parts.map((p) => ({ who: p.who, mine: false, text: p.text }))]);
+      setPresent((cur) => {
+        const add = parts.map((p) => p.who).filter((w) => w !== primary && !cur.includes(w));
+        if (add.length) Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        return add.length ? [...cur, ...add] : cur;
+      });
+      if (startRef.current) {
         liveState(startRef.current.session_id)
           .then((s) => {
             if (typeof s.interest === 'number') setInterest(s.interest);
+            if (s.leaving) {
+              leavingRef.current = true;
+              setLeaving(true);
+            }
           })
           .catch(() => {});
       }
     },
     onModeChange: ({ mode }) => {
-      // The character just finished its closing line: hang up and read it back.
-      if (mode === 'listening' && startRef.current && userTurns.current >= (startRef.current.max_turns ?? 3) && !ending.current) {
-        setTimeout(() => finish(), 600);
-      }
+      // They said their exit line and finished speaking: hang up and read it back.
+      if (mode === 'listening' && leavingRef.current && !ending.current) setTimeout(() => finish(), 900);
     },
-    onError: (m) => fail(typeof m === 'string' ? m : 'The live line dropped.'),
+    onDisconnect: () => {
+      // The line closed on their side (time limit, network). Read back what we have.
+      if (!ending.current && startRef.current && convId.current) finish();
+    },
+    onError: (m) => {
+      if (!ending.current) fail(typeof m === 'string' ? m : 'The live line dropped.');
+    },
   });
 
-  // Mark reacts to whoever is speaking.
+  // The Mark reacts to whoever is speaking.
   useEffect(() => {
     if (phase !== 'live') return;
     const id = setInterval(() => {
@@ -79,11 +123,15 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
         energy.value = withTiming(Math.min(1, (v || 0) * 2.2), { duration: 90 });
       } catch {}
     }, 90);
-    return () => clearInterval(id);
+    const clock = setInterval(() => setSecs((s) => s + 1), 1000);
+    return () => {
+      clearInterval(id);
+      clearInterval(clock);
+    };
   }, [phase, conv, energy]);
 
   useEffect(() => {
-    if (phase === 'connecting' || phase === 'evaluating' || phase === 'wrapping') idle.value = withRepeat(withTiming(0.45, { duration: 1300, easing: Easing.inOut(Easing.sin) }), -1, true);
+    if (phase === 'connecting' || phase === 'evaluating') idle.value = withRepeat(withTiming(0.45, { duration: 1300, easing: Easing.inOut(Easing.sin) }), -1, true);
     else {
       cancelAnimation(idle);
       idle.value = withTiming(0, { duration: 300 });
@@ -106,6 +154,7 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
     })();
     return () => {
       alive = false;
+      ending.current = true;
       try {
         conv.endSession();
       } catch {}
@@ -126,18 +175,23 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
   async function finish() {
     if (ending.current || !startRef.current) return;
     ending.current = true;
-    setPhase('wrapping');
+    const id = convId.current || (() => {
+      try {
+        return conv.getId();
+      } catch {
+        return '';
+      }
+    })();
     try {
       conv.endSession();
     } catch {}
-    play('select');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setPhase('evaluating');
     try {
-      const e = await liveFinish(startRef.current.session_id, convId.current || conv.getId());
+      const e = await liveFinish(startRef.current.session_id, id);
       play('reveal');
       onDone({ sessionId: startRef.current.session_id, evaluation: e, start: startRef.current });
     } catch (e: any) {
-      ending.current = false;
       fail(e?.message ?? 'Poise could not read that one.');
     }
   }
@@ -145,8 +199,19 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
   const speaking = conv.isSpeaking;
   const shared = phase === 'live' ? energy : idle;
   const name = start?.character.name ?? '';
+  const clock = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
   const status =
-    phase === 'connecting' ? 'Connecting' : phase === 'wrapping' || phase === 'evaluating' ? 'Poise is reading it back' : phase === 'error' ? err : speaking ? `${name} is talking` : 'Listening. Just talk';
+    phase === 'connecting'
+      ? 'Connecting'
+      : phase === 'evaluating'
+        ? 'Call ended. Poise is reading it back'
+        : phase === 'error'
+          ? err
+          : leaving
+            ? `${name} is leaving`
+            : speaking
+              ? 'They’re talking. Cut in whenever you want'
+              : 'Your turn. Just talk';
 
   return (
     <View style={{ flex: 1 }}>
@@ -156,41 +221,47 @@ function Live({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: C
             <RNText style={{ fontFamily: font.medium, fontSize: 18, color: t.accent }}>{name[0]}</RNText>
           </View>
           <View style={{ flex: 1 }}>
-            <Body strong>{name}</Body>
+            <Body strong>
+              {name}
+              {present.length ? <RNText style={{ fontFamily: font.regular, color: t.ink2 }}>{`  +  ${present.join(', ')}`}</RNText> : null}
+            </Body>
             <Muted small numberOfLines={1}>{start.character.style}</Muted>
           </View>
-          <Tag label="Live" tone="accent" />
+          {phase === 'live' ? <Tag label={clock} tone="accent" /> : <Tag label="Live" tone="accent" />}
         </Animated.View>
       )}
       {start && (
         <View style={{ marginHorizontal: 22, marginTop: 12, gap: 4 }}>
           <Muted small>{label ? `${label} · ` : ''}{start.setting}</Muted>
-          <Body small strong color={t.accent}>{start.goal}</Body>
         </View>
       )}
 
       <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 10, paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
-        {msgs.map((m, i) => (
-          <Animated.View key={i} entering={FadeInDown.duration(280)} style={{ alignSelf: m.role === 'char' ? 'flex-start' : 'flex-end', maxWidth: '84%' }}>
-            <View style={{ backgroundColor: m.role === 'char' ? t.card : t.accent, borderWidth: m.role === 'char' ? 1 : 0, borderColor: t.line, borderRadius: 18, borderBottomLeftRadius: m.role === 'char' ? 6 : 18, borderBottomRightRadius: m.role === 'user' ? 6 : 18, paddingHorizontal: 14, paddingVertical: 11 }}>
-              <Body color={m.role === 'char' ? t.ink : t.onAccent}>{m.text}</Body>
-            </View>
-          </Animated.View>
-        ))}
+        {msgs.map((m, i) => {
+          const showName = !m.mine && (m.who !== name || present.length > 0) && msgs[i - 1]?.who !== m.who;
+          return (
+            <Animated.View key={i} entering={FadeInDown.duration(260)} style={{ alignSelf: m.mine ? 'flex-end' : 'flex-start', maxWidth: '84%', gap: 3 }}>
+              {showName ? <RNText style={{ fontFamily: font.medium, fontSize: 11, letterSpacing: 0.4, color: m.who === name ? t.accent : t.ink2, marginLeft: 6 }}>{m.who.toUpperCase()}</RNText> : null}
+              <View style={{ backgroundColor: m.mine ? t.accent : t.card, borderWidth: m.mine ? 0 : 1, borderColor: t.line, borderRadius: 18, borderBottomLeftRadius: m.mine ? 18 : 6, borderBottomRightRadius: m.mine ? 6 : 18, paddingHorizontal: 14, paddingVertical: 11 }}>
+                <Body color={m.mine ? t.onAccent : t.ink}>{m.text}</Body>
+              </View>
+            </Animated.View>
+          );
+        })}
       </ScrollView>
 
       <View style={{ alignItems: 'center', paddingBottom: 18, gap: 12 }}>
         <Muted small color={phase === 'error' ? t.accent : t.ink2}>{status}</Muted>
-        <View style={{ width: 170, height: 170, alignItems: 'center', justifyContent: 'center' }}>
-          <Mark index={speaking ? 40 : 62} axes={{ voice: 55, presence: 55, command: 55, composure: 55, read: 55 }} size={170} energy={shared} color={t.markInk} animateIn={false} opacity={phase === 'live' ? 0.8 : 0.35} />
-          <View style={{ position: 'absolute', width: 64, height: 64, borderRadius: 32, backgroundColor: speaking ? t.card : t.accent, borderWidth: speaking ? 1 : 0, borderColor: t.line }} />
+        <View style={{ width: 150, height: 150, alignItems: 'center', justifyContent: 'center' }}>
+          <Mark index={speaking ? 40 : 62} axes={{ voice: 55, presence: 55, command: 55, composure: 55, read: 55 }} size={150} energy={shared} color={t.markInk} animateIn={false} opacity={phase === 'live' ? 0.8 : 0.35} />
+          <View style={{ position: 'absolute', width: 56, height: 56, borderRadius: 28, backgroundColor: speaking ? t.card : t.accent, borderWidth: speaking ? 1 : 0, borderColor: t.line }} />
         </View>
-        {phase === 'live' && userTurns.current > 0 ? (
-          <Pressable onPress={finish} hitSlop={10} style={{ paddingHorizontal: 18, height: 38, borderRadius: 19, borderWidth: 1, borderColor: t.line, justifyContent: 'center' }}>
-            <RNText style={{ fontFamily: font.medium, fontSize: 14, color: t.ink }}>End and get my read</RNText>
+        {phase === 'live' ? (
+          <Pressable onPress={finish} hitSlop={10} style={{ paddingHorizontal: 20, height: 40, borderRadius: 20, backgroundColor: turns > 0 ? t.ink : t.card, borderWidth: turns > 0 ? 0 : 1, borderColor: t.line, justifyContent: 'center' }}>
+            <RNText style={{ fontFamily: font.medium, fontSize: 14, color: turns > 0 ? t.bg : t.ink2 }}>{turns > 0 ? 'End call and get my read' : 'Hang up'}</RNText>
           </Pressable>
         ) : (
-          <View style={{ height: 38 }} />
+          <View style={{ height: 40 }} />
         )}
       </View>
     </View>

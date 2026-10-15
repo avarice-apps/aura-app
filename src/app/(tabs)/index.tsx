@@ -2,15 +2,16 @@ import React from 'react';
 import { View, ScrollView, Pressable, Text as RNText } from 'react-native';
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Screen, Title, Body, Muted, Label, Row, Stack, Num, Statue, Halo, Icon, ICON, Section, Chevron } from '@/ui';
+import { Screen, Title, Body, Muted, Label, Row, Stack, Icon, ICON, Section, Chevron, ArtCard } from '@/ui';
 import { font, useTheme } from '@/theme';
 import { useStore, auraIndex } from '@/state/store';
 import { nextLesson, ALL_MISSIONS } from '@/lib/progress';
 import { play } from '@/lib/sound';
 import { questsFor, PARTNER, QUEST_CATEGORY } from '@/lib/quests';
 import { ToneSwitch } from '@/components/ToneSwitch';
+import { today } from '@/lib/dailies';
 
-const TIER = (n: number) => (n >= 85 ? ['Gravity', 'People lean in without knowing why.'] : n >= 72 ? ['Magnetic', 'The room reorganises around you.'] : n >= 60 ? ['Composed', 'Steady. Nothing leaks.'] : n >= 45 ? ['Present', 'You hold attention. You don’t yet direct it.'] : ['Faint', 'The good parts are getting buried.']);
+const TIER = (n: number) => (n >= 85 ? ['Gravity', 'People remember you after.'] : n >= 72 ? ['Magnetic', 'People want to keep talking to you.'] : n >= 60 ? ['Composed', 'Solid. Not memorable yet.'] : n >= 45 ? ['Present', 'You can hold a conversation. You don’t lead one.'] : ['Faint', 'People are losing you. Fixable.']);
 
 /** Today. Three sections, one primary action: your Index, what's next, three small things. */
 export default function Today() {
@@ -27,10 +28,11 @@ export default function Today() {
     { key: 'mission', title: mission.title, sub: 'Field mission · do it for real', icon: ICON.flag, go: () => router.push('/missions') },
     evening
       ? { key: 'debrief', title: 'Tonight’s debrief', sub: 'One moment from today, with Poise', icon: ICON.moon, go: () => router.push({ pathname: '/(tabs)/poise', params: { mode: 'debrief' } }) }
-      : { key: 'scan', title: 'Aura Scan', sub: 'Fifteen seconds on camera', icon: ICON.scan, go: () => router.push('/aura-scan') },
+      : { key: 'scan', title: 'Aura Farm', sub: 'Fifteen seconds on camera', icon: ICON.scan, go: () => router.push('/aura-scan') },
   ];
   const doneCount = daily.filter((d) => doneToday.includes(d.key)).length;
   const [tier, line] = TIER(idx ?? 0);
+  const dailyDone = (s.dailyQuestDone ?? []).includes(today());
 
   return (
     <Screen>
@@ -47,29 +49,45 @@ export default function Today() {
         </Row>
 
         {/* 1 · Index */}
-        <Animated.View entering={FadeInDown.duration(450)} style={{ marginTop: 18, height: 196, borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, overflow: 'hidden' }}>
-          <View style={{ position: 'absolute', right: -60, top: -40 }}><Halo size={290} opacity={0.4} /></View>
-          <View style={{ position: 'absolute', right: 4, bottom: -8 }}><Statue name="bust" height={186} /></View>
-          <View style={{ position: 'absolute', left: 20, top: 18, width: 170, gap: 2 }}>
-            <Label>Aura Index</Label>
-            {idx !== null ? (
-              <>
-                <Num value={idx} size={72} />
-                <Body strong style={{ fontSize: 16 }}>{tier}</Body>
-                <Muted small>{line}</Muted>
-              </>
-            ) : (
-              <>
-                <Title size={22} style={{ marginTop: 10 }}>Not set yet</Title>
-                <Muted small>Your first lesson sets your starting point.</Muted>
-              </>
-            )}
-          </View>
-          {s.streak > 0 && (
-            <View style={{ position: 'absolute', left: 20, bottom: 14, backgroundColor: t.accentSoft, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 999 }}>
-              <RNText style={{ fontFamily: font.mono, fontSize: 11, color: t.accent }}>{s.streak}-day streak</RNText>
+        <Animated.View entering={FadeInDown.duration(450)} style={{ marginTop: 18 }}>
+          <ArtCard art="youth" height={250} focus="top" onPress={() => router.push('/(tabs)/progress')}>
+            <Row style={{ justifyContent: 'space-between', alignItems: 'flex-end' }}>
+              <View style={{ flex: 1, gap: 2 }}>
+                <RNText style={{ fontFamily: font.mono, fontSize: 10.5, letterSpacing: 1.4, color: 'rgba(255,255,255,0.75)' }}>AURA INDEX</RNText>
+                {idx !== null ? (
+                  <>
+                    <RNText style={{ fontFamily: font.medium, fontSize: 64, lineHeight: 68, letterSpacing: -2, color: '#FFF' }}>{idx}</RNText>
+                    <RNText style={{ fontFamily: font.medium, fontSize: 16, color: '#FFF' }}>{tier}</RNText>
+                    <RNText style={{ fontFamily: font.regular, fontSize: 13, color: 'rgba(255,255,255,0.86)' }}>{line}</RNText>
+                  </>
+                ) : (
+                  <>
+                    <RNText style={{ fontFamily: font.medium, fontSize: 26, color: '#FFF', marginTop: 6 }}>Not set yet</RNText>
+                    <RNText style={{ fontFamily: font.regular, fontSize: 13, color: 'rgba(255,255,255,0.86)' }}>Your first conversation sets your starting point.</RNText>
+                  </>
+                )}
+              </View>
+              {s.streak > 0 && (
+                <View style={{ backgroundColor: 'rgba(255,255,255,0.16)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 }}>
+                  <RNText style={{ fontFamily: font.mono, fontSize: 11, color: '#FFF' }}>{s.streak}-day streak</RNText>
+                </View>
+              )}
+            </Row>
+          </ArtCard>
+        </Animated.View>
+
+        {/* Daily side quest */}
+        <Animated.View entering={FadeInDown.duration(450).delay(40)} style={{ marginTop: 12 }}>
+          <Pressable onPress={() => { play('select'); router.push('/daily'); }} style={{ borderRadius: 22, backgroundColor: t.accent, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+            <View style={{ flex: 1, gap: 3 }}>
+              <RNText style={{ fontFamily: font.mono, fontSize: 10.5, letterSpacing: 1.4, color: 'rgba(255,255,255,0.75)' }}>{dailyDone ? 'DAILY SIDE QUEST · DONE' : 'DAILY SIDE QUEST'}</RNText>
+              <RNText style={{ fontFamily: font.medium, fontSize: 19, lineHeight: 23, color: '#FFF' }}>{dailyDone ? 'Back tomorrow with someone new.' : 'Something’s about to happen to you.'}</RNText>
+              <RNText style={{ fontFamily: font.regular, fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>{dailyDone ? 'Tap to play it again.' : 'You find out what when the call connects.'}</RNText>
             </View>
-          )}
+            <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center' }}>
+              <Icon d={ICON.play} size={13} fill={t.accent} />
+            </View>
+          </Pressable>
         </Animated.View>
 
         {/* 2 · Up next */}
@@ -92,10 +110,15 @@ export default function Today() {
         {/* 3 · Side quests */}
         <Animated.View entering={FadeInDown.duration(450).delay(120)} style={{ marginTop: 28 }}>
           <Row style={{ justifyContent: 'space-between', marginBottom: 10 }}>
-            <RNText style={{ fontFamily: font.medium, fontSize: 17, letterSpacing: -0.3, color: t.ink }}>Side quests</RNText>
+            <RNText style={{ fontFamily: font.medium, fontSize: 17, letterSpacing: -0.3, color: t.ink }}>Live scenes</RNText>
             <ToneSwitch />
           </Row>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}>
+            <Pressable onPress={() => { play('select'); router.push('/floor'); }} style={{ width: 200, height: 150, borderRadius: 20, backgroundColor: t.accent, padding: 16, justifyContent: 'space-between', overflow: 'hidden' }}>
+              <Label color={t.onInverse2}>Open Floor</Label>
+              <RNText style={{ fontFamily: font.medium, fontSize: 17, lineHeight: 21, letterSpacing: -0.3, color: t.onAccent }}>Stay in a live scene as long as you can</RNText>
+              <RNText style={{ fontFamily: font.regular, fontSize: 12, color: t.onInverse2 }}>No turn limit · people join</RNText>
+            </Pressable>
             {questsFor(s.tone, s.questsDone ?? []).slice(0, 8).map((q) => {
               const done = (s.questsDone ?? []).includes(q.id);
               return (

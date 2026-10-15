@@ -1,0 +1,191 @@
+{
+  "extras": [
+    { "label": "Sasha", "voice": "cgSgspJ2msm6clMCkdW9", "sketch": "late twenties, quick, protective of her friends, reads people fast" },
+    { "label": "Marco", "voice": "bIHbv24MWmeRgasZH58o", "sketch": "easygoing on the surface, competitive underneath, likes an audience" },
+    { "label": "Nina", "voice": "47ztMLq1EmhhslNSINCu", "sketch": "fifties, warm but sharp, asks the question everyone else avoids" }
+  ],
+  "floors": [
+    {
+      "id": "f-bar",
+      "title": "Last call at the bar",
+      "blurb": "She's interested until her friend shows up.",
+      "category": "dating",
+      "primary": "ines",
+      "setting": "A crowded bar, Friday, 12:40am. You've been talking to Ines by the bar for a few minutes. It's loud enough that you have to lean in.",
+      "opener": "Okay wait, say that again, I literally couldn't hear you.",
+      "roles": { "Sasha": "Ines's best friend, here to check on her", "Marco": "a guy at the bar who knows Ines from work" },
+      "beats": [
+        "Ines asks him something oddly specific about what he just said, to see if there's anything behind it.",
+        "Sasha walks up, looks him up and down, and asks Ines if she's okay. Then asks him directly who he is.",
+        "Sasha asks what he does, and doesn't let him get away with a vague answer.",
+        "Marco slides in, greets Ines a little too familiarly, and offers to buy both girls a drink. Ignores him.",
+        "Ines says she should probably get back to her friends, watching how he reacts.",
+        "Last call is announced. Ines asks, half-joking, what he's doing after this."
+      ]
+    },
+    {
+      "id": "f-party",
+      "title": "Friend-of-a-friend party",
+      "blurb": "You know one person. He just left you with strangers.",
+      "category": "approach",
+      "primary": "dev",
+      "setting": "A house party in a small apartment. Dev, the only person you know, drags you into a group in the kitchen.",
+      "opener": "Guys, this is the one I told you about. Okay, go, tell them the thing.",
+      "roles": { "Marco": "Dev's roommate, opinionated, holds court in the kitchen", "Sasha": "a girl in the group who's funny and a little mean" },
+      "beats": [
+        "Dev leaves to get the door, abandoning him with Marco and Sasha. Marco asks how he knows Dev.",
+        "Sasha asks a playfully loaded question: hot take, what's something everyone here likes that he thinks is overrated.",
+        "Marco disagrees with his take, loudly, with a bad argument, playing to the room.",
+        "An awkward silence lands. Nobody fills it. Let it sit one beat, then Sasha raises an eyebrow at him.",
+        "Dev comes back and puts him on the spot to tell an embarrassing story about Dev to the group.",
+        "Sasha says she's heading to another party and asks if he wants to come, in front of Marco."
+      ]
+    },
+    {
+      "id": "f-parents",
+      "title": "Dinner with her parents",
+      "blurb": "Her dad is polite. That's the problem.",
+      "category": "status",
+      "primary": "julian",
+      "setting": "Dinner at your partner's parents' house. She stepped out to take a call. It's you, her dad Julian, and her mom Nina.",
+      "opener": "So. She tells us you're doing something with startups now.",
+      "roles": { "Nina": "her mom, kind, curious, asks the real questions" },
+      "beats": [
+        "Nina asks how they met, and wants the real version, not the cute one.",
+        "Julian asks what he actually earns from it, framed politely but meaning it.",
+        "Julian makes a mildly loaded political comment and waits to see if he agrees.",
+        "Nina mentions, casually, that her ex used to come to these dinners too, and how much Julian liked him.",
+        "Julian asks where he sees this going with their daughter. Specifically. Timeline.",
+        "Julian asks him to help with the dishes, alone, and goes quiet in a way that's clearly a test."
+      ]
+    },
+    {
+      "id": "f-interview",
+      "title": "The interview turns",
+      "blurb": "First round went fine. Then a second person joins.",
+      "category": "work",
+      "primary": "julian",
+      "setting": "A final-round interview at a company you actually want. Julian, the hiring manager, has been friendly so far.",
+      "opener": "Walk me through the gap on your CV. The eight months.",
+      "roles": { "Nina": "the VP, joins late, distracted, decisive" },
+      "beats": [
+        "Julian pushes on the weakest-sounding part of his last answer: meaning what, specifically.",
+        "Nina, the VP, walks in late, apologises to nobody, and asks him to summarise himself in thirty seconds.",
+        "Nina asks for his salary expectation, a number, now.",
+        "Julian asks about a time he was clearly wrong and someone else was right.",
+        "Nina says, flatly, that they have a strong internal candidate, and asks why they should take the risk on him.",
+        "Julian asks if he has any questions for them, and it's obvious a weak question will hurt."
+      ]
+    },
+    {
+      "id": "f-bill",
+      "title": "The bill arrives",
+      "blurb": "Marco ordered the steak and three cocktails.",
+      "category": "money",
+      "primary": "dev",
+      "setting": "Group dinner for Dev's birthday at a nice place. You had a salad and water. Marco ordered the steak, wine and three cocktails.",
+      "opener": "Okay, bill's here. Easiest thing is we just split it four ways, yeah?",
+      "roles": { "Marco": "ordered the most, acting like it's nothing", "Sasha": "also ate light, watching to see if anyone says something" },
+      "beats": [
+        "Marco says splitting evenly is the only non-annoying way and anyone who itemises is cheap.",
+        "Sasha, quietly, looks at him to see if he'll say it so she doesn't have to.",
+        "Marco realises he left his card in the car and asks him to cover him, he'll send it later.",
+        "Dev, a bit drunk, says it's his birthday and he shouldn't have to pay at all, half-joking, waiting for someone to agree.",
+        "Three days later: Marco still hasn't paid him back. Marco texts, read aloud: 'yo what do I owe you again lol'.",
+        "Marco gets defensive when pressed and says he's being weird about money."
+      ]
+    },
+    {
+      "id": "f-roommate",
+      "title": "The roommate talk",
+      "blurb": "Rent is late. Again. Her boyfriend basically lives here.",
+      "category": "conflict",
+      "primary": "kai",
+      "setting": "Your shared kitchen, 11pm. Kai's rent share is a week late for the third month. Kai's partner has been staying over most nights.",
+      "opener": "You've been weird all day. If you've got something to say, say it.",
+      "roles": { "Marco": "Kai's partner, who is very much here right now" },
+      "beats": [
+        "Kai gets defensive and points out something he does that's also annoying, specific and slightly true.",
+        "Marco wanders into the kitchen in a towel, says hey, and opens the fridge. Eats his food.",
+        "Kai says Marco being here basically saves them both money because he buys groceries sometimes.",
+        "Kai goes quiet and says things have been hard lately, money-wise. It might be real, might be a deflection.",
+        "Kai asks if he's saying he wants Kai to move out.",
+        "Kai proposes a deal that's slightly unfair to him and waits."
+      ]
+    },
+    {
+      "id": "f-date",
+      "title": "The date that's slipping",
+      "blurb": "Great first ten minutes. Then her phone buzzes.",
+      "category": "dating",
+      "primary": "mara",
+      "setting": "A first date at a small wine bar. It started well. Her phone has buzzed twice.",
+      "opener": "Sorry, sorry. Okay. Where were we, you were saying something about your job?",
+      "roles": { "Nina": "the server, friendly, a little nosy" },
+      "beats": [
+        "Mara asks him what he'd do if money didn't matter, and doesn't accept a generic answer.",
+        "The server, Nina, interrupts to ask if they want another bottle, and says to Mara 'oh you're back!' in a way that implies she's been here on dates before.",
+        "Mara brings up her ex, unprompted, in a way that's a little too detailed.",
+        "Mara asks him what his last relationship taught him, eyes on him.",
+        "Her phone buzzes again. She looks at it, then at him, and asks if he minds if she answers it.",
+        "The bill comes. Mara asks, lightly, whether he'd want to do this again. She's hard to read."
+      ]
+    },
+    {
+      "id": "f-network",
+      "title": "Working the room",
+      "blurb": "One shot at the person who can hire you.",
+      "category": "work",
+      "primary": "theo",
+      "setting": "A rooftop industry event. Theo, a senior person at a firm you want to join, is alone for a second with a drink.",
+      "opener": "Let me guess. You're here to network.",
+      "roles": { "Marco": "a loud guy from a rival firm who dominates conversations", "Nina": "a partner at Theo's firm, the actual decision maker" },
+      "beats": [
+        "Theo asks why that firm, specifically, and says everyone gives the same answer.",
+        "Marco barges in, talks over him about his own deal, and tries to pull Theo away.",
+        "Theo asks him a sharp technical or opinion question in front of Marco, to see who has a real view.",
+        "Nina walks up. Theo introduces him and Nina asks what he'd change about their firm.",
+        "Nina has to leave and asks for the one-line version of why she should remember him.",
+        "Theo says he's going to get another drink, which is an exit. See if he lets it end well."
+      ]
+    },
+    {
+      "id": "f-morning",
+      "title": "The morning after",
+      "blurb": "Her roommate is in the kitchen. So is the question.",
+      "category": "dating",
+      "primary": "mara",
+      "spicy": true,
+      "setting": "Mara's apartment, 9am. You stayed over after a night out. Coffee in the kitchen. Things were great last night. Now it's daylight.",
+      "opener": "Morning. So. That happened. Coffee? It's terrible, fair warning.",
+      "roles": { "Sasha": "Mara's roommate, walks in, unbothered, enjoying this a lot" },
+      "beats": [
+        "Mara teases him about something specific he said last night that he probably doesn't remember.",
+        "Sasha walks in, clocks him, says 'oh, hi' with a huge grin, and asks if he's the one from Thursday.",
+        "Sasha asks, deadpan, how he takes his coffee and whether he's staying for breakfast or 'doing the thing where you leave'.",
+        "Mara asks, half-joking, how many people he's brought home this month.",
+        "Mara says she's not really looking for anything serious right now, watching his face.",
+        "Mara asks if he wants to get food sometime, sober, or if this was just a thing."
+      ]
+    },
+    {
+      "id": "f-wingman",
+      "title": "Wingman down",
+      "blurb": "Dev is crashing and taking you with him.",
+      "category": "approach",
+      "primary": "dev",
+      "spicy": true,
+      "setting": "A rooftop bar. Dev is your wingman. He's three drinks deep and just walked you both up to Sasha and her friend.",
+      "opener": "Ladies. My boy here has a question for you. Go on. Ask them.",
+      "roles": { "Sasha": "unimpressed, funny, testing both of them" },
+      "beats": [
+        "Sasha says 'he has a question? cute' and waits, arms crossed.",
+        "Dev tells an embarrassing story about him that is definitely exaggerated.",
+        "Sasha asks him to rate Dev's approach out of ten, honestly, in front of Dev.",
+        "Dev hits on Sasha badly and she shuts him down. Now it's awkward and on him to rescue it.",
+        "Sasha asks what his actual game is, since Dev's is clearly nonexistent.",
+        "Sasha gives him her Instagram but not her number and watches what he does with that."
+      ]
+    }
+  ]
+}

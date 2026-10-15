@@ -1,4 +1,5 @@
 import { createAudioPlayer, AudioPlayer, setAudioModeAsync } from 'expo-audio';
+import * as Haptics from 'expo-haptics';
 
 const SOURCES = {
   tap: require('../../assets/sounds/tap.wav'),
@@ -26,7 +27,7 @@ export async function initSounds() {
   (Object.keys(SOURCES) as SoundName[]).forEach((k) => {
     try {
       const p = createAudioPlayer(SOURCES[k]);
-      p.volume = k === 'tap' || k === 'tick' ? 0.5 : 0.8;
+      p.volume = 0.22;
       players[k] = p;
     } catch {}
   });
@@ -36,7 +37,16 @@ export function setSoundsEnabled(on: boolean) {
   enabled = on;
 }
 
+// Navigation and taps are felt, not heard: a light haptic only. Sound is kept for results.
+const SILENT: SoundName[] = ['tap', 'select', 'tick'];
+
 export function play(name: SoundName) {
+  if (SILENT.includes(name)) {
+    try {
+      Haptics.selectionAsync();
+    } catch {}
+    return;
+  }
   if (!enabled) return;
   const p = players[name];
   if (!p) return;

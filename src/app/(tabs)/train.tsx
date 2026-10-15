@@ -3,7 +3,7 @@ import { View, ScrollView, Pressable, Text as RNText } from 'react-native';
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { Screen, Title, Muted, Section, Icon, ICON, Row } from '@/ui';
+import { Screen, Title, Muted, Section, Icon, ICON, Row, ArtCard, OnBlue } from '@/ui';
 import { font, useTheme } from '@/theme';
 import { useStore, isPaid } from '@/state/store';
 import { UNITS, ROMAN, isFreeLesson, nextLesson } from '@/lib/progress';
@@ -24,10 +24,15 @@ export default function Path() {
         <View style={{ paddingTop: 8, gap: 6 }}>
           <Title size={30}>Train</Title>
         </View>
-        <Row gap={10} style={{ marginTop: 14 }}>
+        <Animated.View entering={FadeInDown.duration(400)} style={{ marginTop: 14 }}>
+          <ArtCard art="apollo" height={220} focus="top" onPress={() => router.push('/floor')}>
+            <OnBlue kicker="Live · no turn limit" sub="A real conversation that keeps going. People join. It gets harder.">Open Floor</OnBlue>
+          </ArtCard>
+        </Animated.View>
+        <Row gap={10} style={{ marginTop: 10 }}>
           {[
             { k: 'sit', label: 'Situations', sub: 'Ten seconds to read the room', icon: ICON.clock, go: () => router.push('/situations') },
-            { k: 'scan', label: 'Aura Scan', sub: 'Fifteen seconds on camera', icon: ICON.scan, go: () => router.push('/aura-scan') },
+            { k: 'scan', label: 'Aura Farm', sub: 'Fifteen seconds on camera. Who holds it?', icon: ICON.scan, go: () => router.push('/aura-scan') },
           ].map((x) => (
             <Pressable key={x.k} onPress={() => { play('select'); x.go(); }} style={{ flex: 1, borderRadius: 20, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, padding: 14, gap: 10 }}>
               <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: t.accentSoft, alignItems: 'center', justifyContent: 'center' }}>
@@ -36,6 +41,22 @@ export default function Path() {
               <View style={{ gap: 2 }}>
                 <RNText style={{ fontFamily: font.medium, fontSize: 15, color: t.ink }}>{x.label}</RNText>
                 <RNText style={{ fontFamily: font.regular, fontSize: 12, color: t.ink2 }}>{x.sub}</RNText>
+              </View>
+            </Pressable>
+          ))}
+        </Row>
+        <Row gap={10} style={{ marginTop: 10 }}>
+          {[
+            { k: 'clip', label: 'Rate a clip', sub: 'Anyone’s moment, scored', icon: ICON.upload, go: () => router.push('/clip') },
+            { k: 'ig', label: 'Profile read', sub: 'Your Instagram’s aura', icon: ICON.scan, go: () => router.push('/profile-read') },
+          ].map((x) => (
+            <Pressable key={x.k} onPress={() => { play('select'); x.go(); }} style={{ flex: 1, borderRadius: 20, backgroundColor: t.accent, padding: 14, gap: 10 }}>
+              <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: 'rgba(255,255,255,0.16)', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon d={x.icon} size={16} color="#FFF" />
+              </View>
+              <View style={{ gap: 2 }}>
+                <RNText style={{ fontFamily: font.medium, fontSize: 15, color: '#FFF' }}>{x.label}</RNText>
+                <RNText style={{ fontFamily: font.regular, fontSize: 12, color: 'rgba(255,255,255,0.8)' }}>{x.sub}</RNText>
               </View>
             </Pressable>
           ))}

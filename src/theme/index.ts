@@ -35,13 +35,13 @@ export const gallery: Theme = {
   ink: '#121218',
   ink2: '#5E5E69',
   ink3: '#8E8E99',
-  inverse: '#1414E6',
+  inverse: '#1608F2',
   onInverse: '#FFFFFF',
   onInverse2: '#C8CAFF',
-  accent: '#1414E6',
+  accent: '#1608F2',
   accentSoft: '#EDEEFF',
   onAccent: '#FFFFFF',
-  markInk: '#1414E6',
+  markInk: '#1608F2',
 };
 
 /** Night print: deep cobalt-black, for late use. */
@@ -91,16 +91,37 @@ export function useTheme(): Theme {
 
 export const STATUES = {
   // floating cut-outs (on paper)
-  athlete: require('../../assets/img/marble_248579.webp'),
-  bust: require('../../assets/img/marble_249049.webp'),
-  bustDark: require('../../assets/img/marble_250675.webp'),
-  antinoos: require('../../assets/img/marble_256530.webp'),
-  head: require('../../assets/img/marble_255422.webp'),
+  athlete: require('../../assets/img/grain_248579.webp'),
+  bust: require('../../assets/img/grain_249049.webp'),
+  bustDark: require('../../assets/img/grain_250675.webp'),
+  antinoos: require('../../assets/img/grain_256530.webp'),
+  head: require('../../assets/img/grain_255422.webp'),
   // engravings (cobalt line on paper)
   engrBust: require('../../assets/img/engr_249049.webp'),
   engrAthlete: require('../../assets/img/engr_248579.webp'),
   engrAntinoos: require('../../assets/img/engr_256530.webp'),
 } as const;
+
+/** Full-bleed art: public-domain sculpture and portraits (Cleveland Museum of Art, CC0) in the Kleos print treatment. */
+export const ART = {
+  youth: require('../../assets/art/a_youth.webp'),
+  aurelius: require('../../assets/art/a_aurelius.webp'),
+  aphrodite: require('../../assets/art/a_aphrodite.webp'),
+  vespasian: require('../../assets/art/a_vespasian.webp'),
+  trajan: require('../../assets/art/a_trajan.webp'),
+  man: require('../../assets/art/a_man.webp'),
+  apollo: require('../../assets/art/a_apollo.webp'),
+  athlete: require('../../assets/art/a_athlete.webp'),
+  lisa: require('../../assets/art/o_lisa.webp'),
+  pitt: require('../../assets/art/o_pitt.webp'),
+  couple: require('../../assets/art/o_couple.webp'),
+  tennis: require('../../assets/art/o_tennis.webp'),
+  seaside: require('../../assets/art/o_seaside.webp'),
+  lovers: require('../../assets/art/o_lovers.webp'),
+  dora: require('../../assets/art/o_dora.webp'),
+  violin: require('../../assets/art/o_violin.webp'),
+} as const;
+export type ArtName = keyof typeof ART;
 
 /** Square cobalt prints (dither / scanline), Hermes-style. */
 export const PRINTS = {

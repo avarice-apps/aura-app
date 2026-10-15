@@ -26,7 +26,11 @@ export type Counts = { fillers: number; hedges: number; apologies: number; ended
 
 export type Evaluation = {
   rating: number;
-  axes: { voice: number; command: number; composure: number; awareness: number };
+  axes: { voice: number; command: number; composure: number; awareness: number; landed?: number };
+  /** One blunt sentence: how it actually went. */
+  verdict?: string;
+  effort?: 'real' | 'half' | 'trolling';
+  landed?: { score: number; evidence: string };
   archetype: string;
   archetype_line: string;
   strengths: { text: string; turn: number }[];
@@ -85,3 +89,29 @@ export type ScanResult = {
 };
 
 export type Lesson = { character: string; setting: string; opener: string; twist: string | null; goal: string; hint: string; focus?: string };
+
+/** Rate a Clip: a moment (anyone's), scored for aura beat by beat. */
+export type Moment = {
+  title: string;
+  verdict: string;
+  lines: { t: string; text: string; points: number }[];
+  total: number;
+  tier: string;
+  caption: string;
+  what_to_do: string;
+  said_instead?: string | null;
+  createdAt?: string;
+};
+
+/** Profile Read: an Instagram profile as a stranger sees it. */
+export type ProfileRead = {
+  score: number;
+  tier: string;
+  first_impression: string;
+  parts: { part: string; score: number; note: string; fix: string }[];
+  bio_rewrite?: string | null;
+  caption_rewrite?: { before: string; after: string } | null;
+  fixes: string[];
+  song?: { title: string; artist: string; why: string };
+  createdAt?: string;
+};

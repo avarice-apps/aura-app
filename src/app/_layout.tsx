@@ -45,6 +45,11 @@ export default function RootLayout() {
         <Stack.Screen name="you" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="missions" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="room/[cat]" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="floor/index" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="daily" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
+        <Stack.Screen name="clip" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="profile-read" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="floor/[id]" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="code/[id]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="replay" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="paywall" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />

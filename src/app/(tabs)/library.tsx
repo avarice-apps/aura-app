@@ -2,7 +2,7 @@ import React from 'react';
 import { View, ScrollView, Pressable, Text as RNText } from 'react-native';
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Screen, Title, Label, Statue, Section, Chevron } from '@/ui';
+import { Screen, Title, Statue, Section, Chevron, ArtCard, OnBlue } from '@/ui';
 import { font, useTheme } from '@/theme';
 import { useStore } from '@/state/store';
 import { UNITS, nextLesson } from '@/lib/progress';
@@ -36,22 +36,15 @@ export default function Library() {
 
         {/* Program */}
         <Animated.View entering={FadeInDown.duration(450)}>
-          <Pressable onPress={() => { play('select'); router.push('/(tabs)/train'); }} style={{ marginTop: 16, height: 200, borderRadius: 24, backgroundColor: t.accent, overflow: 'hidden' }}>
-            <View style={{ position: 'absolute', right: -6, bottom: -14 }}>
-              <Statue name="head" height={200} />
-            </View>
-            <View style={{ position: 'absolute', left: 20, top: 20, width: 200, gap: 6 }}>
-              <Label color={t.onInverse2}>Program · {done ? 'In progress' : 'Start here'}</Label>
-              <RNText style={{ fontFamily: font.medium, fontSize: 26, lineHeight: 30, letterSpacing: -0.6, color: t.onAccent }}>The Presence Path</RNText>
-              <RNText style={{ fontFamily: font.medium, fontSize: 14, color: t.onAccent }}>{next.unit.title} · {next.lesson.title}</RNText>
-            </View>
-            <View style={{ position: 'absolute', left: 20, bottom: 20, width: 170, gap: 6 }}>
+          <ArtCard art="couple" height={230} focus="top" style={{ marginTop: 16 }} onPress={() => router.push('/(tabs)/train')}>
+            <OnBlue kicker={`Program · ${done ? 'In progress' : 'Start here'}`} sub={`${next.unit.title} · ${next.lesson.title}`}>The Presence Path</OnBlue>
+            <View style={{ marginTop: 12, width: 170, gap: 6 }}>
               <View style={{ height: 3, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.25)' }}>
-                <View style={{ height: 3, borderRadius: 2, backgroundColor: t.onAccent, width: `${Math.max(4, (done / total) * 100)}%` }} />
+                <View style={{ height: 3, borderRadius: 2, backgroundColor: '#FFF', width: `${Math.max(4, (done / total) * 100)}%` }} />
               </View>
-              <RNText style={{ fontFamily: font.mono, fontSize: 11, color: t.onInverse2 }}>{done} / {total}</RNText>
+              <RNText style={{ fontFamily: font.mono, fontSize: 11, color: 'rgba(255,255,255,0.75)' }}>{done} / {total}</RNText>
             </View>
-          </Pressable>
+          </ArtCard>
         </Animated.View>
 
         {/* Rooms */}

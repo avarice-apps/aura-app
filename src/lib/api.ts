@@ -1,5 +1,5 @@
 import { API_URL, OFFLINE } from './config';
-import type { Evaluation, Lesson, Receipt, ScanResult, SessionStart, TurnResult } from './types';
+import type { Evaluation, Lesson, Moment, ProfileRead, Receipt, ScanResult, SessionStart, TurnResult } from './types';
 import { useStore, type Goal } from '@/state/store';
 import { QUESTS } from './quests';
 
@@ -135,7 +135,7 @@ function fileField(uri: string, name: string, type: string) {
 
 // ------------------------------------------------------------------ conversations
 
-export type StartArgs = { goal?: Goal; room_id?: string; lesson?: Lesson; pressure?: number; attempt_of?: string; max_turns?: number };
+export type StartArgs = { goal?: Goal; room_id?: string; lesson?: Lesson; floor_id?: string; daily_id?: string; pressure?: number; attempt_of?: string; max_turns?: number };
 
 export async function startSession(a: StartArgs): Promise<SessionStart & { openerAudio: AudioSrc }> {
   if (OFFLINE) {
@@ -292,13 +292,13 @@ export async function withdrawTraining(subjectId: string): Promise<number> {
 
 // ------------------------------------------------------------------ live (full-duplex) conversations
 
-export type LiveStart = SessionStart & { agent_id: string; conversation_token: string; overrides: any };
+export type LiveStart = SessionStart & { agent_id: string; conversation_token: string; overrides: any; speakers?: { name: string; role: string }[] };
 
 export async function liveStart(a: StartArgs): Promise<LiveStart> {
   return postJSON<LiveStart>('/live/start', { ...a, tone: tone() });
 }
 
-export async function liveState(sessionId: string): Promise<{ done: boolean; turns: number; interest: number | null; trust: number | null }> {
+export async function liveState(sessionId: string): Promise<{ done: boolean; leaving?: boolean; turns: number; interest: number | null; trust: number | null }> {
   const r = await fetch(`${API_URL}/live/${sessionId}/state`);
   if (!r.ok) throw new Error('state');
   return r.json();
@@ -307,4 +307,57 @@ export async function liveState(sessionId: string): Promise<{ done: boolean; tur
 export async function liveFinish(sessionId: string, conversationId: string): Promise<Evaluation & { scriptAudio: AudioSrc }> {
   const e = await postJSON<Evaluation & { script_audio?: string }>(`/live/${sessionId}/finish`, { conversation_id: conversationId });
   return { ...e, scriptAudio: e.script_audio };
+}
+
+// ------------------------------------------------------------------ rate a clip / profile read
+
+export async function rateMoment(a: { videoUri: string; note?: string }): Promise<Moment> {
+  if (OFFLINE) {
+    await sleep(1800);
+    return {
+      title: 'The fumbled toast',
+      verdict: 'Strong open, then he read his notes off his phone for a full minute.',
+      lines: [
+        { t: '0:02', text: 'Stands up, taps the glass, room goes quiet', points: 120 },
+        { t: '0:09', text: 'Pulls out his phone to read the speech', points: -200 },
+        { t: '0:21', text: 'Inside joke nobody else gets', points: -150 },
+        { t: '0:34', text: 'Lands the last line, looks at the couple', points: 90 },
+      ],
+      total: -140,
+      tier: 'Aura debt',
+      caption: 'Opened like a best man, closed like a PowerPoint.',
+      what_to_do: 'Memorise three lines, look at the couple, sit down.',
+      said_instead: 'I’ll keep it short, because they’ve waited long enough. To the two of you.',
+    };
+  }
+  const form = new FormData();
+  form.append('video', fileField(a.videoUri, 'clip.mp4', 'video/mp4'));
+  if (a.note) form.append('note', a.note);
+  form.append('tone', tone());
+  return postForm<Moment>('/moment', form, 180000);
+}
+
+export async function readProfile(a: { uris: string[]; handle?: string }): Promise<ProfileRead> {
+  if (OFFLINE) {
+    await sleep(1800);
+    return {
+      score: 47,
+      tier: 'LinkedIn energy',
+      first_impression: 'Hustle bio, no face, and a grid that could be anyone’s.',
+      parts: [
+        { part: 'Profile picture', score: 52, note: 'Too far away to read your face or your vibe.', fix: 'Shoulders up, natural light, not a mirror.' },
+        { part: 'Bio', score: 34, note: '“Grind in silence” is a quote, not a person.', fix: 'Say one specific thing you do or like.' },
+        { part: 'Grid', score: 61, note: 'Cohesive colours, but no people and no story.', fix: 'Add two posts with friends in them.' },
+      ],
+      bio_rewrite: 'Puerto Rico → Williams. Building things. Overthinking playlists.',
+      caption_rewrite: { before: 'Grateful 🙏✨', after: 'Third attempt at this view. Worth it.' },
+      fixes: ['Replace the quote in your bio with one real detail.', 'Use a closer, warmer profile photo.', 'Post one photo with people in it.'],
+      song: { title: 'Location', artist: 'Khalid', why: 'Chill, a little guarded, wants to be found.' },
+    };
+  }
+  const form = new FormData();
+  a.uris.slice(0, 6).forEach((u, i) => form.append('shots', fileField(u, `shot${i}.jpg`, 'image/jpeg')));
+  if (a.handle) form.append('handle', a.handle);
+  form.append('tone', tone());
+  return postForm<ProfileRead>('/profile', form, 180000);
 }

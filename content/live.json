@@ -1,31 +1,183 @@
 {
   "note": "Live conversations: Poise coaches; the cast plays the other people. Each character has a real conversational style so users learn to adapt, not memorise one answer. Voices are ElevenLabs premade ids; swap for custom ones later.",
   "cast": [
-    { "id": "mara", "name": "Mara", "style": "Warm and curious", "voice": "EXAVITQu4vr4xnSDxMaL", "behaviour": "Asks follow-ups, rewards specifics, goes quiet if you monologue." },
-    { "id": "theo", "name": "Theo", "style": "The skeptic", "voice": "CwhRBWXzGAHq8TQ4Fs17", "behaviour": "Polite but unconvinced. Asks 'why that?' and 'meaning what?'. Respects a clean, held position." },
-    { "id": "dev", "name": "Dev", "style": "The talker", "voice": "iP95p4xoKVk53GoZ742B", "behaviour": "Fills silence, interrupts warmly, steers back to himself. Tests whether you can get a word in without fighting." },
-    { "id": "julian", "name": "Julian", "style": "Reserved and senior", "voice": "pqHfZKP75CvOlQylNhV4", "behaviour": "Short answers, long pauses, high status. Rewards calm and brevity; punishes filling his silences." },
-    { "id": "ines", "name": "Ines", "style": "Distracted", "voice": "cgSgspJ2msm6clMCkdW9", "behaviour": "Checks her phone, half-listens. Tests whether you can earn attention without chasing it." },
-    { "id": "kai", "name": "Kai", "style": "Direct", "voice": "nPczCjzI2devNBz1zQrb", "behaviour": "Blunt, fast, no small talk. Wants the point first." }
+    {
+      "id": "mara",
+      "name": "Mara",
+      "style": "Warm and curious",
+      "voice": "T1LJmO1i3U7y9K38NWAy",
+      "behaviour": "Asks follow-ups, rewards specifics, goes quiet if you monologue."
+    },
+    {
+      "id": "theo",
+      "name": "Theo",
+      "style": "The skeptic",
+      "voice": "cjVigY5qzO86Huf0OWal",
+      "behaviour": "Polite but unconvinced. Asks 'why that?' and 'meaning what?'. Respects a clean, held position."
+    },
+    {
+      "id": "dev",
+      "name": "Dev",
+      "style": "The talker",
+      "voice": "TX3LPaxmHKxFdv7VOQHJ",
+      "behaviour": "Fills silence, interrupts warmly, steers back to himself. Tests whether you can get a word in without fighting."
+    },
+    {
+      "id": "julian",
+      "name": "Julian",
+      "style": "Reserved and senior",
+      "voice": "pqHfZKP75CvOlQylNhV4",
+      "behaviour": "Short answers, long pauses, high status. Rewards calm and brevity; punishes filling his silences."
+    },
+    {
+      "id": "ines",
+      "name": "Ines",
+      "style": "Distracted",
+      "voice": "FGY2WhTYpPnrIDTdsKH5",
+      "behaviour": "Checks her phone, half-listens. Tests whether you can earn attention without chasing it."
+    },
+    {
+      "id": "kai",
+      "name": "Kai",
+      "style": "Direct",
+      "voice": "pNInz6obpgDQGcFmaJgB",
+      "behaviour": "Blunt, fast, no small talk. Wants the point first."
+    }
   ],
   "rooms": [
-    { "id": "what-do-you-do", "title": "So, what do you actually do?", "category": "intro", "partner": "mara", "opener": "So what do you actually do? Like, day to day.", "twist": "She says 'that sounds kind of boring, no offence' with a smile.", "goal": "Make it interesting in under 30 seconds, then turn it back to her.", "free": true },
-    { "id": "interview-why-you", "title": "Why should it be you?", "category": "work", "partner": "julian", "opener": "We have forty applicants. Why should it be you?", "twist": "He says nothing for four seconds after your answer.", "goal": "Answer, stop, and hold the silence without filling it." },
-    { "id": "the-pitch", "title": "Explain it in one breath", "category": "work", "partner": "kai", "opener": "You've got thirty seconds. What's the idea?", "twist": "'Okay, but who actually pays for that?'", "goal": "Point first, then one supporting fact." },
-    { "id": "dinner-story", "title": "Tell the story", "category": "group", "partner": "dev", "opener": "Wait, you were there? Tell them what happened.", "twist": "Dev cuts in halfway with his own version.", "goal": "Recover the floor without fighting for it." },
-    { "id": "boss-on-phone", "title": "The boss on his phone", "category": "status", "partner": "ines", "opener": "Remind me, what is it you do?", "twist": "She looks at her phone mid-answer.", "goal": "Land it in one sentence and move the attention." },
-    { "id": "say-no", "title": "Say no to the favour", "category": "conflict", "partner": "dev", "opener": "Can you cover my shift Saturday? You're the only one I trust.", "twist": "'Come on, it's literally one day.'", "goal": "Decline once, kindly, without over-explaining. Hold it on the second ask." },
-    { "id": "disagree-friend", "title": "Hold your point", "category": "conflict", "partner": "theo", "opener": "Honestly, I think you're wrong about this.", "twist": "He brings a reasonable counterpoint.", "goal": "Acknowledge what's right in his point, keep yours." },
-    { "id": "compliment", "title": "Take the compliment", "category": "status", "partner": "mara", "opener": "That was genuinely a great toast. Did you write it?", "twist": null, "goal": "Accept it without deflecting or inflating it." },
-    { "id": "first-date-open", "title": "The first ten minutes", "category": "dating", "partner": "mara", "opener": "Sorry I'm late. Have you been here long?", "twist": "She asks, 'So is this your usual move, this place?'", "goal": "Ease, curiosity, one real question." },
-    { "id": "lost-thread", "title": "Recovery: lost the thread", "category": "recovery", "partner": "kai", "opener": "And then what? You were saying something about the second option.", "twist": "Poise cuts your audio for two seconds mid-sentence.", "goal": "Reset in one clean sentence without apologising twice." },
-    { "id": "toast", "title": "Thirty-second toast", "category": "hosting", "partner": "julian", "opener": "You're up. Say something about him.", "twist": "Someone heckles, 'Keep it short.'", "goal": "One story, one line, glass up." },
-    { "id": "meet-parents", "title": "Meeting her father", "category": "dating", "partner": "julian", "opener": "So. What are your intentions with my daughter?", "twist": "He doesn't laugh at your joke.", "goal": "Warm, steady, direct. Don't perform." }
+    {
+      "id": "what-do-you-do",
+      "title": "So, what do you actually do?",
+      "category": "intro",
+      "partner": "mara",
+      "opener": "So what do you actually do? Like, day to day.",
+      "twist": "She says 'that sounds kind of boring, no offence' with a smile.",
+      "goal": "Make it interesting in under 30 seconds, then turn it back to her.",
+      "free": true
+    },
+    {
+      "id": "interview-why-you",
+      "title": "Why should it be you?",
+      "category": "work",
+      "partner": "julian",
+      "opener": "We have forty applicants. Why should it be you?",
+      "twist": "He says nothing for four seconds after your answer.",
+      "goal": "Answer, stop, and hold the silence without filling it."
+    },
+    {
+      "id": "the-pitch",
+      "title": "Explain it in one breath",
+      "category": "work",
+      "partner": "kai",
+      "opener": "You've got thirty seconds. What's the idea?",
+      "twist": "'Okay, but who actually pays for that?'",
+      "goal": "Point first, then one supporting fact."
+    },
+    {
+      "id": "dinner-story",
+      "title": "Tell the story",
+      "category": "group",
+      "partner": "dev",
+      "opener": "Wait, you were there? Tell them what happened.",
+      "twist": "Dev cuts in halfway with his own version.",
+      "goal": "Recover the floor without fighting for it."
+    },
+    {
+      "id": "boss-on-phone",
+      "title": "The boss on his phone",
+      "category": "status",
+      "partner": "ines",
+      "opener": "Remind me, what is it you do?",
+      "twist": "She looks at her phone mid-answer.",
+      "goal": "Land it in one sentence and move the attention."
+    },
+    {
+      "id": "say-no",
+      "title": "Say no to the favour",
+      "category": "conflict",
+      "partner": "dev",
+      "opener": "Can you cover my shift Saturday? You're the only one I trust.",
+      "twist": "'Come on, it's literally one day.'",
+      "goal": "Decline once, kindly, without over-explaining. Hold it on the second ask."
+    },
+    {
+      "id": "disagree-friend",
+      "title": "Hold your point",
+      "category": "conflict",
+      "partner": "theo",
+      "opener": "Honestly, I think you're wrong about this.",
+      "twist": "He brings a reasonable counterpoint.",
+      "goal": "Acknowledge what's right in his point, keep yours."
+    },
+    {
+      "id": "compliment",
+      "title": "Take the compliment",
+      "category": "status",
+      "partner": "mara",
+      "opener": "That was genuinely a great toast. Did you write it?",
+      "twist": null,
+      "goal": "Accept it without deflecting or inflating it."
+    },
+    {
+      "id": "first-date-open",
+      "title": "The first ten minutes",
+      "category": "dating",
+      "partner": "mara",
+      "opener": "Sorry I'm late. Have you been here long?",
+      "twist": "She asks, 'So is this your usual move, this place?'",
+      "goal": "Ease, curiosity, one real question."
+    },
+    {
+      "id": "lost-thread",
+      "title": "Recovery: lost the thread",
+      "category": "recovery",
+      "partner": "kai",
+      "opener": "And then what? You were saying something about the second option.",
+      "twist": "Poise cuts your audio for two seconds mid-sentence.",
+      "goal": "Reset in one clean sentence without apologising twice."
+    },
+    {
+      "id": "toast",
+      "title": "Thirty-second toast",
+      "category": "hosting",
+      "partner": "julian",
+      "opener": "You're up. Say something about him.",
+      "twist": "Someone heckles, 'Keep it short.'",
+      "goal": "One story, one line, glass up."
+    },
+    {
+      "id": "meet-parents",
+      "title": "Meeting her father",
+      "category": "dating",
+      "partner": "julian",
+      "opener": "So. What are your intentions with my daughter?",
+      "twist": "He doesn't laugh at your joke.",
+      "goal": "Warm, steady, direct. Don't perform."
+    }
   ],
   "pressure_levels": [
-    { "level": 1, "name": "Easy", "answer_window_s": 30, "interruptions": 0, "skeptical_followups": 0 },
-    { "level": 2, "name": "Real", "answer_window_s": 20, "interruptions": 1, "skeptical_followups": 1 },
-    { "level": 3, "name": "Heat", "answer_window_s": 12, "interruptions": 2, "skeptical_followups": 2, "plot_twist": true }
+    {
+      "level": 1,
+      "name": "Easy",
+      "answer_window_s": 30,
+      "interruptions": 0,
+      "skeptical_followups": 0
+    },
+    {
+      "level": 2,
+      "name": "Real",
+      "answer_window_s": 20,
+      "interruptions": 1,
+      "skeptical_followups": 1
+    },
+    {
+      "level": 3,
+      "name": "Heat",
+      "answer_window_s": 12,
+      "interruptions": 2,
+      "skeptical_followups": 2,
+      "plot_twist": true
+    }
   ],
   "pause_rule": "A deliberate pause of up to 2.5 s before answering is never penalised. Filled pauses (um, uh, so) are."
 }

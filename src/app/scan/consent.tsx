@@ -26,7 +26,7 @@ export default function ScanConsent() {
     <Screen edges={['top', 'bottom']}>
       <Row style={{ justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8 }}>
         <IconButton label="Close" onPress={() => router.dismissAll()}><Icon d={ICON.close} size={16} /></IconButton>
-        <Label>{scan.mode === 'party' ? `Player ${scan.current + 1} of ${scan.players.length}` : 'Aura Scan'}</Label>
+        <Label>{scan.mode === 'party' ? `Player ${scan.current + 1} of ${scan.players.length}` : 'Aura Farm'}</Label>
         <View style={{ width: 40 }} />
       </Row>
       <View style={{ flex: 1, paddingHorizontal: 20, justifyContent: 'center', gap: 18 }}>

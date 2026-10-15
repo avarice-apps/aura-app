@@ -5,7 +5,8 @@ import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming, withSpring } from 'react-native-reanimated';
 import Svg, { Path, Line, Circle, Ellipse } from 'react-native-svg';
-import { font, radius, space, useTheme, STATUES, PRINTS } from '@/theme';
+import { font, radius, space, useTheme, STATUES, PRINTS, ART, ArtName } from '@/theme';
+import { LinearGradient } from 'expo-linear-gradient';
 import { play } from '@/lib/sound';
 
 // ------------------------------------------------------------ layout
@@ -301,3 +302,34 @@ export const ICON = {
   search: 'M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4',
   send: 'M5 12h14M13 6l6 6-6 6',
 } as const;
+
+
+// ------------------------------------------------------------ art (Hermes-style prints)
+
+/** A full-bleed print. The art carries the blue; content sits on a scrim at the bottom in white. */
+export function ArtCard({ art, height, children, onPress, style, focus = 'center', scrim = 0.85 }: { art: ArtName; height: number; children?: React.ReactNode; onPress?: () => void; style?: StyleProp<ViewStyle>; focus?: 'top' | 'center'; scrim?: number }) {
+  const t = useTheme();
+  const body = (
+    <View style={[{ height, borderRadius: radius.card, overflow: 'hidden', backgroundColor: t.accent }, style]}>
+      <Image source={ART[art]} style={StyleSheet.absoluteFill} contentFit="cover" contentPosition={{ top: focus === 'top' ? '28%' : '45%', left: '50%' }} transition={250} />
+      <LinearGradient pointerEvents="none" colors={['rgba(22,8,242,0)', `rgba(22,8,242,${scrim * 0.55})`, `rgba(16,6,200,${scrim})`]} locations={[0.35, 0.65, 1]} style={StyleSheet.absoluteFill} />
+      <View style={{ flex: 1, padding: 18, justifyContent: 'flex-end' }}>{children}</View>
+    </View>
+  );
+  return onPress ? (
+    <Pressable onPress={() => { play('select'); onPress(); }} style={({ pressed }) => ({ transform: [{ scale: pressed ? 0.985 : 1 }] })}>
+      {body}
+    </Pressable>
+  ) : body;
+}
+
+/** White display text for blue sections. */
+export function OnBlue({ children, size = 26, kicker, sub }: { children?: React.ReactNode; size?: number; kicker?: string; sub?: string }) {
+  return (
+    <View style={{ gap: 4 }}>
+      {kicker ? <RNText style={{ fontFamily: font.mono, fontSize: 10.5, letterSpacing: 1.4, color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase' }}>{kicker}</RNText> : null}
+      {children ? <RNText style={{ fontFamily: font.medium, fontSize: size, lineHeight: size * 1.12, letterSpacing: -size * 0.025, color: '#FFFFFF' }}>{children}</RNText> : null}
+      {sub ? <RNText style={{ fontFamily: font.regular, fontSize: 14, lineHeight: 19, color: 'rgba(255,255,255,0.86)' }}>{sub}</RNText> : null}
+    </View>
+  );
+}

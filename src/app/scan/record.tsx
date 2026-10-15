@@ -74,7 +74,7 @@ export default function ScanRecord() {
   if (!camPerm?.granted || !micPerm?.granted) {
     return (
       <View style={{ flex: 1, backgroundColor: t.bg, padding: 24, justifyContent: 'center', gap: 12 }}>
-        <Title size={28}>Aura Scan needs the camera and the mic.</Title>
+        <Title size={28}>Aura Farm needs the camera and the mic.</Title>
         <Body color={t.ink2}>Only for the fifteen seconds. The clip is deleted after it’s read.</Body>
         <Button label="Allow" onPress={() => { askCam(); askMic(); }} />
         <Button label="Not now" variant="ghost" onPress={() => router.dismissAll()} />

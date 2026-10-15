@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, Pressable, Text as RNText } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { Body, Card, Icon, ICON, Label, Muted, Num, Row, Stack, Statue, Title, Bar, Tag, Serif, Halo } from '@/ui';
+import { Body, Card, Icon, ICON, Label, Muted, Num, Row, Stack, Title, Bar, Tag, Serif, ArtCard } from '@/ui';
+import type { ArtName } from '@/theme';
 import { font, useTheme } from '@/theme';
 import type { Evaluation } from '@/lib/types';
 import { speak, stopSpeaking } from '@/lib/voice';
@@ -66,40 +67,29 @@ export function ThoughtTrace({ e }: { e: Evaluation }) {
   );
 }
 
-const STATUE_FOR: Record<string, 'athlete' | 'bust' | 'bustDark' | 'antinoos' | 'head'> = {
-  'The Hedge': 'head',
-  'The Apologist': 'bust',
-  'The Sprinter': 'athlete',
-  'The Statue': 'bustDark',
-  'The Pleaser': 'head',
-  'The Blade': 'antinoos',
-  'The Anchor': 'bustDark',
-  'The Current': 'athlete',
-  'The Storyteller': 'antinoos',
-  'The Understated': 'bust',
+
+const ART_FOR: Record<string, ArtName> = {
+  'The Hedge': 'man', 'The Apologist': 'aphrodite', 'The Sprinter': 'athlete', 'The Statue': 'vespasian', 'The Pleaser': 'lisa',
+  'The Blade': 'trajan', 'The Anchor': 'aurelius', 'The Current': 'apollo', 'The Storyteller': 'pitt', 'The Understated': 'youth',
+  'The Ghost': 'dora', 'The Clown': 'violin',
 };
 
-/** Approved design O5: the dark block, now blue. Archetype, one line, the number, a statue. */
+/** The verdict as a print: archetype, one line, the number. Built to be screenshotted. */
 export function ResultHero({ e, label = 'This answer read as' }: { e: Evaluation; label?: string }) {
-  const t = useTheme();
   return (
-    <View style={{ height: 210, borderRadius: 24, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, overflow: 'hidden' }}>
-      <View style={{ position: 'absolute', right: -50, top: -40 }}>
-        <Halo size={280} opacity={0.45} />
+    <ArtCard art={ART_FOR[e.archetype] ?? 'aurelius'} height={300} focus="top">
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
+        <View style={{ flex: 1, gap: 3 }}>
+          <RNText style={{ fontFamily: font.mono, fontSize: 10.5, letterSpacing: 1.4, color: 'rgba(255,255,255,0.75)' }}>{label.toUpperCase()}</RNText>
+          <RNText style={{ fontFamily: font.medium, fontSize: 28, lineHeight: 31, letterSpacing: -0.8, color: '#FFF' }}>{e.archetype}</RNText>
+          <RNText style={{ fontFamily: font.regular, fontSize: 14, lineHeight: 19, color: 'rgba(255,255,255,0.86)' }}>{e.archetype_line}</RNText>
+        </View>
+        <View style={{ alignItems: 'flex-end' }}>
+          <RNText style={{ fontFamily: font.medium, fontSize: 60, lineHeight: 62, letterSpacing: -2, color: '#FFF' }}>{e.rating}</RNText>
+          <RNText style={{ fontFamily: font.mono, fontSize: 10, letterSpacing: 1.2, color: 'rgba(255,255,255,0.75)' }}>AURA</RNText>
+        </View>
       </View>
-      <View style={{ position: 'absolute', right: 6, bottom: -12 }}>
-        <Statue name={STATUE_FOR[e.archetype] ?? 'head'} height={176} />
-      </View>
-      <View style={{ position: 'absolute', left: 18, top: 16, width: 180, gap: 3 }}>
-        <Label color={t.accent}>{label}</Label>
-        <Title size={26}>{e.archetype}</Title>
-        <Body small color={t.ink2}>{e.archetype_line}</Body>
-      </View>
-      <View style={{ position: 'absolute', left: 18, bottom: 12, flexDirection: 'row', alignItems: 'baseline', gap: 8 }}>
-        <Num value={e.rating} size={54} color={t.accent} />
-        <Label>Aura · this read</Label>
-      </View>
-    </View>
+    </ArtCard>
   );
 }
 
@@ -107,8 +97,19 @@ export function FeedbackCard({ e }: { e: Evaluation }) {
   const t = useTheme();
   return (
     <Card style={{ paddingVertical: 4 }}>
-      {e.strengths.map((s, i) => (
-        <View key={i} style={{ flexDirection: 'row', gap: 10, paddingVertical: 12, borderTopWidth: i ? 1 : 0, borderColor: t.cardAlt }}>
+      {e.verdict ? (
+        <View style={{ paddingVertical: 14 }}>
+          <Serif size={21} italic>{e.verdict}</Serif>
+        </View>
+      ) : null}
+      {(e.strengths ?? []).length === 0 ? (
+        <View style={{ flexDirection: 'row', gap: 10, paddingVertical: 12, borderTopWidth: e.verdict ? 1 : 0, borderColor: t.cardAlt }}>
+          <RNText style={{ fontFamily: font.mono, fontSize: 12, color: t.ink3, width: 14 }}>·</RNText>
+          <Body small color={t.ink2} style={{ flex: 1 }}>Nothing here worked well enough to call a strength.</Body>
+        </View>
+      ) : null}
+      {(e.strengths ?? []).map((s, i) => (
+        <View key={i} style={{ flexDirection: 'row', gap: 10, paddingVertical: 12, borderTopWidth: i || e.verdict ? 1 : 0, borderColor: t.cardAlt }}>
           <RNText style={{ fontFamily: font.mono, fontSize: 12, color: t.accent, width: 14 }}>+</RNText>
           <Body small style={{ flex: 1 }}>{s.text}</Body>
         </View>
@@ -177,9 +178,9 @@ export function Insufficient({ e }: { e: Evaluation }) {
   return (
     <Card style={{ marginTop: 16, gap: 8 }}>
       <Label>No rating this time</Label>
-      <Title size={26}>Not enough to go on.</Title>
-      <Body color={t.ink2}>{e.reason ?? 'Poise heard too little to rate fairly. That one doesn’t count against you.'}</Body>
-      <Muted small>A fair read needs a few full sentences. Get a little closer to the mic and give it one more go.</Muted>
+      <Title size={26}>Nothing to read.</Title>
+      <Body color={t.ink2}>{e.reason ?? 'You barely said anything. There is nothing to rate.'}</Body>
+      <Muted small>Talk to them like they’re real. A few full sentences is enough.</Muted>
     </Card>
   );
 }
@@ -187,6 +188,7 @@ export function Insufficient({ e }: { e: Evaluation }) {
 export function AxesCard({ e }: { e: Evaluation }) {
   const t = useTheme();
   const rows: [string, number][] = [
+    ...(typeof e.axes.landed === 'number' ? ([['How it landed', e.axes.landed]] as [string, number][]) : []),
     ['Voice', e.axes.voice],
     ['Command', e.axes.command],
     ['Composure', e.axes.composure],

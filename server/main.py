@@ -18,7 +18,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, Response, HTMLResponse, FileResponse, StreamingResponse
 from fastapi import Request
 
-from pipeline import audio, face, rubric, poise, tts, converse, live
+from pipeline import audio, face, rubric, poise, tts, converse, live, vision
 from training import store as train_store, learned
 
 app = FastAPI(title="Aura", version="0.1")
@@ -287,7 +287,7 @@ async def live_start(request: Request):
     """Start a live voice session: our session + a one-time ElevenLabs token + per-session overrides."""
     b = await request.json()
     try:
-        out = converse.start(room_id=b.get("room_id"), goal=b.get("goal"), lesson=b.get("lesson"), pressure=int(b.get("pressure", 1)), max_turns=b.get("max_turns"), attempt_of=b.get("attempt_of"), tone=b.get("tone", "real"))
+        out = converse.start(room_id=b.get("room_id"), goal=b.get("goal"), lesson=b.get("lesson"), floor_id=b.get("floor_id"), daily_id=b.get("daily_id"), pressure=int(b.get("pressure", 2)), max_turns=b.get("max_turns"), attempt_of=b.get("attempt_of"), tone=b.get("tone", "real"), live=True)
     except KeyError as e:
         raise HTTPException(410, str(e))
     agent_id = await _agent_id()
@@ -303,7 +303,7 @@ async def live_state(sid: str):
         raise HTTPException(410, "session expired")
     chars = [t for t in s["turns"] if t["role"] == "char"]
     last = chars[-1] if chars else {}
-    return {"done": bool(s.get("done")), "turns": sum(1 for t in s["turns"] if t["role"] == "user"), "interest": last.get("interest"), "trust": last.get("trust")}
+    return {"done": bool(s.get("done")), "leaving": bool(last.get("leaving")), "turns": sum(1 for t in s["turns"] if t["role"] == "user"), "interest": last.get("interest"), "trust": last.get("trust")}
 
 
 @app.post("/live/{sid}/finish")
@@ -311,6 +311,9 @@ async def live_finish(sid: str, request: Request, voice: bool = True):
     """After hang-up: measure the recording, then Poise evaluates."""
     b = await request.json()
     cid = b.get("conversation_id")
+    if sid in converse.SESSIONS:
+        # Hung up: anything ElevenLabs still sends for this call is ignored.
+        converse.SESSIONS[sid]["closed"] = True
     if cid:
         try:
             await live.analyse_call(sid, cid)
@@ -341,14 +344,19 @@ async def live_llm(request: Request):
             yield 'data: {"choices":[{"index":0,"delta":{"content":"Sorry, I lost you there."},"finish_reason":null}]}\n\n'
             yield "data: [DONE]\n\n"
         return StreamingResponse(bye(), media_type="text/event-stream")
-    return StreamingResponse(live.openai_stream(sid, text or "...", b.get("model") or "kleos-character"), media_type="text/event-stream")
+    # The agent can ask for a reply after a long silence; then the last message is ours, not his.
+    last_role = next((m.get("role") for m in reversed(msgs) if m.get("role") in ("user", "assistant")), "user")
+    if last_role != "user":
+        text = ""
+    live.rollback_if_retry(sid, text)
+    return StreamingResponse(live.openai_stream(sid, text, b.get("model") or "kleos-character"), media_type="text/event-stream")
 
 
 @app.post("/session/start")
 async def session_start(request: Request):
     b = await request.json()
     try:
-        out = converse.start(room_id=b.get("room_id"), goal=b.get("goal"), lesson=b.get("lesson"), pressure=int(b.get("pressure", 1)), max_turns=b.get("max_turns"), attempt_of=b.get("attempt_of"), tone=b.get("tone", "real"))
+        out = converse.start(room_id=b.get("room_id"), goal=b.get("goal"), lesson=b.get("lesson"), floor_id=b.get("floor_id"), daily_id=b.get("daily_id"), pressure=int(b.get("pressure", 1)), max_turns=b.get("max_turns") or (8 if (b.get("floor_id") or b.get("daily_id")) else None), attempt_of=b.get("attempt_of"), tone=b.get("tone", "real"))
     except KeyError as e:
         raise HTTPException(410, str(e))
     except ValueError as e:
@@ -437,9 +445,40 @@ async def make_ledger(text: str = Form(""), context: str = Form(""), tone: str =
         finally:
             os.remove(path)
     if len(story.split()) < 5:
-        raise HTTPException(422, "Tell me a little more about what happened.")
+        raise HTTPException(422, "I didn’t catch enough of that. Tell me what happened in a few sentences." if audio_file is not None else "Give me a bit more. What happened, who was there, what did you say?")
     out = await converse.ledger(story, context, tone)
     out["story"] = story
+    return out
+
+
+@app.post("/moment")
+async def rate_moment(video: UploadFile = File(...), note: str = Form(""), tone: str = Form("real")):
+    """Rate a Clip: anyone's moment, scored for aura beat by beat. Behaviour only. The clip is deleted right after."""
+    path = await _save(video, ".mp4")
+    try:
+        out = await vision.rate_moment(path, note, tone)
+    finally:
+        for p_ in (path, path + ".wav"):
+            if os.path.exists(p_):
+                os.remove(p_)
+    if out.get("declined"):
+        raise HTTPException(422, out.get("reason") or "Poise won't rate that one.")
+    return out
+
+
+@app.post("/profile")
+async def read_profile(shots: list[UploadFile] = File(...), handle: str = Form(""), tone: str = Form("real")):
+    """Profile Read: screenshots of an Instagram profile, read the way a stranger would."""
+    imgs = []
+    for f in shots[:6]:
+        b = await f.read()
+        mt = f.content_type if f.content_type in ("image/jpeg", "image/png", "image/webp", "image/gif") else "image/jpeg"
+        imgs.append((b, mt))
+    if not imgs:
+        raise HTTPException(422, "Add at least one screenshot of the profile.")
+    out = await vision.read_profile(imgs, handle, tone)
+    if out.get("declined"):
+        raise HTTPException(422, out.get("reason") or "Poise won't read that one.")
     return out
 
 
