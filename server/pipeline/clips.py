@@ -122,8 +122,8 @@ def window(rec_times: list[dict], turn: int | None) -> float:
     return max(0.0, start - 0.3)
 
 
-def _ffmpeg(args: list[str]) -> None:
-    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *args], check=True, timeout=90)
+def _ffmpeg(args: list[str], timeout: int = 90) -> None:
+    subprocess.run(["ffmpeg", "-y", "-loglevel", "error", *args], check=True, timeout=timeout)
 
 
 def render(png: str, audio: str, start: float, out: str, dur: float = 15.0) -> None:
@@ -190,52 +190,50 @@ def _vgrad(img: Image.Image, top: int, bottom: int, a0: int, a1: int) -> None:
         d.line([(0, y), (W, y)], fill=(0, 0, 0, int(a0 + (a1 - a0) * k)))
 
 
-def scan_hud(prompt: str, name: str, out: str) -> None:
+def _shadowed(img: Image.Image, xy, text: str, font, fill, blur: int = 10, alpha: int = 150) -> None:
+    """Text with a soft shadow so it reads on any footage, with no box behind it."""
+    sh = Image.new("RGBA", img.size, (0, 0, 0, 0))
+    ImageDraw.Draw(sh).text(xy, text, font=font, fill=(0, 0, 0, alpha))
+    img.alpha_composite(sh.filter(ImageFilter.GaussianBlur(blur)))
+    ImageDraw.Draw(img).text(xy, text, font=font, fill=fill)
+
+
+def scan_hud(title: str, name: str, out: str, label: str = "AURA SCAN") -> None:
+    """Editorial frame: soft fades top and bottom, a serif wordmark, a small mono label, the prompt or title in
+    italic. Nothing that looks like a camcorder."""
     img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    _vgrad(img, 560, 0, 0, 165)
-    _vgrad(img, 1240, H, 0, 200)
+    _vgrad(img, 520, 0, 0, 150)
+    _vgrad(img, 1080, H, 0, 215)
+    word = _font("InstrumentSerif_400Regular.ttf", 64)
+    mono = _font("GeistMono_500Medium.ttf", 24)
+    _shadowed(img, (80, 78), "Kleos", word, (255, 255, 255, 255))
     d = ImageDraw.Draw(img)
-    c, L, s = 56, 74, 4
-    for x, y, dx, dy in ((c, c, 1, 1), (W - c, c, -1, 1), (c, H - c, 1, -1), (W - c, H - c, -1, -1)):
-        d.line([(x, y), (x + dx * L, y)], fill=(255, 255, 255, 230), width=s)
-        d.line([(x, y), (x, y + dy * L)], fill=(255, 255, 255, 230), width=s)
-    mono = _font("GeistMono_500Medium.ttf", 28)
-    d.text((96, 104), "KLEOS  ·  AURA SCAN", font=mono, fill=(255, 255, 255, 255))
-    nm = (name or "").upper()[:22]
-    if nm:
-        d.text((W - 96 - d.textlength(nm, font=mono), 104), nm, font=mono, fill=SOFT + (255,))
-    ital = _font("InstrumentSerif_400Regular_Italic.ttf", 58)
-    lines = _wrap(d, f"“{(prompt or '').strip()}”", ital, W - 192)[:3]
-    y = 168
-    for line in lines:
-        d.text((96, y), line, font=ital, fill=(255, 255, 255, 255))
-        y += 66
-    small = _font("GeistMono_500Medium.ttf", 24)
-    d.text((W - 96 - d.textlength("joinkleos.com", font=small), H - 118), "joinkleos.com", font=small, fill=(255, 255, 255, 170))
+    lab = label.upper() + (f"  ·  {name.upper()[:18]}" if name else "")
+    _shadowed(img, (W - 80 - d.textlength(lab, font=mono), 104), lab, mono, (255, 255, 255, 230), blur=6)
+    ital = _font("InstrumentSerif_400Regular_Italic.ttf", 50)
+    y = 178
+    for line in _wrap(d, (title or "").strip(), ital, W - 160)[:2]:
+        _shadowed(img, (80, y), line, ital, (255, 255, 255, 240))
+        y += 58
+    small = _font("GeistMono_500Medium.ttf", 22)
+    _shadowed(img, (W - 80 - d.textlength("joinkleos.com", font=small), H - 92), "joinkleos.com", small, (255, 255, 255, 170), blur=5)
     img.save(out, "PNG")
 
 
 def scan_chip(label: str, value: str, out: str) -> None:
-    w, h = W - 192, 92
+    """One measured readout as a line of type: mono label, hairline, serif number."""
+    w, h = W - 160, 96
     img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    mono = _font("GeistMono_500Medium.ttf", 26)
+    serif = _font("InstrumentSerif_400Regular.ttf", 72)
+    ImageDraw.Draw(img).line([(0, h - 2), (w, h - 2)], fill=(255, 255, 255, 110), width=2)
+    _shadowed(img, (0, 46), label.upper(), mono, (255, 255, 255, 235), blur=6)
     d = ImageDraw.Draw(img)
-    d.rounded_rectangle([0, 0, w - 1, h - 1], radius=46, fill=(255, 255, 255, 40), outline=(255, 255, 255, 110), width=2)
-    mono = _font("GeistMono_500Medium.ttf", 28)
-    serif = _font("InstrumentSerif_400Regular.ttf", 60)
-    d.text((40, (h - 30) // 2), label.upper(), font=mono, fill=(255, 255, 255, 235))
-    d.text((w - 40 - d.textlength(value, font=serif), (h - 66) // 2 - 4), value, font=serif, fill=(255, 255, 255, 255))
+    _shadowed(img, (w - d.textlength(value, font=serif), 6), value, serif, (255, 255, 255, 255))
     img.save(out, "PNG")
 
 
-def scan_line(out: str) -> None:
-    img = Image.new("RGBA", (W, 14), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    for y, a in ((6, 200), (5, 120), (7, 120), (4, 50), (8, 50), (3, 20), (9, 20)):
-        d.line([(0, y), (W, y)], fill=(214, 210, 255, a))
-    img.save(out, "PNG")
-
-
-def scan_end(r: dict, out: str) -> None:
+def scan_end(r: dict, out: str, kicker: str = "KLEOS  ·  AURA SCAN", suffix: str = "  ·  AURA") -> None:
     img = Image.new("RGB", (W, H), BLUE)
     arts = sorted(glob.glob(os.path.join(ART, "a_*.webp")))
     if arts:
@@ -248,14 +246,14 @@ def scan_end(r: dict, out: str) -> None:
     img = Image.composite(Image.new("RGB", (W, H), BLUE), img, fade.resize((W, H)))
     d = ImageDraw.Draw(img)
     mono = _font("GeistMono_500Medium.ttf", 30)
-    d.text((80, 90), "KLEOS  ·  AURA SCAN", font=mono, fill=WHITE)
+    d.text((80, 90), kicker, font=mono, fill=WHITE)
     nm = (r.get("name") or "").upper()[:22]
     if nm:
         d.text((W - 80 - d.textlength(nm, font=mono), 90), nm, font=mono, fill=SOFT)
     big = _font("InstrumentSerif_400Regular.ttf", 340)
     score = str(r.get("score", ""))
     d.text((70, 1010), score, font=big, fill=WHITE)
-    d.text((86, 1390), f"{(r.get('tier') or '').upper()}  ·  AURA", font=mono, fill=SOFT)
+    d.text((86, 1390), f"{(r.get('tier') or '').upper()}{suffix}", font=mono, fill=SOFT)
     serif = _font("InstrumentSerif_400Regular.ttf", 78)
     d.text((80, 1440), (r.get("archetype") or "")[:28], font=serif, fill=WHITE)
     sans = _font("Geist_400Regular.ttf", 38)
@@ -276,57 +274,157 @@ def _probe(path: str) -> tuple[float, bool]:
     return max(1.0, min(dur, 60.0)), has_audio
 
 
-def render_scan(src: str, r: dict, out: str) -> None:
+def _render_overlay(src: str, out: str, hud: str, timed: list, end: str) -> None:
+    """The take, cropped to 9:16, with the frame throughout, timed images (path, x, y, show_at,
+    hide_at or None) fading in and out over it, then the end card. Audio is the take's own; silence under the card."""
     dur, has_audio = _probe(src)
+    ins = ["-i", src, "-loop", "1", "-t", f"{dur:.2f}", "-i", hud]
+    for p, *_ in timed:
+        ins += ["-loop", "1", "-t", f"{dur:.2f}", "-i", p]
+    ins += ["-loop", "1", "-t", f"{SCAN_END_S}", "-i", end, "-f", "lavfi", "-t", f"{SCAN_END_S}", "-i", "anullsrc=r=44100:cl=stereo"]
+    n_end, n_sil = 2 + len(timed), 3 + len(timed)
+    if not has_audio:
+        ins += ["-f", "lavfi", "-t", f"{dur:.2f}", "-i", "anullsrc=r=44100:cl=stereo"]
+    main_a = "0:a" if has_audio else f"{n_sil + 1}:a"
+    f = [
+        "[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,fps=30[b]",
+        "[b][1:v]overlay=0:0:shortest=1[v0]",
+    ]
+    prev = "v0"
+    for i, item in enumerate(timed):
+        _, x, y, at, until = item[:5]
+        cut = len(item) > 5 and item[5]  # hard cut out (the next item replaces it in place)
+        at = max(0.0, min(at, dur - 0.4))
+        fades = f"fade=t=in:st={at:.2f}:d={0.1 if cut else 0.2}:alpha=1"
+        enable = ""
+        if until is not None and until < dur:
+            if cut:
+                enable = f":enable='lt(t,{until:.2f})'"
+            else:
+                fades += f",fade=t=out:st={max(at + 0.3, until - 0.3):.2f}:d=0.3:alpha=1"
+        f.append(f"[{2 + i}:v]format=rgba,{fades}[c{i}]")
+        f.append(f"[{prev}][c{i}]overlay={x}:{y}:shortest=1{enable}[v{i + 1}]")
+        prev = f"v{i + 1}"
+    f.append(f"[{prev}]format=yuv420p[vm]")
+    f.append(f"[{n_end}:v]scale={W}:{H},setsar=1,fps=30,format=yuv420p,fade=t=in:st=0:d=0.35[ve]")
+    f.append(f"[{main_a}]aresample=44100,aformat=channel_layouts=stereo,atrim=0:{dur:.2f},asetpts=PTS-STARTPTS[am]")
+    f.append(f"[{n_sil}:a]aresample=44100,aformat=channel_layouts=stereo[ae]")
+    f.append("[vm][am][ve][ae]concat=n=2:v=1:a=1[v][a]")
+    _ffmpeg([*ins, "-filter_complex", ";".join(f), "-map", "[v]", "-map", "[a]",
+             "-c:v", "libx264", "-preset", "veryfast", "-crf", "25", "-pix_fmt", "yuv420p",
+             "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", out + ".part.mp4"], timeout=300)
+    os.replace(out + ".part.mp4", out)
+
+
+def render_scan(src: str, r: dict, out: str) -> None:
+    dur, _ = _probe(src)
     axes = r.get("axes") or {}
     chips = [("Delivery", axes.get("delivery")), ("Composure", axes.get("composure")), ("Command", axes.get("command")), ("Posture", axes.get("posture"))]
     with tempfile.TemporaryDirectory(prefix="kleos_scan_") as tmp:
-        hud, line, end = (os.path.join(tmp, n) for n in ("hud.png", "line.png", "end.png"))
-        scan_hud(r.get("prompt") or "", r.get("name") or "", hud)
-        scan_line(line)
+        hud, end = os.path.join(tmp, "hud.png"), os.path.join(tmp, "end.png")
+        scan_hud(f"“{(r.get('prompt') or '').strip()}”" if r.get("prompt") else "", r.get("name") or "", hud)
         scan_end(r, end)
-        chip_files = []
+        timed = []
         for i, (label, v) in enumerate(chips):
             p = os.path.join(tmp, f"chip{i}.png")
             scan_chip(label, str(v if isinstance(v, (int, float)) else "–"), p)
-            chip_files.append(p)
-        ins = ["-i", src, "-loop", "1", "-t", f"{dur:.2f}", "-i", hud, "-loop", "1", "-t", f"{dur:.2f}", "-i", line]
-        for p in chip_files:
-            ins += ["-loop", "1", "-t", f"{dur:.2f}", "-i", p]
-        ins += ["-loop", "1", "-t", f"{SCAN_END_S}", "-i", end]
-        ins += ["-f", "lavfi", "-t", f"{SCAN_END_S}", "-i", "anullsrc=r=44100:cl=stereo"]
-        if not has_audio:
-            ins += ["-f", "lavfi", "-t", f"{dur:.2f}", "-i", "anullsrc=r=44100:cl=stereo"]
-        n_end, n_sil = 3 + len(chip_files), 4 + len(chip_files)
-        main_a = "0:a" if has_audio else f"{n_sil + 1}:a"
-        f = [
-            "[0:v]scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1,fps=30[b]",
-            "[b][1:v]overlay=0:0:shortest=1[h]",
-            f"[h][2:v]overlay=0:'mod(t*620,{H})':shortest=1[v0]",
-        ]
-        prev = "v0"
-        for i in range(len(chip_files)):
-            at = dur * (0.16 + 0.17 * i)
-            f.append(f"[{3 + i}:v]format=rgba,fade=t=in:st={at:.2f}:d=0.35:alpha=1[c{i}]")
-            f.append(f"[{prev}][c{i}]overlay=96:{1300 + i * 112}:shortest=1[v{i + 1}]")
-            prev = f"v{i + 1}"
-        f.append(f"[{prev}]format=yuv420p[vm]")
-        f.append(f"[{n_end}:v]scale={W}:{H},setsar=1,fps=30,format=yuv420p,fade=t=in:st=0:d=0.35[ve]")
-        f.append(f"[{main_a}]aresample=44100,aformat=channel_layouts=stereo,atrim=0:{dur:.2f},asetpts=PTS-STARTPTS[am]")
-        f.append(f"[{n_sil}:a]aresample=44100,aformat=channel_layouts=stereo[ae]")
-        f.append("[vm][am][ve][ae]concat=n=2:v=1:a=1[v][a]")
-        _ffmpeg([*ins, "-filter_complex", ";".join(f), "-map", "[v]", "-map", "[a]",
-                 "-c:v", "libx264", "-preset", "veryfast", "-crf", "25", "-pix_fmt", "yuv420p",
-                 "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart", out + ".part.mp4"])
-        os.replace(out + ".part.mp4", out)
+            timed.append((p, 80, 1310 + i * 112, dur * (0.16 + 0.17 * i), None))
+        _render_overlay(src, out, hud, timed, end)
 
 
-async def make_scan(vid: str, r: dict) -> None:
+# ---- Aura Check: anything filmed live, rated beat by beat
+
+def _secs(t) -> float:
+    try:
+        if isinstance(t, (int, float)):
+            return float(t)
+        parts = [float(x) for x in str(t).strip().split(":")]
+        return parts[0] * 60 + parts[1] if len(parts) == 2 else parts[0]
+    except Exception:
+        return 0.0
+
+
+def _signed(n: int) -> str:
+    return f"+{n}" if n > 0 else (f"−{abs(n)}" if n < 0 else "0")
+
+
+def beat_chip(points: int, text: str, out: str) -> None:
+    """A beat as a subtitle: thin rule, big serif points, the beat in small mono. No box."""
+    w, h = W - 160, 250
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    ImageDraw.Draw(img).line([(0, 6), (120, 6)], fill=(255, 255, 255, 230), width=3)
+    serif = _font("InstrumentSerif_400Regular.ttf", 132)
+    mono = _font("GeistMono_500Medium.ttf", 26)
+    _shadowed(img, (0, 22), f"{_signed(points)} aura", serif, (255, 255, 255, 255), blur=14, alpha=170)
+    d = ImageDraw.Draw(img)
+    for k, line in enumerate(_wrap(d, (text or "").upper(), mono, w)[:2]):
+        _shadowed(img, (2, 176 + k * 36), line, mono, (255, 255, 255, 230), blur=6)
+    img.save(out, "PNG")
+
+
+def total_tag(total: int, out: str) -> None:
+    """Running total, top right under the label: a serif number, right-aligned."""
+    w, h = 360, 110
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    serif = _font("InstrumentSerif_400Regular.ttf", 76)
+    d = ImageDraw.Draw(img)
+    v = _signed(total)
+    _shadowed(img, (w - d.textlength(v, font=serif), 10), v, serif, (255, 255, 255, 255), blur=10)
+    img.save(out, "PNG")
+
+
+def moment_end(m: dict, out: str) -> None:
+    total = int(m.get("total") or 0)
+    scan_end({"score": _signed(total), "tier": m.get("tier") or "", "archetype": m.get("title") or "", "roast": m.get("caption") or m.get("verdict") or "", "name": ""}, out, kicker="KLEOS  ·  AURA CHECK", suffix="")
+
+
+def render_moment(src: str, m: dict, out: str) -> None:
+    dur, _ = _probe(src)
+    beats = []
+    for b in (m.get("lines") or [])[:6]:
+        try:
+            beats.append((min(_secs(b.get("t")), max(0.0, dur - 1.0)), int(b.get("points") or 0), str(b.get("text") or "")))
+        except Exception:
+            continue
+    beats.sort(key=lambda x: x[0])
+    with tempfile.TemporaryDirectory(prefix="kleos_moment_") as tmp:
+        hud, end = os.path.join(tmp, "hud.png"), os.path.join(tmp, "end.png")
+        scan_hud(m.get("title") or "", "", hud, label="AURA CHECK")
+        moment_end(m, end)
+        timed, running = [], 0
+        tag0 = os.path.join(tmp, "tag_start.png")
+        total_tag(0, tag0)
+        first = beats[0][0] if beats else dur
+        timed.append((tag0, 0, 0, 0.0, None))
+        for i, (at, pts, text) in enumerate(beats):
+            chip = os.path.join(tmp, f"beat{i}.png")
+            beat_chip(pts, text, chip)
+            nxt = beats[i + 1][0] if i + 1 < len(beats) else dur
+            # A beat holds 2.8 s, or until the next one lands in its place (then it cuts, no blending).
+            if nxt - at < 2.8:
+                timed.append((chip, 80, 1440, at, nxt, True))
+            else:
+                timed.append((chip, 80, 1440, at, at + 2.8))
+            running += pts
+            tag = os.path.join(tmp, f"tag{i}.png")
+            total_tag(running, tag)
+            timed.append((tag, 0, 0, at, None))
+        # the running total sits top-right, under the wordmark line
+        # running total: right-aligned under the label; each new total replaces the last in place
+        timed = [((it[0], W - 80 - 360, 140, *it[3:]) if os.path.basename(it[0]).startswith("tag") else it) for it in timed]
+        for k, it in enumerate(timed):
+            if os.path.basename(it[0]).startswith("tag"):
+                nxt = next((t2[3] for t2 in timed[k + 1:] if os.path.basename(t2[0]).startswith("tag")), None)
+                timed[k] = (it[0], it[1], it[2], it[3], nxt, True) if nxt is not None else it
+        _render_overlay(src, out, hud, timed, end)
+
+
+async def make_scan(vid: str, r: dict, kind: str = "scan") -> None:
     """Render the rated video from the kept take, then delete the take. Errors leave a marker for the poll."""
     src = scan_src(vid)
     try:
         async with _render_slots:
-            await asyncio.to_thread(render_scan, src, r, scan_out(vid))
+            await asyncio.to_thread(render_moment if kind == "moment" else render_scan, src, r, scan_out(vid))
     except Exception as e:
         print("scan render failed:", repr(e)[:300])
         open(scan_out(vid) + ".failed", "w").close()

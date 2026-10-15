@@ -26,7 +26,8 @@ export default function Farm() {
   const recent = [
     ...(s.duels ?? []).map((d) => ({ k: `d${d.code}`, title: d.topic, sub: `Duel ${d.code} · ${d.result ? 'judged' : 'waiting'}`, at: d.createdAt, go: () => router.push({ pathname: '/duel/[code]', params: { code: d.code } }) })),
     ...(s.challenges ?? []).map((c) => ({ k: `c${c.code}`, title: c.title, sub: `Challenge ${c.code}`, at: c.createdAt, go: () => router.push({ pathname: '/challenge/[code]', params: { code: c.code } }) })),
-    ...(s.moments ?? []).map((m, i) => ({ k: `m${i}`, title: m.title, sub: `Clip · ${m.total > 0 ? '+' : ''}${m.total} aura`, at: m.createdAt ?? '', go: () => router.push('/clip') })),
+    ...(s.moments ?? []).map((m, i) => ({ k: `m${i}`, title: m.title, sub: `Aura check · ${m.total > 0 ? '+' : ''}${m.total} aura`, at: m.createdAt ?? '', go: () => router.push('/capture') })),
+    ...(s.fits ?? []).slice(0, 10).map((f, i) => ({ k: `f${i}`, title: `${f.tier} · ${f.score}`, sub: `Fit check · ${f.verdict}`, at: f.createdAt ?? '', go: () => router.push({ pathname: '/capture', params: { mode: 'fit' } }) })),
     ...(s.scans ?? []).slice(0, 10).map((r, i) => ({ k: `s${i}`, title: `${r.name} · ${r.archetype}`, sub: `Farm-off · ${r.score} ${r.tier}`, at: (r as any).createdAt ?? '', go: () => router.push('/aura-scan') })),
   ]
     .sort((a, b) => (b.at || '').localeCompare(a.at || ''))
@@ -41,10 +42,25 @@ export default function Farm() {
         </View>
 
         <Animated.View entering={FadeInDown.duration(400)} style={{ marginTop: 14 }}>
-          <ArtCard art="athlete" height={210} focus="top" onPress={() => router.push('/aura-scan')}>
-            <OnBlue kicker="Farm-off · pass the phone" sub="Same prompt, fifteen seconds each on camera. Poise ranks who held it and who folded.">Who has the most aura?</OnBlue>
+          <ArtCard art="athlete" height={230} focus="top" onPress={() => router.push('/capture')}>
+            <OnBlue kicker="Aura check" sub="Pull it out mid-moment and film it. Poise rates every beat and makes you the video to post.">Point it at anything.</OnBlue>
           </ArtCard>
         </Animated.View>
+
+        <Row gap={10} style={{ marginTop: 10 }}>
+          {[
+            { k: 'fit', kicker: 'FIT CHECK', label: 'Rate the fit', sub: 'Yours or a friend’s. Honest.', art: 'pitt' as const, go: () => router.push({ pathname: '/capture', params: { mode: 'fit' } }) },
+            { k: 'wardrobe', kicker: 'YOUR STYLE', label: 'Your path to aura', sub: 'Your taste, then your wardrobe', art: 'aurelius' as const, go: () => router.push('/wardrobe') },
+          ].map((x) => (
+            <View key={x.k} style={{ flex: 1 }}>
+              <ArtCard art={x.art} height={180} focus="top" onPress={x.go}>
+                <RNText style={{ fontFamily: font.mono, fontSize: 9.5, letterSpacing: 1.4, color: 'rgba(255,255,255,0.75)' }}>{x.kicker}</RNText>
+                <RNText style={{ fontFamily: font.medium, fontSize: 16, color: '#FFF' }}>{x.label}</RNText>
+                <RNText style={{ fontFamily: font.regular, fontSize: 12, lineHeight: 16, color: 'rgba(255,255,255,0.85)' }}>{x.sub}</RNText>
+              </ArtCard>
+            </View>
+          ))}
+        </Row>
 
         <Animated.View entering={FadeInDown.duration(400).delay(40)} style={{ marginTop: 10 }}>
           <Pressable onPress={() => { play('select'); router.push('/duel'); }} style={{ borderRadius: 22, backgroundColor: t.accent, padding: 18, gap: 12 }}>
@@ -75,8 +91,8 @@ export default function Farm() {
 
         <Row gap={10} style={{ marginTop: 10 }}>
           {[
-            { k: 'clip', label: 'Rate a clip', sub: 'Anyone’s moment, scored beat by beat', art: 'man' as const, go: () => router.push('/clip') },
             { k: 'ig', label: 'Profile read', sub: 'What your Instagram says', art: 'dora' as const, go: () => router.push('/profile-read') },
+            { k: 'farmoff', label: 'Farm-off', sub: 'Pass the phone. One winner.', art: 'man' as const, go: () => router.push('/aura-scan') },
           ].map((x) => (
             <View key={x.k} style={{ flex: 1 }}>
               <ArtCard art={x.art} height={170} focus="top" onPress={x.go}>

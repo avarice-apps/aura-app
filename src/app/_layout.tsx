@@ -71,6 +71,9 @@ export default function RootLayout() {
         <Stack.Screen name="duel/index" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="duel/[code]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="clip" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="capture" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
+        <Stack.Screen name="fit" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="wardrobe" options={{ animation: 'fade' }} />
         <Stack.Screen name="profile-read" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="floor/[id]" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="code/[id]" options={{ animation: 'slide_from_right' }} />

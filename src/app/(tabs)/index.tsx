@@ -28,7 +28,7 @@ export default function Today() {
     { key: 'mission', title: mission.title, sub: 'Field mission · do it for real', icon: ICON.flag, go: () => router.push('/missions') },
     evening
       ? { key: 'debrief', title: 'Tonight’s debrief', sub: 'One moment from today, with Poise', icon: ICON.moon, go: () => router.push({ pathname: '/(tabs)/poise', params: { mode: 'debrief' } }) }
-      : { key: 'scan', title: 'Aura Farm', sub: 'Fifteen seconds on camera', icon: ICON.scan, go: () => router.push('/aura-scan') },
+      : { key: 'scan', title: 'Aura check', sub: 'Film any moment, get it rated', icon: ICON.scan, go: () => router.push('/capture') },
   ];
   const doneCount = daily.filter((d) => doneToday.includes(d.key)).length;
   const [tier, line] = TIER(idx ?? 0);

@@ -15,13 +15,15 @@ const PER_SHORT = { week: '/week', month: '/month', year: '/year' } as const;
 const PER_LONG = { week: 'every week', month: 'every month', year: 'every year' } as const;
 
 /** Why the paywall opened; sets the headline so it answers the moment. */
-export type PaywallReason = 'calls' | 'clips' | 'poise' | 'profiles' | 'read' | 'black' | 'path' | 'retry' | 'onboarding' | 'plan';
+export type PaywallReason = 'calls' | 'clips' | 'poise' | 'profiles' | 'fits' | 'read' | 'black' | 'wardrobe' | 'path' | 'retry' | 'onboarding' | 'plan';
 
 const HEAD: Record<PaywallReason, [string, string]> = {
   calls: ['You’ve used this week’s free calls.', 'Kleos+ makes every scene, every day, unlimited. Or invite a friend: you both get extra calls.'],
   clips: ['That was this week’s free clip.', 'Rate every fumble you see. Unlimited with Kleos+.'],
   poise: ['Poise is out of free debriefs this week.', 'Tell her about every date, meeting and night out.'],
   profiles: ['That was your free Profile Read.', 'Re-read your page after every change.'],
+  fits: ['That was this week’s last free Fit check.', 'Rate every fit before you leave the house. Unlimited with Kleos+.'],
+  wardrobe: ['Your Wardrobe is Kleos Black.', 'Scan what you own once. Get the fit for any room, built from your own clothes.'],
   read: ['There’s more to this read.', 'The moment it turned, two ways in, and Poise’s voice note.'],
   black: ['This one is Kleos Black.', 'Rehearse your real situation before it happens.'],
   path: ['The rest of the Path is Kleos+.', 'Every lesson, every unit, every checkpoint.'],
@@ -33,9 +35,9 @@ const HEAD: Record<PaywallReason, [string, string]> = {
 export function PaywallBody({ onDone, onSkip, reason = 'plan' }: { onDone: () => void; onSkip: () => void; reason?: PaywallReason }) {
   const t = useTheme();
   const current = useTier();
-  const [tier, setTier] = useState<'plus' | 'black'>(reason === 'black' ? 'black' : 'plus');
+  const [tier, setTier] = useState<'plus' | 'black'>(reason === 'black' || reason === 'wardrobe' ? 'black' : 'plus');
   const [products, setProducts] = useState<Product[]>(FALLBACK);
-  const [pick, setPick] = useState<string>(reason === 'black' ? 'kleos_black_annual' : 'kleos_plus_weekly');
+  const [pick, setPick] = useState<string>(reason === 'black' || reason === 'wardrobe' ? 'kleos_black_annual' : 'kleos_plus_weekly');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 

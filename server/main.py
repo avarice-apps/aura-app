@@ -31,7 +31,7 @@ app = FastAPI(title="Aura", version="0.1")
 # Every expensive endpoint costs real money (models, voice). Cap requests per client so nobody can use the
 # server as a free AI proxy or run up the bill. Generous for real use; ElevenLabs' /llm calls are exempt
 # (they're authenticated with the agent secret and already bounded by the live session).
-_EXPENSIVE = ("/read", "/pressure", "/scan", "/live/", "/session/", "/situations/", "/lesson", "/ledger", "/portrait", "/duel", "/moment", "/profile", "/clip/", "/redeem", "/challenge")
+_EXPENSIVE = ("/read", "/fit", "/wardrobe", "/style", "/pressure", "/scan", "/live/", "/session/", "/situations/", "/lesson", "/ledger", "/portrait", "/duel", "/moment", "/profile", "/clip/", "/redeem", "/challenge")
 _LIMITS = ((120, 600), (1000, 86400))  # per IP: 120 per 10 minutes, 1000 per day (campus wifi shares IPs)
 _hits: dict[str, list[float]] = {}
 
@@ -880,18 +880,85 @@ async def privacy_delete(request: Request):
 
 
 @app.post("/moment")
-async def rate_moment(video: UploadFile = File(...), note: str = Form(""), tone: str = Form("real")):
-    """Rate a Clip: anyone's moment, scored for aura beat by beat. Behaviour only. The clip is deleted right after."""
+async def rate_moment(video: UploadFile = File(...), note: str = Form(""), tone: str = Form("real"), render: str = Form("0")):
+    """Rate a Clip / Aura Check: anything filmed or uploaded, scored for aura beat by beat. Behaviour only.
+    The clip is deleted right after, unless render=1: then it's kept only until the rated video is made."""
     path = await _save(video, ".mp4")
+    keep = False
     try:
         out = await vision.rate_moment(path, note, tone)
+        keep = render == "1" and not out.get("declined") and bool(out.get("lines"))
+        if keep:
+            clips.gc()
+            vid = secrets.token_hex(6)
+            shutil.move(path, clips.scan_src(vid))
     finally:
-        for p_ in (path, path + ".wav"):
+        for p_ in ((path + ".wav",) if keep else (path, path + ".wav")):
             if os.path.exists(p_):
                 os.remove(p_)
     if out.get("declined"):
         raise HTTPException(422, out.get("reason") or "Poise won't rate that one.")
+    if keep:
+        out["video_id"] = vid
+        task = asyncio.create_task(clips.make_scan(vid, dict(out), kind="moment"))
+        _BG.add(task)
+        task.add_done_callback(_BG.discard)
     return out
+
+
+@app.post("/fit")
+async def read_fit(photos: list[UploadFile] = File(...), tone: str = Form("real"), lane: str = Form("")):
+    """Fit check: an outfit photo, rated honestly, with fixes and the colours that suit the wearer. Not stored."""
+    imgs = []
+    for f in photos[:3]:
+        jpg = _as_jpeg(await f.read())
+        if jpg:
+            imgs.append((jpg, "image/jpeg"))
+    if not imgs:
+        raise HTTPException(422, "Couldn't open that photo. Try again.")
+    out = await vision.read_fit(imgs, tone, _cap(lane, 40))
+    if out.get("declined"):
+        raise HTTPException(422, out.get("reason") or "Poise won't rate that one.")
+    return out
+
+
+@app.post("/style/profile")
+async def style_profile_ep(request: Request):
+    """The style quiz → his path to aura: signature direction, principles, core pieces, palette."""
+    b = await request.json()
+    clean = lambda xs, n: [_cap(str(x), 40) for x in (xs or [])][:n]
+    answers = {"styles": clean(b.get("lanes"), 6), "colours_he_owns": clean(b.get("colours"), 10), "his_week": clean(b.get("life"), 8),
+               "how_he_feels_about_his_wardrobe": _cap(str(b.get("feeling") or ""), 80), "wants_to_come_across_as": _cap(str(b.get("presence") or ""), 60)}
+    if not answers["styles"]:
+        raise HTTPException(422, "Pick at least one style.")
+    return await vision.style_profile(answers, b.get("tone", "real"))
+
+
+@app.post("/wardrobe/scan")
+async def wardrobe_scan(photos: list[UploadFile] = File(...)):
+    """Catalogue clothes from photos. Photos aren't stored; the app keeps them on the phone."""
+    imgs = []
+    for f in photos[:8]:
+        jpg = _as_jpeg(await f.read())
+        if jpg:
+            imgs.append((jpg, "image/jpeg"))
+    if not imgs:
+        raise HTTPException(422, "Couldn't open those photos.")
+    return await vision.scan_wardrobe(imgs)
+
+
+@app.post("/wardrobe/build")
+async def wardrobe_build(request: Request):
+    """Two outfits from the wardrobe the app sends (descriptions only), for an occasion and a presence."""
+    b = await request.json()
+    items = [
+        {"id": str(x.get("id"))[:40], "category": str(x.get("category"))[:12], "name": _cap(str(x.get("name") or ""), 60),
+         "colour": _cap(str((x.get("colour") or {}).get("name") or ""), 30), "formality": int(x.get("formality") or 3)}
+        for x in (b.get("items") or [])[:150] if isinstance(x, dict) and x.get("id")
+    ]
+    if len(items) < 2:
+        raise HTTPException(422, "Add at least a top, a bottom and shoes first.")
+    return await vision.build_fits(items, _cap(b.get("occasion") or "", 120), _cap(b.get("presence") or "", 80), b.get("colouring"), b.get("tone", "real"), _cap(b.get("lane") or "", 40))
 
 
 @app.post("/profile")

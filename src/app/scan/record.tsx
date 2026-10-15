@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Pressable, Text as RNText, useWindowDimensions } from 'react-native';
+import { View, Pressable, Text as RNText } from 'react-native';
 import { router } from 'expo-router';
 import { CameraView, useCameraPermissions, useMicrophonePermissions } from 'expo-camera';
-import Animated, { FadeIn, FadeInDown, FadeOut, useSharedValue, withTiming, withRepeat, useAnimatedStyle, Easing, cancelAnimation } from 'react-native-reanimated';
+import Animated, { FadeIn, FadeInDown, useSharedValue, withTiming, useAnimatedStyle } from 'react-native-reanimated';
+import { ScanHud } from '@/components/ScanHud';
 import * as Haptics from 'expo-haptics';
 import { Title, Body, Muted, Label, Button, IconButton, Icon, ICON, Num } from '@/ui';
 import { font, useTheme } from '@/theme';
@@ -11,8 +12,6 @@ import { randomPrompt } from '@/lib/scanPrompts';
 import { play } from '@/lib/sound';
 
 const TAKE_S = 15;
-/** What the HUD says it's reading, in turn. Visual only: the real measurements arrive with the card. */
-const READING = ['VOICE', 'PACE', 'PAUSES', 'STILLNESS', 'POSTURE', 'COMPOSURE'];
 type Phase = 'ready' | 'countdown' | 'recording' | 'done';
 
 /** Back-camera scan. Prompt on screen for the person holding the phone to read out, 3-2-1, fifteen seconds, hard stop. */
@@ -89,7 +88,7 @@ export default function ScanRecord() {
     <View style={{ flex: 1, backgroundColor: '#000' }}>
       {/* 720p at ~3.5 Mbps: a 15 s take uploads in a few seconds on mobile data */}
       <CameraView ref={cam} style={{ flex: 1 }} facing={facing} mode="video" videoQuality="720p" videoBitrate={3_500_000} />
-      {phase === 'recording' && <ScanHud secs={TAKE_S - left} top={cardBottom + 14} />}
+      {phase === 'recording' && <ScanHud secs={TAKE_S - left} top={cardBottom + 16} />}
 
       {/* top bar */}
       <View style={{ position: 'absolute', top: 54, left: 20, right: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -138,43 +137,6 @@ export default function ScanRecord() {
         )}
         {phase === 'ready' && <Muted small color="rgba(255,255,255,0.7)" align="center">Read the prompt out loud, then answer it. Fifteen seconds.</Muted>}
       </View>
-    </View>
-  );
-}
-
-
-/** The live scan overlay while recording: corner brackets, a moving scan line, a timecode and what it's reading. */
-function ScanHud({ secs, top }: { secs: number; top: number }) {
-  const { height } = useWindowDimensions();
-  const y = useSharedValue(0);
-  const [k, setK] = useState(0);
-  useEffect(() => {
-    y.value = top;
-    y.value = withRepeat(withTiming(height - 150, { duration: 2400, easing: Easing.linear }), -1, false);
-    const id = setInterval(() => setK((n) => (n + 1) % READING.length), 1100);
-    return () => {
-      cancelAnimation(y);
-      clearInterval(id);
-    };
-  }, [height, top, y]);
-  const line = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }));
-  const corner = (pos: object, rot: string) => (
-    <View style={[{ position: 'absolute', width: 34, height: 34, borderColor: '#fff', borderTopWidth: 3, borderLeftWidth: 3, transform: [{ rotate: rot }] }, pos]} />
-  );
-  return (
-    <View pointerEvents="none" style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}>
-      <Animated.View style={[{ position: 'absolute', left: 0, right: 0, height: 2, backgroundColor: 'rgba(214,210,255,0.7)', shadowColor: '#D6D2FF', shadowOpacity: 0.9, shadowRadius: 6 }, line]} />
-      {corner({ top, left: 18 }, '0deg')}
-      {corner({ top, right: 18 }, '90deg')}
-      {corner({ bottom: 150, right: 18 }, '180deg')}
-      {corner({ bottom: 150, left: 18 }, '270deg')}
-      <View style={{ position: 'absolute', bottom: 160, left: 30, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#fff' }} />
-        <RNText style={{ fontFamily: font.mono, fontSize: 11, letterSpacing: 1.4, color: '#fff' }}>{`REC 00:${String(secs).padStart(2, '0')}`}</RNText>
-      </View>
-      <Animated.View key={k} entering={FadeIn.duration(200)} exiting={FadeOut.duration(150)} style={{ position: 'absolute', bottom: 160, right: 30 }}>
-        <RNText style={{ fontFamily: font.mono, fontSize: 11, letterSpacing: 1.4, color: 'rgba(255,255,255,0.85)' }}>{`READING · ${READING[k]}`}</RNText>
-      </Animated.View>
     </View>
   );
 }

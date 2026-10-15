@@ -2,13 +2,13 @@ import { router } from 'expo-router';
 import { useStore } from '@/state/store';
 
 export type Tier = 'free' | 'plus' | 'black';
-export type Metered = 'calls' | 'clips' | 'poise' | 'profiles';
+export type Metered = 'calls' | 'clips' | 'poise' | 'profiles' | 'fits';
 
 /** What each tier gets per week. Infinity = unlimited. The Daily Side Quest, Situations' daily set, Aura Farm and Duels are always free. */
 export const LIMITS: Record<Tier, Record<Metered, number>> = {
-  free: { calls: 2, clips: 1, poise: 3, profiles: 1 },
-  plus: { calls: Infinity, clips: Infinity, poise: Infinity, profiles: 3 },
-  black: { calls: Infinity, clips: Infinity, poise: Infinity, profiles: Infinity },
+  free: { calls: 2, clips: 1, poise: 3, profiles: 1, fits: 3 },
+  plus: { calls: Infinity, clips: Infinity, poise: Infinity, profiles: 3, fits: Infinity },
+  black: { calls: Infinity, clips: Infinity, poise: Infinity, profiles: Infinity, fits: Infinity },
 };
 
 /** The pitch, used by the paywall and plan screen. */
@@ -17,19 +17,19 @@ export const TIERS = [
     key: 'free' as const,
     name: 'Free',
     line: 'Get a taste. Every day.',
-    perks: ['The Daily Side Quest, every day', 'Aura Farm and Debate Duels with friends', '2 live calls a week, with the verdict, the score and Poise’s voice note', '1 clip rating a week, 1 Profile Read'],
+    perks: ['The Daily Side Quest, every day', 'Aura Farm and Debate Duels with friends', '2 live calls a week, with the verdict, the score and Poise’s voice note', '3 Fit checks, 1 clip rating and 1 Profile Read a week'],
   },
   {
     key: 'plus' as const,
     name: 'Kleos+',
     line: 'Train every day. Hear the whole truth.',
-    perks: ['Unlimited live calls: Open Floor, every side quest, the full Path', 'The full read: the moment it turned, what they were thinking, two ways in', 'Run it back and Replay any moment', 'Unlimited clip ratings and Poise debriefs', 'Your patterns, cleared tells and the Index over time'],
+    perks: ['Unlimited live calls: Open Floor, every side quest, the full Path', 'The full read: the moment it turned, what they were thinking, two ways in', 'Run it back and Replay any moment', 'Unlimited Fit checks, clip ratings and Poise debriefs', 'Your patterns, cleared tells and the Index over time'],
   },
   {
     key: 'black' as const,
     name: 'Kleos Black',
     line: 'For the moments that actually matter.',
-    perks: ['Everything in Kleos+', 'Rehearse your real situation: describe tomorrow’s date or interview, play it tonight', 'Your Portrait: a deep read of every conversation you’ve had', 'Unlimited Profile Reads, re-read after every change', 'New Daily packs a week early'],
+    perks: ['Everything in Kleos+', 'Your Wardrobe: scan what you own, get the fit for any room and the presence you want', 'Rehearse your real situation: describe tomorrow’s date or interview, play it tonight', 'Your Portrait: a deep read of every conversation you’ve had', 'Unlimited Profile Reads, re-read after every change', 'New Daily packs a week early'],
   },
 ];
 
@@ -51,7 +51,9 @@ export function useTier(): Tier {
 function usageNow() {
   const s = useStore.getState();
   const w = week();
-  return s.usage?.week === w ? s.usage : { week: w, calls: 0, clips: 0, poise: 0, profiles: 0 };
+  // Older installs stored usage before some features existed: missing counters start at 0.
+  const base = { week: w, calls: 0, clips: 0, poise: 0, profiles: 0, fits: 0 };
+  return s.usage?.week === w ? { ...base, ...s.usage } : base;
 }
 
 /** Extra live calls earned through invites. They never expire and are only used once the week's are gone. */
@@ -105,7 +107,7 @@ export function gate(kind: Metered): boolean {
 }
 
 /** Tier gate for whole features (Black-only rehearsals, Plus-only full reads). */
-export function requireTier(need: Tier, reason: 'black' | 'read' | 'path' | 'retry'): boolean {
+export function requireTier(need: Tier, reason: 'black' | 'read' | 'path' | 'retry' | 'wardrobe'): boolean {
   if (atLeast(tierOf(useStore.getState()), need)) return true;
   router.push({ pathname: '/paywall', params: { reason } });
   return false;

@@ -52,12 +52,17 @@ type State = {
   dailyQuestDone: string[]; // dates (YYYY-MM-DD) a Daily Side Quest was played
   moments: import('@/lib/types').Moment[];
   profileReads: import('@/lib/types').ProfileRead[];
+  fits?: import('@/lib/types').FitRead[];
   patternsDismissed: string[]; // pattern keys the user removed from their history
   daily: { day: string; done: string[] }; // today's small things: situation, mission, debrief, scan
   // plan (set from RevenueCat entitlements; trial counts as plus)
   plan: 'free' | 'plus' | 'black';
   trialEndsAt?: string;
-  usage: { week: string; calls: number; clips: number; poise: number; profiles: number };
+  usage: { week: string; calls: number; clips: number; poise: number; profiles: number; fits?: number };
+  wardrobe?: import('@/lib/types').WardrobeItem[];
+  /** The style lane he's building toward (Wardrobe). Keeps every fit read and build consistent. */
+  styleLane?: string;
+  styleProfile?: import('@/lib/types').StyleProfile;
   duels: { id: string; code: string; topic: string; role: 'a' | 'b'; createdAt: string; result?: any }[];
   // referrals: extra live calls earned (granted by the server) and how many have been used
   credits: { granted: number; used: number };
@@ -107,6 +112,10 @@ const initial = {
   dailyQuestDone: [] as string[],
   moments: [] as import('@/lib/types').Moment[],
   profileReads: [] as import('@/lib/types').ProfileRead[],
+  fits: [] as import('@/lib/types').FitRead[],
+  wardrobe: [] as import('@/lib/types').WardrobeItem[],
+  styleProfile: undefined as import('@/lib/types').StyleProfile | undefined,
+  styleLane: undefined as string | undefined,
   patternsDismissed: [] as string[],
   daily: { day: '', done: [] as string[] },
   plan: 'free' as 'free' | 'plus' | 'black',

@@ -123,6 +123,23 @@ export const ART = {
 } as const;
 export type ArtName = keyof typeof ART;
 
+/** Heritage prints for the style section: public-domain works (CC0 museum collections, US government photographs) in Kleos blue on ivory (scripts/heritage.py). */
+export const HERITAGE = {
+  sailing: { src: require('../../assets/heritage/sailing.webp'), credit: 'White House photograph, 1962' },
+  gentleman: { src: require('../../assets/heritage/gentleman.webp'), credit: 'Caillebotte, Portrait of a Man, 1880' },
+  rider: { src: require('../../assets/heritage/rider.webp'), credit: 'Nadar, Man on a Horse, 1860s' },
+  deauville: { src: require('../../assets/heritage/deauville.webp'), credit: 'Boudin, The Beach at Deauville, 1864' },
+  rowers: { src: require('../../assets/heritage/rowers.webp'), credit: 'Eakins, The Biglin Brothers, 1873' },
+  pockets: { src: require('../../assets/heritage/pockets.webp'), credit: 'Caillebotte, Man with Hands in His Pockets, 1893' },
+  jockeys: { src: require('../../assets/heritage/jockeys.webp'), credit: 'Degas, Before the Race, 1887' },
+  polo: { src: require('../../assets/heritage/polo.webp'), credit: 'Bellows, Polo Sketch, 1921' },
+  trouville: { src: require('../../assets/heritage/trouville.webp'), credit: 'Caillebotte, Villas at Trouville, 1884' },
+} as const;
+export type HeritageName = keyof typeof HERITAGE;
+/** The style section's palette: printed catalogue, the same in light and dark mode. */
+export const IVORY = '#F1EBDD';
+export const NAVY = '#0C0678'; // the deep end of Kleos blue, for type on ivory
+
 /** Square cobalt prints (dither / scanline), Hermes-style. */
 export const PRINTS = {
   athlete: require('../../assets/img/print_athlete.webp'),

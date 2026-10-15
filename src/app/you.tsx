@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, ScrollView, TextInput, Pressable, Switch, Alert, Linking } from 'react-native';
+import { Directory, Paths } from 'expo-file-system';
 import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Screen, Body, Muted, Label, Card, Row, Stack, ListRow, Pill, Num, Tag, Serif, Section, IconButton, Icon, ICON } from '@/ui';
@@ -25,13 +26,17 @@ export default function YouTab() {
   const golds = UNITS.flatMap((u) => u.lessons).filter((l) => s.laurels[l.id] === 3);
 
   function askDelete() {
-    Alert.alert('Delete everything?', 'Your sessions, receipts, cards and progress on this phone, plus your duels and any training clips on our server. Your subscription stays.', [
+    Alert.alert('Delete everything?', 'Your sessions, receipts, cards, wardrobe and progress on this phone, plus your duels and any training clips on our server. Your subscription stays.', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
           await deleteServerData(s.subjectId).catch(() => {});
+          try {
+            const d = new Directory(Paths.document, 'wardrobe'); // wardrobe photos live only on the phone
+            if (d.exists) d.delete();
+          } catch {}
           s.reset();
           router.replace('/onboarding');
         },

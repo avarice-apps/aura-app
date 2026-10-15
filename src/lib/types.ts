@@ -104,6 +104,8 @@ export type Moment = {
   caption: string;
   what_to_do: string;
   said_instead?: string | null;
+  /** Server is rendering the rated video (kept up to two hours). */
+  video_id?: string;
   createdAt?: string;
 };
 
@@ -123,6 +125,51 @@ export type ProfileRead = {
   song?: { title: string; artist: string; why: string };
   createdAt?: string;
 };
+
+/** Fit check: an outfit photo, rated honestly, with fixes and the colours that suit the wearer. */
+export type Swatch = { name: string; hex: string };
+export type FitRead = {
+  score: number;
+  tier: string;
+  lane?: string;
+  verdict: string;
+  roast: string;
+  pieces: { item: string; score: number; note: string }[];
+  works: string[];
+  fixes: string[];
+  colouring?: { undertone: string; contrast: string; read: string; wear: Swatch[]; avoid: Swatch[] } | null;
+  buy?: { piece: string; why: string }[];
+  createdAt?: string;
+};
+
+/** One piece in the wardrobe. The photo stays on the phone; only the description is sent when building a fit. */
+export type WardrobeItem = {
+  id: string;
+  uri: string;
+  category: 'top' | 'bottom' | 'outer' | 'shoes' | 'accessory' | 'full';
+  name: string;
+  colour: Swatch;
+  formality: number;
+  addedAt: string;
+};
+export type BuiltFit = {
+  name: string;
+  items: string[];
+  why: string;
+  presence: string;
+  missing?: { piece: string; why: string } | null;
+};
+
+/** His style, learned in the Wardrobe quiz. Every fit read and build stays consistent with it. */
+export type StyleRead = {
+  signature: string;
+  read: string;
+  principles: string[];
+  core: { piece: string; why: string }[];
+  palette: Swatch[];
+  presence: string;
+};
+export type StyleProfile = { lanes: string[]; colours: string[]; life: string[]; feeling: string; presence: string; read?: StyleRead; at?: string };
 
 /** Debate Duel: two takes on one topic, judged by Poise. */
 export type Duel = {

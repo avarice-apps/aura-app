@@ -1,5 +1,5 @@
 import { API_URL, OFFLINE } from './config';
-import type { Duel, Evaluation, Lesson, Moment, ProfileRead, Receipt, ScanResult, SessionStart, TurnResult } from './types';
+import type { BuiltFit, Duel, Evaluation, FitRead, Lesson, Moment, ProfileRead, Receipt, ScanResult, SessionStart, StyleProfile, StyleRead, Swatch, TurnResult, WardrobeItem } from './types';
 import { useStore, type Goal } from '@/state/store';
 import { File, Directory, Paths } from 'expo-file-system';
 import { QUESTS } from './quests';
@@ -366,7 +366,7 @@ export async function liveFinish(sessionId: string, conversationId: string): Pro
 
 // ------------------------------------------------------------------ rate a clip / profile read
 
-export async function rateMoment(a: { videoUri: string; note?: string }): Promise<Moment> {
+export async function rateMoment(a: { videoUri: string; note?: string; render?: boolean }): Promise<Moment> {
   if (OFFLINE) {
     await sleep(1800);
     return {
@@ -389,7 +389,71 @@ export async function rateMoment(a: { videoUri: string; note?: string }): Promis
   form.append('video', fileField(a.videoUri, 'clip.mp4', 'video/mp4'));
   if (a.note) form.append('note', a.note);
   form.append('tone', tone());
+  if (a.render) form.append('render', '1'); // the rated video renders in the background while the result shows
   return postForm<Moment>('/moment', form, 180000);
+}
+
+/** Fit check: one outfit photo. Not stored on the server. */
+export async function readFit(uri: string): Promise<FitRead> {
+  if (OFFLINE) {
+    await sleep(1600);
+    return {
+      score: 54,
+      tier: 'Mall default',
+      lane: 'smart casual',
+      verdict: 'Every piece fine, nothing chosen.',
+      roast: 'The chinos are long enough to have their own postcode.',
+      pieces: [
+        { item: 'Shirt', score: 61, note: 'Good colour, but the shoulder seam hangs past the shoulder.' },
+        { item: 'Trousers', score: 42, note: 'Pooling at the shoe. Two inches too long.' },
+        { item: 'Shoes', score: 58, note: 'Clean, but too chunky for the rest of it.' },
+      ],
+      works: ['Navy and white is a palette that never fails.'],
+      fixes: ['Take the trousers up two inches.', 'Size down the shirt or have the shoulders taken in.', 'Swap the trainers for a slim white leather pair.'],
+      colouring: { undertone: 'warm', contrast: 'medium', read: 'Warm undertone, brown hair and eyes: medium contrast.', wear: [{ name: 'Olive', hex: '#5B6236' }, { name: 'Camel', hex: '#B5895A' }, { name: 'Cream', hex: '#EFE6D2' }, { name: 'Navy', hex: '#1F2A44' }, { name: 'Rust', hex: '#A0522D' }], avoid: [{ name: 'Icy grey', hex: '#D7DEE5' }, { name: 'Fuchsia', hex: '#D0368A' }, { name: 'Stark black', hex: '#0A0A0A' }] },
+      buy: [{ piece: 'Slim white leather sneakers', why: 'Lighter shoe for a lighter outfit.' }],
+    };
+  }
+  const form = new FormData();
+  form.append('photos', fileField(uri, 'fit.jpg', 'image/jpeg'));
+  form.append('tone', tone());
+  const lane = useStore.getState().styleLane;
+  if (lane) form.append('lane', lane);
+  return postForm<FitRead>('/fit', form, 90000);
+}
+
+/** The style quiz → his path to aura. */
+export async function readStyle(p: StyleProfile): Promise<StyleRead> {
+  if (OFFLINE) {
+    await sleep(1200);
+    return { signature: 'Clean streetwear', read: 'You own the right colours and too many of the same piece. Your fits stall at the silhouette.', principles: ['One hero piece per fit.', 'Heavyweight blanks, never thin tees.', 'Sneakers chosen like jewellery.'], core: [{ piece: 'Heavyweight boxy grey tee', why: 'Shape everything else hangs off.' }], palette: [{ name: 'Black', hex: '#111111' }, { name: 'Grey', hex: '#8A8A8A' }, { name: 'Bone', hex: '#E8E2D4' }, { name: 'Olive', hex: '#5B6236' }, { name: 'Washed indigo', hex: '#3B4C6B' }], presence: 'Unbothered on campus, sharp at night.' };
+  }
+  return postJSON<StyleRead>('/style/profile', { lanes: p.lanes, colours: p.colours, life: p.life, feeling: p.feeling, presence: p.presence, tone: tone() });
+}
+
+/** Wardrobe: what's in these photos, catalogued. Returns one entry per piece, with the photo it came from. */
+export async function scanWardrobe(uris: string[]): Promise<{ photo: number; category: WardrobeItem['category']; name: string; colour: Swatch; formality: number }[]> {
+  if (OFFLINE) {
+    await sleep(1200);
+    return uris.map((_, i) => ({ photo: i, category: (['top', 'bottom', 'shoes'] as const)[i % 3], name: ['Navy oxford shirt', 'Ecru wide-leg trousers', 'Brown suede loafers'][i % 3], colour: [{ name: 'Navy', hex: '#1F2A44' }, { name: 'Ecru', hex: '#E6DEC8' }, { name: 'Brown', hex: '#6F4728' }][i % 3], formality: 3 }));
+  }
+  const form = new FormData();
+  uris.slice(0, 8).forEach((u, i) => form.append('photos', fileField(u, `piece${i}.jpg`, 'image/jpeg')));
+  const r = await postForm<{ items: any[] }>('/wardrobe/scan', form, 90000);
+  return r.items ?? [];
+}
+
+/** Two outfits from what they own, for the occasion and the presence they want. Only descriptions are sent. */
+export async function buildFits(a: { items: WardrobeItem[]; occasion: string; presence: string; colouring?: FitRead['colouring'] }): Promise<BuiltFit[]> {
+  if (OFFLINE) {
+    await sleep(1400);
+    const pick = (c: string) => a.items.find((x) => x.category === c)?.id;
+    const ids = ['top', 'bottom', 'shoes', 'outer'].map(pick).filter(Boolean) as string[];
+    return [{ name: 'Navy and ecru', items: ids, why: 'Three colours, neat on top, easy below.', presence: 'Composed, not trying.', missing: null }];
+  }
+  const items = a.items.map((x) => ({ id: x.id, category: x.category, name: x.name, colour: x.colour, formality: x.formality }));
+  const r = await postJSON<{ outfits: BuiltFit[] }>('/wardrobe/build', { items, occasion: a.occasion, presence: a.presence, colouring: a.colouring ?? null, tone: tone(), lane: useStore.getState().styleLane ?? '' });
+  return r.outfits ?? [];
 }
 
 export async function readProfile(a: { uris: string[]; handle?: string }): Promise<ProfileRead> {
