@@ -5,6 +5,31 @@ import { QUESTS } from './quests';
 
 const tone = () => useStore.getState().tone ?? 'real';
 
+/** A small summary of his last calls, so characters test his real weak spots and Poise remembers. */
+function profile() {
+  try {
+    const evs = (useStore.getState().sessions ?? [])
+      .map((r) => r.evaluation)
+      .filter((e) => e && !e.insufficient && typeof e.rating === 'number' && e.axes)
+      .slice(0, 8);
+    if (!evs.length) return undefined;
+    const avg = Math.round(evs.reduce((n, e) => n + e.rating, 0) / evs.length);
+    const keys = ['voice', 'command', 'composure', 'awareness', 'landed'] as const;
+    const mean = (k: (typeof keys)[number]) => {
+      const v = evs.map((e) => (e.axes as any)[k]).filter((x) => typeof x === 'number');
+      return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 100;
+    };
+    const weakest = keys.reduce((w, k) => (mean(k) < mean(w) ? k : w), keys[0]);
+    const counts: Record<string, number> = {};
+    evs.forEach((e) => e.archetype && (counts[e.archetype] = (counts[e.archetype] ?? 0) + 1));
+    const archetype = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0] ?? '';
+    const recent_changes = evs.slice(0, 3).map((e) => e.change?.text).filter(Boolean);
+    return { calls: evs.length, avg_rating: avg, weakest, recent_changes, archetype };
+  } catch {
+    return undefined;
+  }
+}
+
 // ------------------------------------------------------------------ offline demo
 // Real voices, pre-rendered. Lets the whole app be walked through before the server is deployed.
 
@@ -147,7 +172,7 @@ export async function startSession(a: StartArgs): Promise<SessionStart & { opene
     const lessonScene = a.lesson ? { setting: a.lesson.setting, opener: a.lesson.opener, goal: a.lesson.goal } : q ? { setting: q.setting, opener: q.opener, goal: q.goal } : null;
     return { session_id: `demo_${Date.now()}`, character: sc.character, setting: lessonScene?.setting ?? sc.setting, goal: lessonScene?.goal ?? sc.goal, opener: lessonScene?.opener ?? sc.opener, max_turns: 2, pressure: a.pressure ?? 1, openerAudio: lessonScene ? undefined : DEMO_AUDIO[`open_${g}` as keyof typeof DEMO_AUDIO] };
   }
-  const r = await postJSON<SessionStart>('/session/start', { ...a, tone: tone() });
+  const r = await postJSON<SessionStart>('/session/start', { ...a, tone: tone(), profile: a.goal ? undefined : profile() });
   return { ...r, openerAudio: r.opener_audio };
 }
 
@@ -301,7 +326,7 @@ export async function withdrawTraining(subjectId: string): Promise<number> {
 export type LiveStart = SessionStart & { agent_id: string; conversation_token: string; overrides: any; speakers?: { name: string; role: string }[] };
 
 export async function liveStart(a: StartArgs): Promise<LiveStart> {
-  return postJSON<LiveStart>('/live/start', { ...a, tone: tone() });
+  return postJSON<LiveStart>('/live/start', { ...a, tone: tone(), profile: a.goal ? undefined : profile() });
 }
 
 export async function liveState(sessionId: string): Promise<{ done: boolean; leaving?: boolean; turns: number; interest: number | null; trust: number | null }> {

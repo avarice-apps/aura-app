@@ -83,7 +83,7 @@ def _agent_config(public_url: str, tts_model: str = TTS_MODELS[0]) -> dict:
                 },
             },
             "tts": {"voice_id": "EXAVITQu4vr4xnSDxMaL", "model_id": tts_model, "supported_voices": _supported_voices()},
-            "turn": {"turn_timeout": 9, "turn_eagerness": "normal"},
+            "turn": {"turn_timeout": 7, "turn_eagerness": "eager"},  # mid-thought pauses get an "Mm-hm" (converse.unfinished)
             "conversation": {"max_duration_seconds": 1200, "client_events": ["audio", "interruption", "agent_response", "user_transcript", "agent_response_correction"]},
         },
         "platform_settings": {

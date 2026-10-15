@@ -21,19 +21,22 @@ export default function Live() {
   const t = useTheme();
   const goal = useStore((s) => s.goal);
   const set = useStore((s) => s.set);
+  const addSession = useStore((s) => s.addSession);
   const [stage, setStage] = useState<'intro' | 'call' | 'cut'>('intro');
   const [count, setCount] = useState(3);
   const [ready, setReady] = useState(false);
   const [failed, setFailed] = useState(false);
   const [second, setSecond] = useState(false);
+  const [noCall, setNoCall] = useState(''); // the call never connected (mic off, server down)
 
   // 3 · 2 · 1, felt as much as seen.
   useEffect(() => {
     if (stage !== 'intro') return;
+    let id: ReturnType<typeof setInterval> | undefined;
     const lead = setTimeout(() => {
       let n = 3;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
-      const id = setInterval(() => {
+      id = setInterval(() => {
         n -= 1;
         if (n <= 0) {
           clearInterval(id);
@@ -45,7 +48,10 @@ export default function Live() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
       }, 800);
     }, 1400);
-    return () => clearTimeout(lead);
+    return () => {
+      clearTimeout(lead);
+      if (id) clearInterval(id);
+    };
   }, [stage]);
 
   useEffect(() => {
@@ -74,12 +80,14 @@ export default function Live() {
           onEnded={cut}
           onLeave={toPaywall}
           onReadFailed={() => setFailed(true)}
-          onError={() => {
+          onError={(m) => {
+            setNoCall(m || 'The line didn’t connect.');
             setFailed(true);
             setStage('cut');
           }}
           onDone={({ sessionId, evaluation }) => {
             set({ ob: { ...useStore.getState().ob, first: evaluation, firstSession: sessionId } });
+            if (!evaluation?.insufficient) addSession({ id: sessionId, kind: 'onboarding', title: 'First conversation', createdAt: new Date().toISOString(), evaluation });
             setReady(true);
           }}
         />
@@ -103,11 +111,11 @@ export default function Live() {
         <Animated.View entering={FadeIn.duration(120)} style={[StyleSheet.absoluteFill, { backgroundColor: t.accent, paddingHorizontal: 28, paddingTop: 120, paddingBottom: 48, justifyContent: 'space-between' }]}>
           <View style={{ gap: 26 }}>
             <Animated.View entering={FadeIn.duration(700).delay(350)}>
-              <RNText style={{ fontFamily: font.serif, fontSize: 38, lineHeight: 44, color: WHITE }}>In reality, you aren’t often given second chances.</RNText>
+              <RNText style={{ fontFamily: font.serif, fontSize: 38, lineHeight: 44, color: WHITE }}>{noCall ? 'The line didn’t connect.' : 'In reality, you aren’t often given second chances.'}</RNText>
             </Animated.View>
             {second && (
               <Animated.View entering={FadeIn.duration(800)}>
-                <RNText style={{ fontFamily: font.serifItalic, fontSize: 30, lineHeight: 36, color: SOFT }}>That’s why we made Kleos, so you never feel you need one.</RNText>
+                <RNText style={{ fontFamily: font.serifItalic, fontSize: 30, lineHeight: 36, color: SOFT }}>{noCall ? `${noCall} You can do your first call from Today.` : 'That’s why we made Kleos, so you never feel you need one.'}</RNText>
               </Animated.View>
             )}
           </View>

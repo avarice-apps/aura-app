@@ -320,7 +320,7 @@ async def live_start(request: Request):
     """Start a live voice session: our session + a one-time ElevenLabs token + per-session overrides."""
     b = await request.json()
     try:
-        out = converse.start(room_id=b.get("room_id"), goal=b.get("goal"), lesson=b.get("lesson"), floor_id=b.get("floor_id"), daily_id=b.get("daily_id"), pressure=int(b.get("pressure", 2)), max_turns=b.get("max_turns"), attempt_of=b.get("attempt_of"), tone=b.get("tone", "real"), live=True)
+        out = converse.start(room_id=b.get("room_id"), goal=b.get("goal"), lesson=b.get("lesson"), floor_id=b.get("floor_id"), daily_id=b.get("daily_id"), pressure=int(b.get("pressure", 2)), max_turns=b.get("max_turns"), attempt_of=b.get("attempt_of"), tone=b.get("tone", "real"), live=True, profile=b.get("profile"))
     except KeyError as e:
         raise HTTPException(410, f"That scene isn't available: {e}")
     except ValueError as e:
@@ -348,6 +348,9 @@ async def live_state(sid: str):
 
 async def _read_back(sid: str, cid: str | None, voice: bool) -> dict:
     s = converse.SESSIONS[sid]
+    if s.get("pending_user"):  # he hung up mid-thought after an "Mm-hm": his words still count
+        frag = s.pop("pending_user")
+        s["turns"].append({"role": "user", "text": frag, "facts": converse.text_facts(frag)})
     if cid:
         # The recording takes ElevenLabs a few seconds to finalise. Give the voice measurement a short window,
         # then read the call anyway (voice axes stay neutral without it). The analysis keeps running in the
@@ -433,7 +436,7 @@ async def live_llm(request: Request):
 async def session_start(request: Request):
     b = await request.json()
     try:
-        out = converse.start(room_id=b.get("room_id"), goal=b.get("goal"), lesson=b.get("lesson"), floor_id=b.get("floor_id"), daily_id=b.get("daily_id"), pressure=int(b.get("pressure", 1)), max_turns=b.get("max_turns") or (8 if (b.get("floor_id") or b.get("daily_id")) else None), attempt_of=b.get("attempt_of"), tone=b.get("tone", "real"))
+        out = converse.start(room_id=b.get("room_id"), goal=b.get("goal"), lesson=b.get("lesson"), floor_id=b.get("floor_id"), daily_id=b.get("daily_id"), pressure=int(b.get("pressure", 1)), max_turns=b.get("max_turns") or (8 if (b.get("floor_id") or b.get("daily_id")) else None), attempt_of=b.get("attempt_of"), tone=b.get("tone", "real"), profile=b.get("profile"))
     except KeyError as e:
         raise HTTPException(410, str(e))
     except ValueError as e:
