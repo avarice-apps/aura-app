@@ -13,7 +13,7 @@ import { liveStart, liveFinish, liveState, uploadFrames, reportMic, StartArgs, L
 import { useStore } from '@/state/store';
 import type { ConversationDone } from '@/components/Conversation';
 import { requestMic, stopSpeaking } from '@/lib/voice';
-import { prepareLiveAudio, endLiveAudio, reviveMic, micState } from '@/lib/liveAudio';
+import { prepareLiveAudio, resetLiveAudio, endLiveAudio, reviveMic, micState, isAudioStartError, AUDIO_START_FAILED } from '@/lib/liveAudio';
 import { play } from '@/lib/sound';
 
 type Msg = { who: string; mine: boolean; text: string };
@@ -99,6 +99,8 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
   const heard = useRef(0); // loudest mic level so far; stays ~0 if the mic is blocked
   const listenMs = useRef(0); // time the line was open for him (the other side not talking)
   const revived = useRef(false);
+  const audioRetried = useRef(false); // one clean retry if iOS refuses to start the call's audio
+  const alive = useRef(true);
 
   // Callbacks below run long after this render; they reach the latest finish/fail through this ref.
   const act = useRef({ finish: () => {}, fail: (_m: string) => {} });
@@ -164,7 +166,20 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
       if (ending.current) return;
       // Mid-call error: never leave the mic running with no way out. Hang up and read what we have.
       if (convId.current) act.current.finish();
-      else act.current.fail(typeof m === 'string' ? m : 'The live line dropped.');
+      else if (isAudioStartError(m) && !audioRetried.current) {
+        // iOS wouldn't start the phone's audio (another app or a stale session holding it). Reset and try once more.
+        audioRetried.current = true;
+        resetLiveAudio().then(() => {
+          if (alive.current && !ending.current) connect();
+        });
+      } else
+        act.current.fail(
+          isAudioStartError(m)
+            ? AUDIO_START_FAILED
+            : typeof m === 'string'
+              ? m
+              : 'The live line dropped.',
+        );
     },
   });
 
@@ -229,24 +244,34 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
     }
   }, [phase, idle]);
 
+  /** Get a fresh token and connect. A retry gets a new token too, since the first may have been spent. */
+  async function connect() {
+    try {
+      const s = await liveStart(args);
+      if (!alive.current) return;
+      startRef.current = s;
+      setStart(s);
+      conv.startSession({ conversationToken: s.conversation_token, connectionType: 'webrtc', overrides: s.overrides });
+    } catch (e: any) {
+      fail(e?.message ?? 'Could not start the conversation.');
+    }
+  }
+
   useEffect(() => {
-    let alive = true;
+    alive.current = true;
     (async () => {
       try {
         stopSpeaking();
         if (!(await requestMic())) throw new Error('Kleos needs the microphone. Turn it on in Settings › Kleos.');
         await prepareLiveAudio();
-        const s = await liveStart(args);
-        if (!alive) return;
-        startRef.current = s;
-        setStart(s);
-        conv.startSession({ conversationToken: s.conversation_token, connectionType: 'webrtc', overrides: s.overrides });
       } catch (e: any) {
         fail(e?.message ?? 'Could not start the conversation.');
+        return;
       }
+      if (alive.current) connect();
     })();
     return () => {
-      alive = false;
+      alive.current = false;
       ending.current = true;
       try {
         conv.endSession();

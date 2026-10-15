@@ -1,5 +1,7 @@
 import { Platform } from 'react-native';
 import { AudioSession, AudioDeviceModule, setupIOSAudioManagement, type AppleAudioConfiguration } from '@livekit/react-native';
+import { setAudioModeAsync, setIsAudioActiveAsync } from 'expo-audio';
+export { AUDIO_START_FAILED } from './audioErrors';
 
 /**
  * The phone's audio session during a live call, owned by the call and nothing else.
@@ -19,25 +21,44 @@ const DUPLEX: AppleAudioConfiguration = {
 const ios = Platform.OS === 'ios';
 let policySet = false;
 
-/** Before the call connects. */
+/**
+ * Before the call connects: leave the phone's audio in a clean, known-good state for the call to take over.
+ * 1. Release whatever the app's UI sounds left active, so the call's activation is a fresh one.
+ * 2. Set the duplex category up front (the order that activated reliably before).
+ * 3. Hand the engine a duplex policy for both of its states.
+ */
 export async function prepareLiveAudio() {
   if (!ios) return;
+  try {
+    await setIsAudioActiveAsync(false);
+  } catch {}
+  try {
+    await setAudioModeAsync({ playsInSilentMode: true, allowsRecording: true });
+  } catch {}
   try {
     if (!policySet) {
       setupIOSAudioManagement(true, { recording: DUPLEX, playout: DUPLEX, deactivateOnStop: true });
       policySet = true;
     }
   } catch {}
-  try {
-    // Keep the mic input initialised from the start, so the first words aren't clipped either.
-    await AudioDeviceModule.setRecordingAlwaysPreparedMode(true);
-  } catch {}
 }
 
-/** After the call. */
-export function endLiveAudio() {
+/** iOS refused to start audio: drop everything, give the system a moment, and set up again. */
+export async function resetLiveAudio() {
   if (!ios) return;
-  AudioDeviceModule.setRecordingAlwaysPreparedMode(false).catch(() => {});
+  try {
+    await AudioSession.stopAudioSession();
+  } catch {}
+  await new Promise((r) => setTimeout(r, 700));
+  await prepareLiveAudio();
+}
+
+/** After the call. Nothing to undo: the engine releases the session when it stops. */
+export function endLiveAudio() {}
+
+/** True for the "couldn't start the phone's audio" family of errors, which are worth one clean retry. */
+export function isAudioStartError(m: unknown) {
+  return /audio session|activation|activating|AVAudioSession/i.test(String(m ?? ''));
 }
 
 /** What the native audio engine thinks it is doing. Sent with a dead-mic report so the next fix isn't a guess. */
@@ -58,7 +79,6 @@ export function micState(): Record<string, unknown> {
     micMuted: read(() => AudioDeviceModule.isMicrophoneMuted()),
     voiceProcessing: read(() => AudioDeviceModule.isVoiceProcessingEnabled()),
     bypassed: read(() => AudioDeviceModule.isVoiceProcessingBypassed()),
-    prepared: read(() => AudioDeviceModule.isRecordingAlwaysPreparedMode()),
     availability: read(() => AudioDeviceModule.getEngineAvailability()),
     muteMode: read(() => AudioDeviceModule.getMuteMode()),
   };

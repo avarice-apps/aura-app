@@ -15,6 +15,7 @@ import { track } from '@/lib/analytics';
 import { refund } from '@/lib/plan';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { OFFLINE } from '@/lib/config';
+import { AUDIO_START_FAILED } from '@/lib/audioErrors';
 
 type Phase = 'loading' | 'speaking' | 'yourturn' | 'recording' | 'sending' | 'evaluating' | 'error';
 type Msg = { role: 'char' | 'user'; text: string };
@@ -323,6 +324,7 @@ export function Conversation(props: { args: StartArgs; onDone: (r: ConversationD
   // Capture the caller's handler first: `props` is reassigned below, and reading props.onDone at call time
   // would call this wrapper again, forever ("Maximum call stack size exceeded").
   const userDone = props.onDone;
+  const [turnFallback, setTurnFallback] = useState(false);
   const onDone = (r: ConversationDone) => {
     try {
       track('call_finished', { kind, rating: r.evaluation?.rating ?? null, insufficient: !!r.evaluation?.insufficient, effort: (r.evaluation as any)?.effort ?? null });
@@ -339,11 +341,26 @@ export function Conversation(props: { args: StartArgs; onDone: (r: ConversationD
   const userError = props.onError;
   // A call that never got going (mic denied, server down) gives the free call back.
   const onError = (e: string) => {
+    if (e === AUDIO_START_FAILED && !turnFallback) {
+      track('call_failed', { kind, fallback: 'turn' });
+      setTurnFallback(true);
+      return;
+    }
     if (props.metered) refund('calls');
     track('call_failed', { kind });
     userError?.(e);
   };
   props = { ...props, onDone, onError };
+  if (turnFallback) {
+    // The live line couldn't get the phone's audio. Same scene, turn by turn, on the standard recorder.
+    const endedThenDone = (r: ConversationDone) => {
+      try {
+        props.onEnded?.();
+      } catch {}
+      onDone(r);
+    };
+    return <TurnConversation args={props.args} label={props.label} onError={onError} onDone={endedThenDone} />;
+  }
   if (liveAvailable()) {
     // Loaded lazily so Expo Go never touches the native WebRTC module.
     // eslint-disable-next-line @typescript-eslint/no-require-imports
