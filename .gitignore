@@ -1,0 +1,16 @@
+node_modules/
+.expo/
+dist/
+*.log
+.env
+.env.*
+!.env.example
+ios/
+android/
+server/.venv/
+server/__pycache__/
+server/**/__pycache__/
+*.mp3
+*.mp4
+*.mov
+.DS_Store

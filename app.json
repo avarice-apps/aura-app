@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "Aura",
+    "slug": "aura",
+    "scheme": "aura",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#06071A",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#1414F0",
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.avarice.aura",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Aura records a short clip of you answering a prompt so Poise can read your presence. Clips are measured, never shared, and deleted after 30 days.",
+        "NSMicrophoneUsageDescription": "Aura records your voice during a Read to measure pace, fillers and energy.",
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.avarice.aura",
+      "adaptiveIcon": {
+        "backgroundColor": "#1414F0",
+        "foregroundImage": "./assets/android-icon-foreground.png"
+      },
+      "permissions": [
+        "CAMERA",
+        "RECORD_AUDIO"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      "expo-secure-store",
+      "expo-audio",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Aura records a short clip so Poise can read your presence.",
+          "microphonePermission": "Aura measures your voice during a Read."
+        }
+      ],
+      "expo-sharing",
+      "expo-image"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "root": "./src/app"
+      }
+    }
+  }
+}
