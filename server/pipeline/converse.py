@@ -135,14 +135,22 @@ CHAR_SYSTEM = """You are playing {name}, a person in a realistic social scene in
 
 Scene: {setting}
 
-How to play it:
-- Reply as {name} would, out loud, in 1 or 2 short sentences. Natural spoken English. No stage directions, no emojis, no narration.
-- React to what he actually said AND how he said it (you are given plain notes on his delivery). Vague answers get a "meaning what?" or a polite cool-off. Specific, interesting answers get genuine interest. Long rambles get a slightly impatient cut-in. Clean, warm answers get warmth back.
-- Never coach him, never praise his communication skills, never mention practice, apps, scores or AI. You are just a person in the scene.
-- Pressure level {pressure} of 3. At 2, add one mild skeptical follow-up. At 3, be skeptical and brief, and you may use the twist.
-- Twist you may introduce on your second reply if the pressure allows: {twist}
-- Respect and safety: never sexual, never cruel, never pressure him into anything. If he says something hostile or unsafe, respond like a reasonable person would (cool, brief).
-"""
+You have an inner state that moves turn by turn, like a real person's:
+- interest (0-100): how much you want to keep talking to him
+- trust (0-100): how much you believe and respect what he says
+Start of scene: interest {i0}, trust {t0}. Move them honestly based on WHAT he said and HOW (you get plain notes on his delivery). Specific, warm, clean answers raise them; hedging, rambling, apologising, dodging your question or trying too hard lower them. Typical moves are 5-20 points. Never move them because he is trying again; you have no memory of earlier attempts.
+
+How to reply:
+- Speak as {name}, out loud, 1-2 short sentences, natural spoken English. No stage directions, emojis or narration.
+- Let your state show: low interest = shorter, cooler, glance-away replies; high interest = warmer, follow-up questions.
+- Never coach him, never mention practice, apps, scores or AI.
+- Pressure {pressure} of 3. At 2: one mild skeptical follow-up. At 3: skeptical and brief; you may use the twist.
+- Twist available on your second reply if pressure allows: {twist}
+- Never sexual, never cruel, never pressure him. If he is hostile, react like a reasonable person (cool, brief).
+
+Return ONLY JSON: {{"reply": str, "interest": int, "trust": int, "thought": str (your private reaction in <= 14 words, first person, honest, e.g. "He finally said something real. Now I'm curious.")}}"""
+
+START_STATE = {"mara": (60, 55), "theo": (45, 35), "dev": (65, 50), "julian": (40, 45), "ines": (35, 50), "kai": (45, 45)}
 
 
 async def turn(session_id: str, user_text: str, facts: dict) -> dict:
@@ -154,20 +162,44 @@ async def turn(session_id: str, user_text: str, facts: dict) -> dict:
     done = n_user >= s["max_turns"]
     spec = s["spec"]
     c = CAST[spec["character"]]
-    system = CHAR_SYSTEM.format(name=c["name"], style=c["style"], behaviour=c["behaviour"], setting=spec["setting"], pressure=s["pressure"], twist=spec.get("twist") or "none")
+    i0, t0 = START_STATE.get(c["id"], (50, 50))
+    system = CHAR_SYSTEM.format(name=c["name"], style=c["style"], behaviour=c["behaviour"], setting=spec["setting"], pressure=s["pressure"], twist=spec.get("twist") or "none", i0=i0, t0=t0)
     convo = []
     for t in s["turns"]:
         if t["role"] == "char":
-            convo.append({"role": "assistant", "content": t["text"]})
+            convo.append({"role": "assistant", "content": json.dumps({"reply": t["text"], "interest": t.get("interest", i0), "trust": t.get("trust", t0), "thought": t.get("thought", "")})})
         else:
             convo.append({"role": "user", "content": f'{t["text"]}\n\n[delivery: {_delivery_plain(t.get("facts", {}))}]'})
     if done:
-        convo[-1]["content"] += "\n\n[This is the last exchange. Reply with one natural sentence that closes or continues the moment, as the scene would.]"
-    r = await _client().messages.create(model=M_CHAR, max_tokens=200, system=system, messages=convo)
-    reply = "".join(b.text for b in r.content if getattr(b, "type", "") == "text").strip().strip('"')
-    reply = re.sub(r"^\*.*?\*\s*", "", reply)
-    s["turns"].append({"role": "char", "text": reply})
-    return {"reply": reply, "done": done, "turn": n_user, "voice": c["voice"]}
+        convo[-1]["content"] += "\n\n[Last exchange. Reply with one natural sentence that closes or continues the moment.]"
+    out = None
+    for _ in range(2):
+        r = await _client().messages.create(model=M_CHAR, max_tokens=300, system=system, messages=convo)
+        raw = "".join(b.text for b in r.content if getattr(b, "type", "") == "text")
+        m = re.search(r"\{.*\}", raw, re.S)
+        try:
+            out = json.loads(m.group(0))
+            break
+        except Exception:
+            out = {"reply": raw.strip().strip('"'), "interest": i0, "trust": t0, "thought": ""}
+    clamp = lambda v, d: max(0, min(100, int(v))) if isinstance(v, (int, float)) else d
+    reply = re.sub(r"^\*.*?\*\s*", "", str(out.get("reply", "")).strip().strip('"'))
+    st = {"interest": clamp(out.get("interest"), i0), "trust": clamp(out.get("trust"), t0), "thought": str(out.get("thought", ""))[:140]}
+    s["turns"].append({"role": "char", "text": reply, **st})
+    return {"reply": reply, "done": done, "turn": n_user, "voice": c["voice"], **st}
+
+
+def trace(session_id: str) -> list[dict]:
+    s = SESSIONS[session_id]
+    c = CAST[s["spec"]["character"]]
+    i0, t0 = START_STATE.get(c["id"], (50, 50))
+    pts = [{"turn": 0, "interest": i0, "trust": t0, "thought": None}]
+    k = 0
+    for t in s["turns"][1:]:
+        if t["role"] == "char":
+            k += 1
+            pts.append({"turn": k, "interest": t.get("interest", i0), "trust": t.get("trust", t0), "thought": t.get("thought")})
+    return pts
 
 
 # ---------------------------------------------------------------- evaluation
@@ -249,7 +281,7 @@ async def evaluate(session_id: str) -> dict:
             f = t.get("facts") or {}
             transcript.append(f'TURN {ui} (you): "{t["text"]}"  [facts: fillers {f.get("filler_count",0)} {[x["word"] for x in f.get("fillers",[])][:6]}, hedges {f.get("hedge_count",0)} {[x["word"] for x in f.get("hedges",[])][:6]}, apologies {f.get("apology_count",0)}, wpm {f.get("wpm",0)}, first word {f.get("first_word_s",0)}s, longest pause {f.get("longest_pause_s",0)}s, ended mid-sentence {f.get("ended_mid_sentence")}, trailing off {f.get("trailing_drop")}]')
         else:
-            transcript.append(f'{CAST[s["spec"]["character"]]["name"]}: "{t["text"]}"')
+            transcript.append(f'{CAST[s["spec"]["character"]]["name"]}: "{t["text"]}"  [their inner state after this: interest {t.get("interest","?")}, trust {t.get("trust","?")}; private thought: {t.get("thought","")}]')
     prev_block = "none"
     if s.get("attempt_of") and s["attempt_of"] in SESSIONS and SESSIONS[s["attempt_of"]].get("evaluation"):
         p = SESSIONS[s["attempt_of"]]
@@ -275,7 +307,7 @@ Previous attempt: {prev_block}"""
     out = await _json_call(M_EVAL, EVAL_SYSTEM, user, max_tokens=2500, check=check)
     axes["awareness"] = max(5, min(97, int(out.get("awareness", {}).get("score", 50))))
     rating = round(axes["voice"] * 0.3 + axes["command"] * 0.3 + axes["composure"] * 0.2 + axes["awareness"] * 0.2)
-    out.update({"rating": rating, "axes": axes, "counts": _counts(s["turns"]), "turns": [{"role": t["role"], "text": t["text"]} for t in s["turns"]]})
+    out.update({"rating": rating, "axes": axes, "counts": _counts(s["turns"]), "turns": [{"role": t["role"], "text": t["text"]} for t in s["turns"]], "trace": trace(session_id), "character": CAST[s["spec"]["character"]]["name"]})
     if s.get("attempt_of") and s["attempt_of"] in SESSIONS and SESSIONS[s["attempt_of"]].get("evaluation"):
         prev = SESSIONS[s["attempt_of"]]["evaluation"]
         out["delta"] = rating - prev["rating"]

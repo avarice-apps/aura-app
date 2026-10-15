@@ -282,7 +282,7 @@ async def session_turn(sid: str, audio_file: UploadFile = File(..., alias="audio
         r = await converse.turn(sid, text, facts)
     except KeyError as e:
         raise HTTPException(410, str(e))
-    return {"user_text": text, "facts": {k: facts[k] for k in ("duration_s", "wpm", "filler_count", "hedge_count", "apology_count", "first_word_s", "ended_mid_sentence")}, "reply": r["reply"], "reply_audio": _voice_url(r["reply"], r["voice"]), "done": r["done"], "turn": r["turn"]}
+    return {"user_text": text, "facts": {k: facts[k] for k in ("duration_s", "wpm", "filler_count", "hedge_count", "apology_count", "first_word_s", "ended_mid_sentence")}, "reply": r["reply"], "reply_audio": _voice_url(r["reply"], r["voice"]), "done": r["done"], "turn": r["turn"], "interest": r["interest"], "trust": r["trust"]}
 
 
 @app.post("/session/{sid}/evaluate")

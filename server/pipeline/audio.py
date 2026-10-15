@@ -63,16 +63,27 @@ def extract_wav(src: str) -> str:
 
 async def transcribe(wav_path: str) -> dict:
     key = os.environ["DEEPGRAM_API_KEY"]
-    async with httpx.AsyncClient(timeout=120) as client:
-        with open(wav_path, "rb") as f:
-            r = await client.post(
-                "https://api.deepgram.com/v1/listen",
-                params={"model": "nova-3", "smart_format": "false", "punctuate": "true", "filler_words": "true", "language": "en"},
-                headers={"Authorization": f"Token {key}", "Content-Type": "audio/wav"},
-                content=f.read(),
-            )
-    r.raise_for_status()
-    return r.json()
+    with open(wav_path, "rb") as f:
+        data = f.read()
+    last = None
+    for attempt in range(3):
+        try:
+            async with httpx.AsyncClient(timeout=60) as client:
+                r = await client.post(
+                    "https://api.deepgram.com/v1/listen",
+                    params={"model": "nova-3", "smart_format": "false", "punctuate": "true", "filler_words": "true", "language": "en"},
+                    headers={"Authorization": f"Token {key}", "Content-Type": "audio/wav"},
+                    content=data,
+                )
+            if r.status_code >= 500:
+                raise httpx.HTTPStatusError("server error", request=r.request, response=r)
+            r.raise_for_status()
+            return r.json()
+        except (httpx.ConnectError, httpx.ReadTimeout, httpx.HTTPStatusError) as e:
+            last = e
+            import asyncio
+            await asyncio.sleep(0.6 * (attempt + 1))
+    raise last
 
 
 def _words(dg: dict) -> list[Word]:
