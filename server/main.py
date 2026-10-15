@@ -18,7 +18,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, Response, HTMLResponse, FileResponse, StreamingResponse
 from fastapi import Request
 
-from pipeline import audio, face, rubric, poise, tts, converse
+from pipeline import audio, face, rubric, poise, tts, converse, live
 from training import store as train_store, learned
 
 app = FastAPI(title="Aura", version="0.1")
@@ -260,6 +260,88 @@ async def rate_submit(token: str, request: Request):
 def _voice_url(text: str, voice_id: str, fast: bool = False) -> str:
     from urllib.parse import quote
     return f"{PUBLIC_URL}/tts?voice_id={voice_id}&text={quote(text)}" + ("&fast=1" if fast else "")
+
+
+# ---------------------------------------------------------------- live (full-duplex) conversations
+
+_LIVE_AGENT: dict = {}
+
+
+async def _agent_id() -> str:
+    if not _LIVE_AGENT.get("id"):
+        _LIVE_AGENT["id"] = await live.ensure_agent(PUBLIC_URL)
+    return _LIVE_AGENT["id"]
+
+
+@app.on_event("startup")
+async def _live_startup():
+    if os.environ.get("ELEVENLABS_API_KEY") and PUBLIC_URL.startswith("https://"):
+        try:
+            await _agent_id()
+        except Exception as e:  # never block the server on this
+            print("live agent setup failed:", e)
+
+
+@app.post("/live/start")
+async def live_start(request: Request):
+    """Start a live voice session: our session + a one-time ElevenLabs token + per-session overrides."""
+    b = await request.json()
+    try:
+        out = converse.start(room_id=b.get("room_id"), goal=b.get("goal"), lesson=b.get("lesson"), pressure=int(b.get("pressure", 1)), max_turns=b.get("max_turns"), attempt_of=b.get("attempt_of"), tone=b.get("tone", "real"))
+    except KeyError as e:
+        raise HTTPException(410, str(e))
+    agent_id = await _agent_id()
+    token = await live.conversation_token(agent_id)
+    sid = out["session_id"]
+    return {**out, "agent_id": agent_id, "conversation_token": token, "overrides": {"agent": {"prompt": {"prompt": f"[[kleos:{sid}]]"}, "firstMessage": out["opener"]}, "tts": {"voiceId": out["character"]["voice"]}}}
+
+
+@app.get("/live/{sid}/state")
+async def live_state(sid: str):
+    s = converse.SESSIONS.get(sid)
+    if not s:
+        raise HTTPException(410, "session expired")
+    chars = [t for t in s["turns"] if t["role"] == "char"]
+    last = chars[-1] if chars else {}
+    return {"done": bool(s.get("done")), "turns": sum(1 for t in s["turns"] if t["role"] == "user"), "interest": last.get("interest"), "trust": last.get("trust")}
+
+
+@app.post("/live/{sid}/finish")
+async def live_finish(sid: str, request: Request, voice: bool = True):
+    """After hang-up: measure the recording, then Poise evaluates."""
+    b = await request.json()
+    cid = b.get("conversation_id")
+    if cid:
+        try:
+            await live.analyse_call(sid, cid)
+        except KeyError as e:
+            raise HTTPException(410, str(e))
+        except Exception as e:
+            print("live analysis failed:", e)
+    try:
+        out = await converse.evaluate(sid)
+    except KeyError as e:
+        raise HTTPException(410, str(e))
+    if voice and out.get("script"):
+        out["script_audio"] = _voice_url(out["script"], tts.VOICE_ID)
+    return out
+
+
+@app.post("/llm/v1/chat/completions")
+async def live_llm(request: Request):
+    """ElevenLabs calls this for every character reply. Our engine answers, streamed."""
+    if request.headers.get("x-kleos-key") != live.llm_secret():
+        raise HTTPException(401)
+    b = await request.json()
+    msgs = b.get("messages") or []
+    sid = live.session_from_messages(msgs)
+    text = live.last_user_text(msgs)
+    if not sid or sid not in converse.SESSIONS:
+        async def bye():
+            yield 'data: {"choices":[{"index":0,"delta":{"content":"Sorry, I lost you there."},"finish_reason":null}]}\n\n'
+            yield "data: [DONE]\n\n"
+        return StreamingResponse(bye(), media_type="text/event-stream")
+    return StreamingResponse(live.openai_stream(sid, text or "...", b.get("model") or "kleos-character"), media_type="text/event-stream")
 
 
 @app.post("/session/start")

@@ -10,6 +10,9 @@ import { startSession, sendTurn, evaluateSession, StartArgs } from '@/lib/api';
 import type { Evaluation, SessionStart } from '@/lib/types';
 import { speak, stopSpeaking, prepareMic } from '@/lib/voice';
 import { play } from '@/lib/sound';
+import { NativeModules, TurboModuleRegistry } from 'react-native';
+import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { OFFLINE } from '@/lib/config';
 
 type Phase = 'loading' | 'speaking' | 'yourturn' | 'recording' | 'sending' | 'evaluating' | 'error';
 type Msg = { role: 'char' | 'user'; text: string };
@@ -36,7 +39,7 @@ export type ConversationDone = { sessionId: string; evaluation: Evaluation & { s
  * A live, turn-based voice conversation with a cast character.
  * The character replies to what you said and how; Poise evaluates at the end.
  */
-export function Conversation({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: ConversationDone) => void; onError?: (e: string) => void; label?: string }) {
+export function TurnConversation({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: ConversationDone) => void; onError?: (e: string) => void; label?: string }) {
   const t = useTheme();
   const [phase, setPhase] = useState<Phase>('loading');
   const [start, setStart] = useState<SessionStart | null>(null);
@@ -295,4 +298,30 @@ export function Conversation({ args, onDone, onError, label }: { args: StartArgs
       </View>
     </View>
   );
+}
+
+
+/** True when the app is a development/production build with WebRTC (not Expo Go) and a server is connected. */
+export function liveAvailable() {
+  if (OFFLINE) return false;
+  if (Constants.executionEnvironment === ExecutionEnvironment.StoreClient) return false; // Expo Go
+  try {
+    return !!(NativeModules.WebRTCModule || TurboModuleRegistry.get('WebRTCModule'));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * The conversation everyone uses. Live full-duplex voice when the build supports it;
+ * otherwise the turn-based version (Expo Go, offline demo).
+ */
+export function Conversation(props: { args: StartArgs; onDone: (r: ConversationDone) => void; onError?: (e: string) => void; label?: string }) {
+  if (liveAvailable()) {
+    // Loaded lazily so Expo Go never touches the native WebRTC module.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { LiveConversation } = require('./LiveConversation');
+    return <LiveConversation {...props} />;
+  }
+  return <TurnConversation {...props} />;
 }

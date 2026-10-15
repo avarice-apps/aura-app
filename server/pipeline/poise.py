@@ -108,7 +108,7 @@ async def verdict(*, prompt_text: str, voice: dict, presence: dict, scores: dict
     last_err = None
     for attempt in range(3):
         msgs = [{"role": "user", "content": user if not last_err else f"{user}\n\nYour previous attempt failed a check: {last_err}. Fix it. Return only JSON."}]
-        r = await client.messages.create(model=model, max_tokens=4000, system=SYSTEM, messages=msgs)
+        r = await client.messages.create(model=model, max_tokens=10000, system=SYSTEM, messages=msgs)
         raw = "".join(b.text for b in r.content if getattr(b, "type", "") == "text").strip()
         raw = re.sub(r"^```(?:json)?|```$", "", raw, flags=re.M).strip()
         m = re.search(r"\{.*\}", raw, re.S)
@@ -129,6 +129,7 @@ async def pressure_line(*, prompt_text: str, voice: dict, composure: int) -> str
     r = await client.messages.create(
         model=MODEL_FAST,
         max_tokens=80,
+        thinking={"type": "disabled"},
         system="You are Poise. Speak to him in second person, never by name or in third person. One sentence, under 16 words, plain and specific, on how he handled a 20-second pressure prompt. No exclamation marks, no slang, no numbers with decimals.",
         messages=[{"role": "user", "content": f"PROMPT: {prompt_text}\nFACTS: {json.dumps({k: v for k, v in voice.items() if k != 'transcript'})}\nTRANSCRIPT: {voice.get('transcript')}\nCOMPOSURE: {composure}"}],
     )

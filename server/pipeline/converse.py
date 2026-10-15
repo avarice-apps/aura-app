@@ -61,7 +61,8 @@ async def _json_call(model: str, system: str, user: str, max_tokens: int = 3000,
     err = None
     for _ in range(tries):
         msg = user if not err else f"{user}\n\nYour previous output failed a check: {err}. Return only valid JSON."
-        r = await _client().messages.create(model=model, max_tokens=max_tokens, system=system, messages=[{"role": "user", "content": msg}])
+        # Thinking is allowed for evaluation-quality calls; leave headroom so the JSON answer always fits.
+        r = await _client().messages.create(model=model, max_tokens=max_tokens + 6000, system=system, messages=[{"role": "user", "content": msg}])
         raw = "".join(b.text for b in r.content if getattr(b, "type", "") == "text")
         m = re.search(r"\{.*\}", raw, re.S)
         try:
@@ -234,18 +235,104 @@ async def turn(session_id: str, user_text: str, facts: dict) -> dict:
         convo[-1]["content"] += "\n\n[Last exchange. Reply with one natural sentence that closes or continues the moment.]"
     out = None
     for attempt in range(3):
-        r = await _client().messages.create(model=M_CHAR, max_tokens=300, system=system, messages=convo)
+        # If the model declines (empty reply), the last attempt falls back to the everyday tone.
+        sys_ = system if attempt < 2 else system.replace(TONE_CHAR.get(s.get("tone", "real"), ""), TONE_CHAR["real"])
+        r = await _client().messages.create(model=M_CHAR, max_tokens=300, system=sys_, messages=convo, thinking={"type": "disabled"})
         raw = "".join(b.text for b in r.content if getattr(b, "type", "") == "text").strip()
         out = _parse_char(raw, i0, t0)
         if out.get("reply"):
             break
     if not out or not out.get("reply"):
-        out = {"reply": "Sorry, say that again?", "interest": i0, "trust": t0, "thought": ""}
+        out = {"reply": "Hm. Go on.", "interest": i0, "trust": t0, "thought": ""}
     clamp = lambda v, d: max(0, min(100, int(v))) if isinstance(v, (int, float)) else d
     reply = re.sub(r"^\*.*?\*\s*", "", str(out.get("reply", "")).strip().strip('"'))
     st = {"interest": clamp(out.get("interest"), i0), "trust": clamp(out.get("trust"), t0), "thought": str(out.get("thought", ""))[:140]}
     s["turns"].append({"role": "char", "text": reply, **st})
     return {"reply": reply, "done": done, "turn": n_user, "voice": c["voice"], **st}
+
+
+LIVE_FORMAT = """
+LIVE VOICE FORMAT (this overrides the JSON instruction above):
+Write ONLY the words you say out loud, 1-2 short spoken sentences. Then a new line with ### and then JSON with your inner state:
+<what you say>
+###{{"interest": int, "trust": int, "thought": str}}
+Nothing before the spoken words. No quotes around them. No stage directions."""
+
+FILLER_RE = re.compile(r"\b(um+|uh+|er+|ah+|like|you know|sort of|kind of|i mean|basically|literally|actually)\b", re.I)
+HEDGE_RE = re.compile(r"\b(i guess|i think|maybe|sort of|kind of|probably|i suppose|or something|or whatever|if that makes sense)\b", re.I)
+APOLOGY_RE = re.compile(r"\b(sorry|apologies|my bad)\b", re.I)
+
+
+def text_facts(text: str) -> dict:
+    """Word-level facts from a live transcript. Acoustic facts are added after the call from the recording."""
+    return {
+        "word_count": len(text.split()),
+        "filler_count": len(FILLER_RE.findall(text)),
+        "hedge_count": len(HEDGE_RE.findall(text)),
+        "apology_count": len(APOLOGY_RE.findall(text)),
+        "ended_mid_sentence": bool(text.strip()) and not text.strip().endswith((".", "!", "?")),
+    }
+
+
+async def stream_turn(session_id: str, user_text: str):
+    """Live mode: yield the character's spoken words as they are generated; store inner state when done."""
+    s = SESSIONS.get(session_id)
+    if not s:
+        raise KeyError("session expired")
+    s["turns"].append({"role": "user", "text": user_text, "facts": text_facts(user_text)})
+    n_user = sum(1 for t in s["turns"] if t["role"] == "user")
+    done = n_user >= s["max_turns"]
+    s["done"] = done
+    spec = s["spec"]
+    c = CAST[spec["character"]]
+    i0, t0 = START_STATE.get(c["id"], (50, 50))
+    tone_txt = TONE_CHAR.get(s.get("tone", "real"), TONE_CHAR["real"])
+    base = CHAR_SYSTEM.format(name=c["name"], style=c["style"], behaviour=c["behaviour"], setting=spec["setting"], pressure=s["pressure"], twist=spec.get("twist") or "none", i0=i0, t0=t0, tone=tone_txt) + LIVE_FORMAT
+    convo = [{"role": "user", "content": "[The scene begins.]"}]
+    for t in s["turns"]:
+        if t["role"] == "char":
+            convo.append({"role": "assistant", "content": f'{t["text"]}\n###{json.dumps({"interest": t.get("interest", i0), "trust": t.get("trust", t0), "thought": t.get("thought", "")})}'})
+        else:
+            convo.append({"role": "user", "content": f'{t["text"]}\n\n[delivery: {_delivery_plain(t.get("facts", {}))}]'})
+    if done:
+        convo[-1]["content"] += "\n\n[Last exchange. Reply with one natural sentence that closes the moment.]"
+
+    spoken, tail = "", ""
+    for attempt in range(2):
+        system = base if attempt == 0 else base.replace(tone_txt, TONE_CHAR["real"])
+        buf = ""
+        emitted = 0
+        async with _client().messages.stream(model=M_CHAR, max_tokens=300, system=system, messages=convo, thinking={"type": "disabled"}) as st:
+            async for delta in st.text_stream:
+                buf += delta
+                cut = buf.find("###")
+                if cut >= 0:
+                    out = buf[:cut]
+                else:
+                    # hold back a possible partial '###' at the end
+                    keep = len(buf) - len(buf.rstrip("#"))
+                    out = buf[: len(buf) - keep]
+                new = out[emitted:]
+                if new:
+                    emitted += len(new)
+                    yield new
+        spoken = buf.split("###")[0].strip()
+        tail = buf.split("###", 1)[1] if "###" in buf else ""
+        if spoken:
+            break
+    if not spoken:
+        spoken = "Hm. Go on."
+        yield spoken
+    state = {"interest": i0, "trust": t0, "thought": ""}
+    m = re.search(r"\{.*\}", tail, re.S)
+    if m:
+        try:
+            o = json.loads(m.group(0))
+            clamp = lambda v, d: max(0, min(100, int(v))) if isinstance(v, (int, float)) else d
+            state = {"interest": clamp(o.get("interest"), i0), "trust": clamp(o.get("trust"), t0), "thought": str(o.get("thought", ""))[:140]}
+        except Exception:
+            pass
+    s["turns"].append({"role": "char", "text": spoken, **state})
 
 
 def attach_deep(session_id: str, turn_index: int, task) -> None:

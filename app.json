@@ -8,26 +8,23 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "backgroundColor": "#06071A",
-    "newArchEnabled": true,
-    "splash": {
-      "backgroundColor": "#1414F0",
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.avarice.aura",
       "infoPlist": {
         "NSCameraUsageDescription": "Kleos records a short clip of you answering a prompt so Poise can read how you come across. Clips are measured, never shared, and deleted after they are read.",
         "NSMicrophoneUsageDescription": "Kleos listens during conversations so the other person can reply and Poise can measure pace, fillers and tone.",
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIBackgroundModes": [
+          "audio"
+        ]
       }
     },
     "android": {
       "package": "com.avarice.aura",
       "adaptiveIcon": {
-        "backgroundColor": "#1414F0",
-        "foregroundImage": "./assets/android-icon-foreground.png"
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/splash-icon.png"
       },
       "permissions": [
         "CAMERA",
@@ -47,7 +44,18 @@
         }
       ],
       "expo-sharing",
-      "expo-image"
+      "expo-image",
+      "@config-plugins/react-native-webrtc",
+      "@livekit/react-native-expo-plugin",
+      "expo-asset",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FFFFFF",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 140
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true

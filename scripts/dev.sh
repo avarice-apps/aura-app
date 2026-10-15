@@ -61,6 +61,17 @@ done
 curl -sf http://localhost:8787/health >/dev/null 2>&1 || die "Server didn't start. See $LOGS/server.log"
 echo "  ready (logs: .dev-logs/server.log)"
 
-say "Starting the app. Scan the QR code with your iPhone camera."
 cd "$ROOT"
+if [ "${1:-}" = "build" ] || [ ! -d "$ROOT/ios" ]; then
+  if [ "${1:-}" = "build" ]; then
+    say "Building Kleos onto your iPhone (first time ~10 min). Keep it plugged in and unlocked."
+    EXPO_PUBLIC_API_URL="$URL" npx expo run:ios --device
+    exit 0
+  fi
+fi
+if [ -d "$ROOT/ios" ]; then
+  say "Starting the app. Open Kleos on your iPhone (or scan the QR code)."
+else
+  say "Starting the app in Expo Go (turn-based voice). For live voice run: npm run build"
+fi
 EXPO_PUBLIC_API_URL="$URL" npx expo start --tunnel -c

@@ -287,3 +287,22 @@ export async function withdrawTraining(subjectId: string): Promise<number> {
     return 0;
   }
 }
+
+// ------------------------------------------------------------------ live (full-duplex) conversations
+
+export type LiveStart = SessionStart & { agent_id: string; conversation_token: string; overrides: any };
+
+export async function liveStart(a: StartArgs): Promise<LiveStart> {
+  return postJSON<LiveStart>('/live/start', { ...a, tone: tone() });
+}
+
+export async function liveState(sessionId: string): Promise<{ done: boolean; turns: number; interest: number | null; trust: number | null }> {
+  const r = await fetch(`${API_URL}/live/${sessionId}/state`);
+  if (!r.ok) throw new Error('state');
+  return r.json();
+}
+
+export async function liveFinish(sessionId: string, conversationId: string): Promise<Evaluation & { scriptAudio: AudioSrc }> {
+  const e = await postJSON<Evaluation & { script_audio?: string }>(`/live/${sessionId}/finish`, { conversation_id: conversationId });
+  return { ...e, scriptAudio: e.script_audio };
+}
