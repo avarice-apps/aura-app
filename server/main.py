@@ -22,6 +22,39 @@ from pipeline import audio, face, rubric, poise, tts, converse, live, vision, du
 from training import store as train_store, learned
 
 app = FastAPI(title="Aura", version="0.1")
+
+
+# ---------------------------------------------------------------- abuse limits
+# Every expensive endpoint costs real money (models, voice). Cap requests per client so nobody can use the
+# server as a free AI proxy or run up the bill. Generous for real use; ElevenLabs' /llm calls are exempt
+# (they're authenticated with the agent secret and already bounded by the live session).
+_EXPENSIVE = ("/read", "/pressure", "/scan", "/live/", "/session/", "/situations/", "/lesson", "/ledger", "/portrait", "/duel", "/moment", "/profile")
+_LIMITS = ((120, 600), (1000, 86400))  # per IP: 120 per 10 minutes, 1000 per day (campus wifi shares IPs)
+_hits: dict[str, list[float]] = {}
+
+
+@app.middleware("http")
+async def rate_limit(request: Request, call_next):
+    path = request.url.path
+    if request.method == "POST" and path.startswith(_EXPENSIVE) and not path.startswith("/llm/"):
+        ip = (request.headers.get("x-forwarded-for") or "").split(",")[0].strip() or (request.client.host if request.client else "?")
+        now = time.time()
+        hits = [t for t in _hits.get(ip, []) if now - t < _LIMITS[-1][1]]
+        for n, window in _LIMITS:
+            if sum(1 for t in hits if now - t < window) >= n:
+                return JSONResponse({"detail": "Slow down a little. Try again in a few minutes."}, status_code=429)
+        hits.append(now)
+        _hits[ip] = hits
+        if len(_hits) > 50000:  # keep memory bounded
+            for k in list(_hits)[:10000]:
+                _hits.pop(k, None)
+    return await call_next(request)
+
+
+def _cap(text: str, n: int) -> str:
+    """Free text goes to a model; keep it to a sane size so it can't carry a whole essay of instructions."""
+    return (text or "")[:n]
+
 AUDIO_DIR = os.environ.get("AURA_AUDIO_DIR", os.path.join(tempfile.gettempdir(), "aura-audio"))
 os.makedirs(AUDIO_DIR, exist_ok=True)
 PUBLIC_URL = os.environ.get("AURA_PUBLIC_URL", "http://localhost:8787")
@@ -469,17 +502,18 @@ async def session_evaluate(sid: str, voice: bool = True):
 @app.post("/lesson")
 async def lesson(request: Request):
     b = await request.json()
-    return await converse.generate_lesson(unit=b.get("unit", ""), objective=b.get("objective", ""), weak=b.get("weak", []), avoid=b.get("avoid", []), pressure=int(b.get("pressure", 1)), unit_id=b.get("unit_id", ""), tone=b.get("tone", "real"))
+    return await converse.generate_lesson(unit=_cap(b.get("unit", ""), 60), objective=_cap(b.get("objective", ""), 1200), weak=b.get("weak", []), avoid=b.get("avoid", []), pressure=int(b.get("pressure", 1)), unit_id=b.get("unit_id", ""), tone=b.get("tone", "real"))
 
 
 @app.post("/ledger")
 async def make_ledger(text: str = Form(""), context: str = Form(""), tone: str = Form("real"), audio_file: UploadFile | None = File(None, alias="audio")):
-    story = text
+    story = _cap(text, 3000)
+    context = _cap(context, 1500)
     if audio_file is not None:
         path = await _save(audio_file, ".m4a")
         try:
             v, _ = await measure(path, with_face=False)
-            story = v.get("transcript") or text
+            story = _cap(v.get("transcript") or text, 3000)
         finally:
             os.remove(path)
     if len(story.split()) < 5:
