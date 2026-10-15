@@ -2,51 +2,44 @@ import React, { useEffect } from 'react';
 import { Stack, SplashScreen } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useFonts, Antonio_200ExtraLight, Antonio_300Light, Antonio_500Medium } from '@expo-google-fonts/antonio';
-import { JetBrainsMono_400Regular, JetBrainsMono_500Medium } from '@expo-google-fonts/jetbrains-mono';
-import { Inter_400Regular, Inter_500Medium } from '@expo-google-fonts/inter';
-import { color } from '@/theme/tokens';
-import { initSounds } from '@/lib/sound';
+import { useFonts } from 'expo-font';
+import { Geist_300Light, Geist_400Regular, Geist_500Medium, Geist_600SemiBold } from '@expo-google-fonts/geist';
+import { GeistMono_400Regular, GeistMono_500Medium } from '@expo-google-fonts/geist-mono';
+import { InstrumentSerif_400Regular, InstrumentSerif_400Regular_Italic } from '@expo-google-fonts/instrument-serif';
+import { Antonio_200ExtraLight, Antonio_300Light } from '@expo-google-fonts/antonio';
+import { useTheme } from '@/theme';
+import { initSounds, setSoundsEnabled } from '@/lib/sound';
+import { useStore } from '@/state/store';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [loaded] = useFonts({
-    Antonio_200ExtraLight,
-    Antonio_300Light,
-    Antonio_500Medium,
-    JetBrainsMono_400Regular,
-    JetBrainsMono_500Medium,
-    Inter_400Regular,
-    Inter_500Medium,
-  });
+  const t = useTheme();
+  const sounds = useStore((s) => s.sounds);
+  const [loaded] = useFonts({ Antonio_200ExtraLight, Antonio_300Light, Geist_300Light, Geist_400Regular, Geist_500Medium, Geist_600SemiBold, GeistMono_400Regular, GeistMono_500Medium, InstrumentSerif_400Regular, InstrumentSerif_400Regular_Italic });
 
   useEffect(() => {
     initSounds();
   }, []);
-
+  useEffect(() => {
+    setSoundsEnabled(sounds);
+  }, [sounds]);
   useEffect(() => {
     if (loaded) SplashScreen.hideAsync();
   }, [loaded]);
-
   if (!loaded) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: color.ink }}>
-      <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: color.ink },
-          animation: 'fade',
-          animationDuration: 420,
-        }}
-      >
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: t.bg }}>
+      <StatusBar style={t.dark ? 'light' : 'dark'} />
+      <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: t.bg }, animation: 'fade', animationDuration: 320 }}>
         <Stack.Screen name="index" />
-        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="read" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
-        <Stack.Screen name="train" />
+        <Stack.Screen name="lesson/[id]" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
+        <Stack.Screen name="situations" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="receipt" options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="scan" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="paywall" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
       </Stack>
     </GestureHandlerRootView>

@@ -268,21 +268,36 @@ async def session_start(request: Request):
 
 
 @app.post("/session/{sid}/turn")
-async def session_turn(sid: str, audio_file: UploadFile = File(..., alias="audio")):
-    path = await _save(audio_file, ".m4a")
+async def session_turn(sid: str, audio_file: UploadFile | None = File(None, alias="audio"), video: UploadFile | None = File(None)):
+    """One user turn. Send `audio` (voice mode) or `video` (camera mode: face + eyes are measured too)."""
+    if video is not None:
+        path = await _save(video, ".mp4")
+        with_face = True
+    elif audio_file is not None:
+        path = await _save(audio_file, ".m4a")
+        with_face = False
+    else:
+        raise HTTPException(422, "send audio or video")
     try:
-        v, _ = await measure(path, with_face=False)
+        v, p = await measure(path, with_face=with_face, face_mesh=True)
     finally:
         os.remove(path)
     text = v.get("transcript") or ""
     if len(text.split()) < 2:
+        # Not enough to react to. The client should let him go again without it counting.
         raise HTTPException(422, "Didn't catch that. Try again, a little closer to the mic.")
     facts = {k: x for k, x in v.items() if k != "transcript"}
+    if with_face:
+        facts["presence"] = p
     try:
         r = await converse.turn(sid, text, facts)
     except KeyError as e:
         raise HTTPException(410, str(e))
-    return {"user_text": text, "facts": {k: facts[k] for k in ("duration_s", "wpm", "filler_count", "hedge_count", "apology_count", "first_word_s", "ended_mid_sentence")}, "reply": r["reply"], "reply_audio": _voice_url(r["reply"], r["voice"]), "done": r["done"], "turn": r["turn"], "interest": r["interest"], "trust": r["trust"]}
+    brief = {k: facts.get(k) for k in ("duration_s", "wpm", "filler_count", "hedge_count", "apology_count", "first_word_s", "ended_mid_sentence", "repeat_count", "restart_count", "fade_endings")}
+    brief["rushed"] = bool(facts.get("rush_moments"))
+    if with_face:
+        brief["eye_contact"] = p.get("eye_contact_ratio")
+    return {"user_text": text, "facts": brief, "reply": r["reply"], "reply_audio": _voice_url(r["reply"], r["voice"]), "done": r["done"], "turn": r["turn"], "interest": r["interest"], "trust": r["trust"]}
 
 
 @app.post("/session/{sid}/evaluate")
@@ -291,7 +306,7 @@ async def session_evaluate(sid: str, voice: bool = True):
         out = await converse.evaluate(sid)
     except KeyError as e:
         raise HTTPException(410, str(e))
-    if voice:
+    if voice and out.get("script"):
         out["script_audio"] = _voice_url(out["script"], tts.VOICE_ID)
     return out
 
@@ -299,7 +314,7 @@ async def session_evaluate(sid: str, voice: bool = True):
 @app.post("/lesson")
 async def lesson(request: Request):
     b = await request.json()
-    return await converse.generate_lesson(unit=b.get("unit", ""), objective=b.get("objective", ""), weak=b.get("weak", []), avoid=b.get("avoid", []), pressure=int(b.get("pressure", 1)))
+    return await converse.generate_lesson(unit=b.get("unit", ""), objective=b.get("objective", ""), weak=b.get("weak", []), avoid=b.get("avoid", []), pressure=int(b.get("pressure", 1)), unit_id=b.get("unit_id", ""))
 
 
 @app.post("/ledger")
@@ -339,3 +354,43 @@ async def scan(video: UploadFile = File(...), prompt_text: str = Form(...), subj
     tier = next(t for m, t in tiers if score >= m)
     card = await converse._json_call(converse.M_EVAL, """You write the playful result card for an 'Aura Scan' party game. Return JSON: {"archetype": "The ..." (2-3 words, fun, flattering-ish, never about looks), "best_moment": str (<= 12 words, cites a quote from the transcript), "roast": str (<= 14 words, affectionate, about delivery only, never looks/body/identity)}. No slang like alpha/sigma/mog/rizz.""", json.dumps({"prompt": prompt_text, "transcript": v["transcript"], "fillers": v["filler_count"], "hedges": v["hedge_count"], "wpm": v["wpm"], "score": score}), max_tokens=400)
     return {"score": score, "tier": tier, "axes": axes, "name": name, "transcript": v["transcript"], "counts": {"fillers": v["filler_count"], "hedges": v["hedge_count"], "wpm": v["wpm"]}, **card}
+
+
+# ---------------------------------------------------------------- situations: "what everyone picked"
+# Tiny SQLite tally. Percentages are only shown in the app once a situation has 200+ real answers.
+
+import sqlite3
+
+_SIT_DB = os.path.join(os.path.dirname(__file__), "data", "situations.sqlite")
+
+
+def _sit_conn():
+    os.makedirs(os.path.dirname(_SIT_DB), exist_ok=True)
+    c = sqlite3.connect(_SIT_DB)
+    c.execute("CREATE TABLE IF NOT EXISTS answers (sid TEXT, choice INTEGER, ts REAL)")
+    c.execute("CREATE INDEX IF NOT EXISTS ix_sid ON answers(sid)")
+    return c
+
+
+@app.post("/situations/{sid}/answer")
+async def situation_answer(sid: str, request: Request):
+    b = await request.json()
+    choice = int(b.get("choice", -1))
+    if not (0 <= choice <= 3) or len(sid) > 64:
+        raise HTTPException(422, "bad answer")
+    c = _sit_conn()
+    with c:
+        c.execute("INSERT INTO answers VALUES (?, ?, ?)", (sid, choice, time.time()))
+    c.close()
+    return {"ok": True}
+
+
+@app.get("/situations/{sid}/stats")
+async def situation_stats(sid: str):
+    c = _sit_conn()
+    rows = c.execute("SELECT choice, COUNT(*) FROM answers WHERE sid=? GROUP BY choice", (sid,)).fetchall()
+    c.close()
+    counts = [0, 0, 0, 0]
+    for ch, n in rows:
+        counts[ch] = n
+    return {"n": sum(counts), "counts": counts}

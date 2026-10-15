@@ -1,0 +1,59 @@
+{
+  "units": [
+    {
+      "id": "intro", "title": "Introductions", "statue": "head",
+      "lessons": [
+        { "id": "intro-1", "title": "Say the specific thing", "objective": "Answer 'what do you do?' with one specific, interesting line, then stop." },
+        { "id": "intro-2", "title": "Turn it back", "objective": "After your answer, ask one real question back within ten seconds." },
+        { "id": "intro-3", "title": "Remember their name", "objective": "Use their name once, naturally, before the conversation ends." },
+        { "id": "intro-4", "title": "Introduce someone else", "objective": "Introduce a friend with one detail that makes the other person curious." },
+        { "id": "intro-5", "title": "The boring answer", "objective": "Make an ordinary job or major sound interesting without exaggerating." },
+        { "id": "intro-check", "title": "Checkpoint", "objective": "A cold introduction with an unfamiliar character at Real pressure.", "checkpoint": true }
+      ]
+    },
+    {
+      "id": "stories", "title": "Stories", "statue": "bust",
+      "lessons": [
+        { "id": "stories-1", "title": "Three beats", "objective": "Tell a 30-second story with a setup, a turn and a final line." },
+        { "id": "stories-2", "title": "Land the ending", "objective": "End a story on a full stop instead of trailing off or explaining it." },
+        { "id": "stories-3", "title": "Read the table", "objective": "Shorten your story when the listener's interest drops." },
+        { "id": "stories-4", "title": "Cut off mid-story", "objective": "When interrupted, let the story go and rejoin within a minute." },
+        { "id": "stories-5", "title": "Make them the hero", "objective": "Tell a story where someone else gets the best line." },
+        { "id": "stories-check", "title": "Checkpoint", "objective": "Tell a story to a talker who keeps cutting in, at Real pressure.", "checkpoint": true }
+      ]
+    },
+    {
+      "id": "pushback", "title": "Holding your ground", "statue": "athlete",
+      "lessons": [
+        { "id": "push-1", "title": "No, once", "objective": "Decline a request clearly with at most one reason." },
+        { "id": "push-2", "title": "The second ask", "objective": "Hold your no when they push, without adding new excuses." },
+        { "id": "push-3", "title": "Disagree out loud", "objective": "Disagree with someone senior, calmly, with one reason." },
+        { "id": "push-4", "title": "Take credit", "objective": "Claim your contribution without accusing anyone." },
+        { "id": "push-5", "title": "Apologise once", "objective": "Apologise cleanly for a real mistake, once, then move on." },
+        { "id": "push-check", "title": "Checkpoint", "objective": "Hold a boundary against a skeptic at Heat pressure.", "checkpoint": true }
+      ]
+    },
+    {
+      "id": "dates", "title": "First dates", "statue": "antinoos",
+      "lessons": [
+        { "id": "date-1", "title": "The first ten minutes", "objective": "Be at ease and curious. Ask one question that isn't on a form." },
+        { "id": "date-2", "title": "Take the tease", "objective": "Take a light tease with ease and hand the attention back." },
+        { "id": "date-3", "title": "Say what you want", "objective": "State a preference (where to go, what to order) without asking permission." },
+        { "id": "date-4", "title": "The awkward pause", "objective": "Let a silence sit, then restart with something specific." },
+        { "id": "date-5", "title": "Ask to see her again", "objective": "Ask clearly and warmly, and accept either answer gracefully." },
+        { "id": "date-check", "title": "Checkpoint", "objective": "A distracted date at Real pressure: earn attention without chasing it.", "checkpoint": true }
+      ]
+    },
+    {
+      "id": "rooms", "title": "Rooms", "statue": "kouros",
+      "lessons": [
+        { "id": "rooms-1", "title": "Join the group", "objective": "Enter a conversation already happening without taking it over." },
+        { "id": "rooms-2", "title": "The toast", "objective": "Give a 30-second toast: one story, one line, glass up." },
+        { "id": "rooms-3", "title": "Talked over", "objective": "Get the floor back when someone talks over you, without raising your voice." },
+        { "id": "rooms-4", "title": "Leave well", "objective": "Leave a conversation warmly and cleanly." },
+        { "id": "rooms-5", "title": "Host the table", "objective": "Bring a quiet person into the conversation." },
+        { "id": "rooms-check", "title": "Checkpoint", "objective": "Join a reserved senior group and leave a mark, at Heat pressure.", "checkpoint": true }
+      ]
+    }
+  ]
+}

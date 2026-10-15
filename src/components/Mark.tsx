@@ -2,7 +2,8 @@ import React, { useEffect, useMemo } from 'react';
 import { View } from 'react-native';
 import { Canvas, Path, Skia, Group, Circle } from '@shopify/react-native-skia';
 import { useSharedValue, withTiming, Easing, useDerivedValue, SharedValue } from 'react-native-reanimated';
-import { color as C, motion } from '@/theme/tokens';
+const C = { white: '#FFFFFF' };
+const motion = { slow: 900 };
 
 export type Axes = { voice: number; presence: number; command: number; composure: number; read: number };
 

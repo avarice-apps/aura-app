@@ -1,7 +1,3 @@
-import Constants from 'expo-constants';
-
-// Set in app.json "extra" or EAS env. Empty string = offline dev mode with sample verdicts.
-export const API_URL: string = (Constants.expoConfig?.extra?.apiUrl as string) ?? process.env.EXPO_PUBLIC_API_URL ?? '';
-export const SUPABASE_URL: string = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
-export const SUPABASE_ANON_KEY: string = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '';
+// Set EXPO_PUBLIC_API_URL to the deployed server. Unset = offline demo mode (canned conversation with real voices).
+export const API_URL: string = process.env.EXPO_PUBLIC_API_URL ?? '';
 export const OFFLINE = !API_URL;

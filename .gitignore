@@ -17,3 +17,6 @@ server/**/__pycache__/
 **/models/*.task
 **/training_data/
 **/models/perception_synthetic*
+
+!assets/demo/*.mp3
+server/data/

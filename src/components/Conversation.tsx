@@ -1,0 +1,217 @@
+import React, { useEffect, useRef, useState } from 'react';
+import { View, ScrollView, Pressable, Text as RNText } from 'react-native';
+import Animated, { FadeInDown, FadeIn, useSharedValue, withTiming, withRepeat, Easing, cancelAnimation } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+import { useAudioRecorder, useAudioRecorderState, RecordingPresets } from 'expo-audio';
+import { Body, Label, Muted, Row, Stack, Icon, ICON, Title } from '@/ui';
+import { Mark } from '@/components/Mark';
+import { font, useTheme } from '@/theme';
+import { startSession, sendTurn, evaluateSession, StartArgs } from '@/lib/api';
+import type { Evaluation, SessionStart } from '@/lib/types';
+import { speak, stopSpeaking, prepareMic } from '@/lib/voice';
+import { play } from '@/lib/sound';
+
+type Phase = 'loading' | 'speaking' | 'yourturn' | 'recording' | 'sending' | 'evaluating' | 'error';
+type Msg = { role: 'char' | 'user'; text: string };
+
+const WINDOW: Record<number, number> = { 1: 40, 2: 22, 3: 14 };
+
+export type ConversationDone = { sessionId: string; evaluation: Evaluation & { scriptAudio?: unknown }; start: SessionStart };
+
+/**
+ * A live, turn-based voice conversation with a cast character.
+ * The character replies to what you said and how; Poise evaluates at the end.
+ */
+export function Conversation({ args, onDone, onError, label }: { args: StartArgs; onDone: (r: ConversationDone) => void; onError?: (e: string) => void; label?: string }) {
+  const t = useTheme();
+  const [phase, setPhase] = useState<Phase>('loading');
+  const [start, setStart] = useState<SessionStart | null>(null);
+  const [msgs, setMsgs] = useState<Msg[]>([]);
+  const [left, setLeft] = useState(0);
+  const [interest, setInterest] = useState<number | null>(null);
+  const [err, setErr] = useState('');
+  const recorder = useAudioRecorder({ ...RecordingPresets.HIGH_QUALITY, isMeteringEnabled: true });
+  const rec = useAudioRecorderState(recorder, 80);
+  const energy = useSharedValue(0);
+  const idle = useSharedValue(0);
+  const scroll = useRef<ScrollView>(null);
+  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const sessionRef = useRef<string>('');
+  const finishing = useRef(false);
+  const pressure = args.pressure ?? 1;
+
+  // live voice energy from mic metering (dBFS -60..0 -> 0..1)
+  useEffect(() => {
+    if (phase === 'recording' && typeof rec.metering === 'number') {
+      const v = Math.max(0, Math.min(1, (rec.metering + 55) / 45));
+      energy.value = withTiming(v, { duration: 90 });
+    }
+  }, [rec.metering, phase, energy]);
+
+  // idle breathing while the character speaks
+  useEffect(() => {
+    if (phase === 'speaking' || phase === 'sending' || phase === 'evaluating' || phase === 'loading') {
+      idle.value = withRepeat(withTiming(0.45, { duration: 1300, easing: Easing.inOut(Easing.sin) }), -1, true);
+    } else {
+      cancelAnimation(idle);
+      idle.value = withTiming(0, { duration: 300 });
+    }
+  }, [phase, idle]);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const ok = await prepareMic();
+        if (!ok) throw new Error('Aura needs the microphone to hear your answer.');
+        const s = await startSession(args);
+        if (!alive) return;
+        sessionRef.current = s.session_id;
+        setStart(s);
+        setMsgs([{ role: 'char', text: s.opener }]);
+        setPhase('speaking');
+        await speak(s.openerAudio);
+        if (alive) setPhase('yourturn');
+      } catch (e: any) {
+        fail(e?.message ?? 'Could not start.');
+      }
+    })();
+    return () => {
+      alive = false;
+      stopSpeaking();
+      if (timer.current) clearInterval(timer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function fail(m: string) {
+    setErr(m);
+    setPhase('error');
+    onError?.(m);
+  }
+
+  async function begin() {
+    if (phase !== 'yourturn') return;
+    stopSpeaking();
+    play('select');
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    await prepareMic();
+    await recorder.prepareToRecordAsync();
+    recorder.record();
+    setPhase('recording');
+    const w = WINDOW[pressure] ?? 40;
+    setLeft(w);
+    timer.current = setInterval(() => {
+      setLeft((l) => {
+        if (l <= 1) {
+          finish();
+          return 0;
+        }
+        if (l <= 4) play('tick');
+        return l - 1;
+      });
+    }, 1000);
+  }
+
+  async function finish() {
+    if (finishing.current) return;
+    finishing.current = true;
+    if (timer.current) {
+      clearInterval(timer.current);
+      timer.current = null;
+    }
+    setPhase((p) => (p === 'recording' ? 'sending' : p));
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      await recorder.stop();
+      const uri = recorder.uri ?? '';
+      const r = await sendTurn(sessionRef.current, uri);
+      setMsgs((m) => [...m, { role: 'user', text: r.user_text }, { role: 'char', text: r.reply }]);
+      if (typeof r.interest === 'number') setInterest(r.interest);
+      setPhase('speaking');
+      await speak(r.replyAudio);
+      if (r.done) {
+        setPhase('evaluating');
+        const e = await evaluateSession(sessionRef.current);
+        play('reveal');
+        onDone({ sessionId: sessionRef.current, evaluation: e, start: start! });
+      } else {
+        setPhase('yourturn');
+      }
+    } catch (e: any) {
+      // A failed turn is recoverable and never counts: let them answer again.
+      const m = String(e?.message ?? '');
+      setErr(/catch that|closer to the mic/i.test(m) ? "Didn't catch that. Go again, it doesn't count." : m || 'Something went wrong. Go again.');
+      play('wrong');
+      setPhase('yourturn');
+    } finally {
+      finishing.current = false;
+    }
+  }
+
+  useEffect(() => {
+    setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 60);
+  }, [msgs.length]);
+
+  const shared = phase === 'recording' ? energy : idle;
+  const status =
+    phase === 'loading' ? 'Setting the scene' : phase === 'speaking' ? `${start?.character.name ?? ''} is talking` : phase === 'yourturn' ? 'Tap and answer out loud' : phase === 'recording' ? 'Listening. Tap when you’re done' : phase === 'sending' ? `${start?.character.name ?? ''} is thinking` : phase === 'evaluating' ? 'Poise is reading it back' : err;
+
+  return (
+    <View style={{ flex: 1 }}>
+      {start && (
+        <Animated.View entering={FadeIn.duration(400)} style={{ marginHorizontal: 20, marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: t.card, borderWidth: 1, borderColor: t.line }}>
+          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: t.inverse, alignItems: 'center', justifyContent: 'center', borderWidth: interest !== null ? 2 : 0, borderColor: interest !== null && interest >= 55 ? t.accent : t.lineStrong }}>
+            <RNText style={{ fontFamily: font.medium, fontSize: 18, color: t.onInverse }}>{start.character.name[0]}</RNText>
+          </View>
+          <View style={{ flex: 1 }}>
+            <Body strong>{start.character.name}</Body>
+            <Muted small numberOfLines={1}>{start.character.style}. {start.character.behaviour}</Muted>
+          </View>
+          <Label>{['', 'Easy', 'Real', 'Heat'][pressure]}</Label>
+        </Animated.View>
+      )}
+
+      {start && (
+        <View style={{ marginHorizontal: 20, marginTop: 10, gap: 4 }}>
+          {label ? <Label>{label}</Label> : null}
+          <Muted small>{start.setting}</Muted>
+          <Body small strong style={{ color: t.accent }}>Goal: {start.goal}</Body>
+        </View>
+      )}
+
+      <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 10, paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
+        {msgs.map((m, i) => (
+          <Animated.View key={i} entering={FadeInDown.duration(320)} style={{ alignSelf: m.role === 'char' ? 'flex-start' : 'flex-end', maxWidth: '84%' }}>
+            <View style={{ backgroundColor: m.role === 'char' ? t.card : t.inverse, borderWidth: m.role === 'char' ? 1 : 0, borderColor: t.line, borderRadius: 18, borderBottomLeftRadius: m.role === 'char' ? 6 : 18, borderBottomRightRadius: m.role === 'user' ? 6 : 18, paddingHorizontal: 14, paddingVertical: 11 }}>
+              <Body color={m.role === 'char' ? t.ink : t.onInverse}>{m.text}</Body>
+            </View>
+          </Animated.View>
+        ))}
+        {phase === 'sending' && (
+          <Animated.View entering={FadeIn} style={{ alignSelf: 'flex-end' }}>
+            <Muted small>Transcribing…</Muted>
+          </Animated.View>
+        )}
+      </ScrollView>
+
+      <View style={{ alignItems: 'center', paddingBottom: 18, gap: 10 }}>
+        <Label color={phase === 'error' ? t.accent : t.ink3}>{status}</Label>
+        <Pressable
+          accessibilityLabel={phase === 'recording' ? 'Finish answer' : 'Start answering'}
+          disabled={!(phase === 'yourturn' || phase === 'recording')}
+          onPress={() => (phase === 'recording' ? finish() : begin())}
+          style={{ width: 170, height: 170, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <View style={{ position: 'absolute' }}>
+            <Mark index={phase === 'recording' ? 60 : 40} axes={{ voice: 55, presence: 55, command: 55, composure: 55, read: 55 }} size={170} energy={shared} color={t.markInk} animateIn={false} opacity={phase === 'yourturn' || phase === 'recording' ? 0.75 : 0.35} />
+          </View>
+          <View style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: phase === 'yourturn' || phase === 'recording' ? t.inverse : t.lineStrong, alignItems: 'center', justifyContent: 'center' }}>
+            {phase === 'recording' ? <View style={{ width: 22, height: 22, borderRadius: 4, backgroundColor: t.onInverse }} /> : <Icon d={ICON.mic} size={26} color={t.onInverse} />}
+          </View>
+        </Pressable>
+        {phase === 'recording' ? <Title size={20}>{left}s</Title> : <View style={{ height: 22 }} />}
+      </View>
+    </View>
+  );
+}

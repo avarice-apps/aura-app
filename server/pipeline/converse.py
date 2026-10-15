@@ -87,12 +87,12 @@ def start(*, room_id: str | None = None, goal: str | None = None, lesson: dict |
         max_turns = prev["max_turns"]
     elif goal:
         g = ONBOARDING[goal]
-        spec = {"character": g["character"], "setting": g["setting"], "opener": g["opener"], "goal": g["goal"], "twist": None}
+        spec = {"character": g["character"], "setting": g["setting"], "opener": g["opener"], "goal": g["goal"], "twist": None, "focus": {"dates": "dates", "work": "work", "rooms": "rooms", "ground": "ground"}.get(goal, "intro")}
     elif room_id:
         r = ROOMS[room_id]
-        spec = {"character": r["partner"], "setting": r.get("setting") or r["title"], "opener": r["opener"], "goal": r["goal"], "twist": r.get("twist")}
+        spec = {"character": r["partner"], "setting": r.get("setting") or r["title"], "opener": r["opener"], "goal": r["goal"], "twist": r.get("twist"), "focus": r.get("focus")}
     elif lesson:
-        spec = {k: lesson.get(k) for k in ("character", "setting", "opener", "goal", "twist")}
+        spec = {k: lesson.get(k) for k in ("character", "setting", "opener", "goal", "twist", "focus")}
     else:
         raise ValueError("need room_id, goal, lesson or attempt_of")
     sid = f"s_{uuid.uuid4().hex[:12]}"
@@ -126,6 +126,22 @@ def _delivery_plain(f: dict) -> str:
         bits.append("took a while to start")
     if f.get("wpm", 0) > 185:
         bits.append("spoke fast")
+    if f.get("repeat_count", 0) + f.get("restart_count", 0) >= 2:
+        bits.append("stumbled and restarted a couple of times")
+    if f.get("rush_moments"):
+        bits.append("sped up partway through")
+    if f.get("fade_endings", 0) >= 2:
+        bits.append("let the ends of sentences fade out")
+    if f.get("flat_stretch_s", 0) >= 6:
+        bits.append("sounded flat for a stretch")
+    if f.get("presence", {}).get("available"):
+        p = f["presence"]
+        if p.get("eye_contact_ratio", 1) < 0.4:
+            bits.append("mostly looked away")
+        elif p.get("look_aways"):
+            bits.append(f"looked {p['look_aways'][0]['dir']} at one point")
+        if p.get("fidget_events", 0) >= 3:
+            bits.append("fidgeted")
     if not bits:
         bits.append("spoke clearly and finished cleanly")
     return "; ".join(bits)
@@ -204,6 +220,17 @@ def trace(session_id: str) -> list[dict]:
 
 # ---------------------------------------------------------------- evaluation
 
+# What matters most depends on the situation. The evaluator is told which lens applies.
+RUBRIC_FOCUS = {
+    "intro": "Introduction: clarity, relevance to the listener, and leaving an opening for them to respond.",
+    "stories": "Storytelling: a shape (setup, turn, point), expressive delivery, and a point the listener can use.",
+    "pushback": "Disagreement: a clear position held without heat, responding to what was actually said, respectful firmness.",
+    "dates": "Social conversation: relevant follow-ups, reciprocity, listening, curiosity that isn't an interview.",
+    "rooms": "Rooms and hosting: reading the group, inclusion, brevity, steering without dominating.",
+    "work": "Interview or professional: specific examples, concise explanation, handling the follow-up without restarting.",
+    "ground": "Boundary or favour: one clear sentence, no over-explaining, warmth without apology.",
+}
+
 EVAL_SYSTEM = """You are Poise, the coach inside Aura. You evaluate one short practice conversation.
 
 Rules:
@@ -216,11 +243,18 @@ Rules:
 - No slang (alpha, sigma, mog, rizz). No exclamation marks. Second person. Plain, precise, a little dry.
 - If a previous attempt is provided, write an honest 'compare' line. It may be better, worse or mixed. Never assume the retry improved.
 - Archetype: one playful label for THIS answer (not the person), from: The Hedge, The Apologist, The Sprinter, The Statue, The Pleaser, The Blade, The Anchor, The Current, The Storyteller, The Understated. Entertainment, clearly.
+- 'What matters most here' names the lens for this situation. Weight your awareness score and your change toward it. A storyteller and an interview candidate are not judged the same way.
+- SIGNAL: each turn carries a time-ordered list of measured moments (fillers, hedges, repeats, restarts, rushes, fades, pauses, and when video exists, look-aways with direction). Find the one moment where two channels line up: words × voice, or voice × eyes. Examples: the hedge arrived exactly when the follow-up did; the main sentence faded as he looked down; the pace jumped on the hardest claim. Quote the words at that moment and name the measured thing. If nothing lines up, set signal to null. Never claim to read feelings, honesty or confidence from the face; describe visible behaviour and its likely effect on the listener.
+- TURNING POINT: the single exchange where the conversation changed direction, if there is one (a question that opened it, an answer that went vague, a recovery). Name the turn, quote it, say what changed in the other person's inner state. If nothing turned, null. Do not invent drama.
+- ALTERNATIVES: two viable ways he could have handled the change moment, in different registers (choose two of: warm and direct, brief and firm, playful and light, calm and explanatory). Each in his own content, one line, so he can pick the one that sounds like him. Neither is 'the' answer.
 Return only JSON:
 {"archetype": str, "archetype_line": str (<= 10 words),
  "strengths": [{"text": str, "turn": int}, {"text": str, "turn": int}],
  "change": {"text": str, "turn": int, "quote": str},
  "hint": str, "example": str,
+ "alternatives": [{"style": str, "line": str}, {"style": str, "line": str}],
+ "signal": {"text": str, "turn": int, "quote": str, "measured": str} or null,
+ "turning_point": {"turn": int, "quote": str, "what_changed": str} or null,
  "awareness": {"score": int, "evidence": str},
  "compare": str or null,
  "script": str (40-70 words, spoken by Poise, ends with the one change)}"""
@@ -279,15 +313,29 @@ async def evaluate(session_id: str) -> dict:
         if t["role"] == "user":
             ui += 1
             f = t.get("facts") or {}
-            transcript.append(f'TURN {ui} (you): "{t["text"]}"  [facts: fillers {f.get("filler_count",0)} {[x["word"] for x in f.get("fillers",[])][:6]}, hedges {f.get("hedge_count",0)} {[x["word"] for x in f.get("hedges",[])][:6]}, apologies {f.get("apology_count",0)}, wpm {f.get("wpm",0)}, first word {f.get("first_word_s",0)}s, longest pause {f.get("longest_pause_s",0)}s, ended mid-sentence {f.get("ended_mid_sentence")}, trailing off {f.get("trailing_drop")}]')
+            mom = "; ".join(f'{m["t"]}s {m["kind"]}: {m["detail"]}' for m in f.get("signal_moments", [])[:14]) or "none"
+            tl = " | ".join(f'#{x["i"]} {x["wpm"]}wpm tone{x["tone_st"]:+.0f} loud{x["loud"]:.1f}{" fades" if x["fades"] else ""}{" rises" if x["ends_up"] else ""}' for x in f.get("timeline", [])[:8]) or "n/a"
+            pres = ""
+            if f.get("presence", {}).get("available"):
+                p = f["presence"]
+                la = ", ".join(f'{x["t"]}s {x["dir"]} {x["dur"]}s' for x in p.get("look_aways", [])[:6]) or "none"
+                pres = f' [eyes: on-lens {p.get("eye_contact_ratio")}, look-aways {la}, end on lens {p.get("end_contact")}, darting {p.get("gaze_shift_rate")}/min, stillness {p.get("stillness_s")}s, fidgets {p.get("fidget_events")}, brow furrow {p.get("brow_furrow_ratio")}]'
+            transcript.append(f'TURN {ui} (you): "{t["text"]}"  [voice: wpm {f.get("wpm",0)} (variation {f.get("rate_cv",0)}), fillers {f.get("filler_count",0)}, hedges {f.get("hedge_count",0)}, apologies {f.get("apology_count",0)}, repeats {f.get("repeat_count",0)}, restarts {f.get("restart_count",0)}, pitch range {f.get("pitch_range_st",0)}st, flat stretch {f.get("flat_stretch_s",0)}s, fades {f.get("fade_endings",0)}, first word {f.get("first_word_s",0)}s, ended mid-sentence {f.get("ended_mid_sentence")}] [per sentence: {tl}] [moments: {mom}]{pres}')
         else:
             transcript.append(f'{CAST[s["spec"]["character"]]["name"]}: "{t["text"]}"  [their inner state after this: interest {t.get("interest","?")}, trust {t.get("trust","?")}; private thought: {t.get("thought","")}]')
     prev_block = "none"
     if s.get("attempt_of") and s["attempt_of"] in SESSIONS and SESSIONS[s["attempt_of"]].get("evaluation"):
         p = SESSIONS[s["attempt_of"]]
         prev_block = json.dumps({"counts": _counts(p["turns"]), "change_given": p["evaluation"]["change"]["text"], "user_turns": [t["text"] for t in p["turns"] if t["role"] == "user"]})
+    total_words = sum((t.get("facts") or {}).get("word_count", 0) for t in s["turns"] if t["role"] == "user")
+    if total_words < 10:
+        out = {"insufficient": True, "reason": "Not enough speech to rate fairly. That one doesn't count against you.", "rating": None, "axes": None, "counts": _counts(s["turns"]), "turns": [{"role": t["role"], "text": t["text"]} for t in s["turns"]], "trace": trace(session_id), "character": CAST[s["spec"]["character"]]["name"]}
+        s["evaluation"] = out
+        return out
+    focus = RUBRIC_FOCUS.get(s["spec"].get("focus") or s["spec"].get("unit") or s["spec"].get("goal_key") or "", RUBRIC_FOCUS["intro"])
     user = f"""Scene: {s['spec']['setting']}
 Goal: {s['spec']['goal']}
+What matters most here: {focus}
 Pressure: {s['pressure']}
 
 {chr(10).join(transcript)}
@@ -302,6 +350,8 @@ Previous attempt: {prev_block}"""
             return "missing change"
         if "!" in o.get("script", ""):
             return "exclamation mark"
+        if len(o.get("alternatives") or []) != 2:
+            return "need exactly two alternatives"
         return None
 
     out = await _json_call(M_EVAL, EVAL_SYSTEM, user, max_tokens=2500, check=check)
@@ -324,13 +374,15 @@ LESSON_SYSTEM = """You design one 3-minute practice conversation for Aura. Retur
 Rules: scenes are realistic for adults 18-30 in cities: work, friends, dates, family, service, travel. Never sexual, never cruel. Vary settings; avoid ones in 'avoid'. Choose the character whose style best tests the goal."""
 
 
-async def generate_lesson(*, unit: str, objective: str, weak: list[str], avoid: list[str], pressure: int) -> dict:
+async def generate_lesson(*, unit: str, objective: str, weak: list[str], avoid: list[str], pressure: int, unit_id: str = "") -> dict:
     user = json.dumps({"unit": unit, "objective": objective, "his recurring weak spots": weak, "avoid settings": avoid, "pressure": pressure})
 
     def check(o):
         return None if o.get("character") in CAST and o.get("opener") else "bad character or missing opener"
 
-    return await _json_call(M_EVAL, LESSON_SYSTEM, user, max_tokens=800, check=check)
+    out = await _json_call(M_EVAL, LESSON_SYSTEM, user, max_tokens=800, check=check)
+    out["focus"] = unit_id if unit_id in RUBRIC_FOCUS else "intro"
+    return out
 
 
 # ---------------------------------------------------------------- ledger / receipts

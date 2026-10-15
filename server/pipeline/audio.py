@@ -50,6 +50,25 @@ class VoiceFacts:
     energy_cv: float = 0.0  # coefficient of variation of RMS; consistency
     trailing_drop: bool = False  # does the clip end on a full stop or trail off
     ended_mid_sentence: bool = False
+    # --- disfluency (stutter-adjacent, measured not diagnosed)
+    repeat_count: int = 0  # immediate word/bigram repeats: "I I", "the the", "so so"
+    repeats: list[dict] = field(default_factory=list)  # {word, t}
+    restart_count: int = 0  # abandoned clause restarted within a beat
+    restarts: list[dict] = field(default_factory=list)  # {from, to, t}
+    prolongation_count: int = 0  # short words held far longer than the speaker's norm
+    prolongations: list[dict] = field(default_factory=list)  # {word, t, dur}
+    # --- pace dynamics
+    rate_cv: float = 0.0  # coefficient of variation of per-sentence wpm
+    rush_moments: list[dict] = field(default_factory=list)  # {t, wpm, text}
+    slow_moments: list[dict] = field(default_factory=list)
+    # --- tone dynamics
+    pitch_range_st: float = 0.0  # 5th-95th percentile pitch range in semitones
+    flat_stretch_s: float = 0.0  # longest stretch of near-monotone voiced speech
+    fade_endings: int = 0  # sentences whose last half-second drops to a murmur
+    loud_cv: float = 0.0  # loudness variation across sentences
+    # --- per-sentence timeline (the raw material for cross-signal moments)
+    timeline: list[dict] = field(default_factory=list)  # {i, t0, t1, text, wpm, tone_st, loud, ends_up, fades}
+    signal_moments: list[dict] = field(default_factory=list)  # {t, kind, detail}
 
     def to_dict(self):
         return asdict(self)
@@ -145,10 +164,11 @@ def analyse(wav_path: str, dg: dict) -> VoiceFacts:
 
     # upward inflection at sentence ends: compare pitch in last 300 ms vs previous 300 ms of each sentence's final word
     upward = 0
+    upward_idx: set[int] = set()
     if words and sentences:
         # locate sentence end words by walking word counts
         idx = 0
-        for s in sentences:
+        for si, s in enumerate(sentences):
             n = len(s.split())
             end_i = min(len(words) - 1, idx + n - 1)
             w = words[end_i]
@@ -160,6 +180,7 @@ def analyse(wav_path: str, dg: dict) -> VoiceFacts:
             b = b[~np.isnan(b)]
             if len(a) >= 3 and len(b) >= 3 and np.median(b) > np.median(a) * 1.06:
                 upward += 1
+                upward_idx.add(si)
 
     # energy consistency
     rms = librosa.feature.rms(y=y, frame_length=2048, hop_length=512)[0]
@@ -168,6 +189,108 @@ def analyse(wav_path: str, dg: dict) -> VoiceFacts:
     # trailing drop: last 1.5s energy vs clip mean
     tail = librosa.feature.rms(y=y[-int(1.5 * sr):], frame_length=2048, hop_length=512)[0] if len(y) > 1.5 * sr else np.array([])
     trailing_drop = bool(len(tail) and np.mean(tail) < 0.45 * (np.mean(rms) + 1e-9))
+
+
+    # ---- per-sentence spans (walk word counts; punctuation lives in the transcript)
+    spans = []
+    if words and sentences:
+        idx = 0
+        for si, sent in enumerate(sentences):
+            n = max(1, len(sent.split()))
+            lo, hi = min(idx, len(words) - 1), min(len(words) - 1, idx + n - 1)
+            idx += n
+            spans.append((si, words[lo].start, words[hi].end, sent, hi - lo + 1))
+
+    # ---- disfluency
+    repeats, restarts, prolong = [], [], []
+    norm = [re.sub(r"[^a-z']", "", w.word.lower()) for w in words]
+    for i in range(1, len(words)):
+        if norm[i] and norm[i] == norm[i - 1] and words[i].start - words[i - 1].end < 0.6:
+            repeats.append({"word": norm[i], "t": round(words[i].start, 2)})
+        elif i >= 3 and norm[i] == norm[i - 2] and norm[i - 1] == norm[i - 3] and words[i - 1].start - words[i - 2].end < 0.6:
+            repeats.append({"word": f"{norm[i-1]} {norm[i]}", "t": round(words[i - 1].start, 2)})
+    # restart: a clause opener ("i", "so", "we", "it", "the") recurs within 4 words after a micro-pause
+    OPENERS = {"i", "so", "we", "it", "the", "and", "my", "you", "there"}
+    for i in range(1, len(words)):
+        gap = words[i].start - words[i - 1].end
+        if 0.25 <= gap < 1.2 and norm[i] in OPENERS:
+            back = norm[max(0, i - 4):i]
+            if norm[i] in back and not (norm[i] == norm[i - 1]):
+                restarts.append({"from": " ".join(w.word for w in words[max(0, i - 4):i]), "to": " ".join(w.word for w in words[i:i + 3]), "t": round(words[i].start, 2)})
+    durs = np.array([w.end - w.start for w in words]) if words else np.array([])
+    if len(durs) >= 8:
+        med = float(np.median(durs))
+        for w, d in zip(words, durs):
+            if len(w.word) <= 4 and d > max(0.75, 2.6 * med):
+                prolong.append({"word": w.word, "t": round(w.start, 2), "dur": round(float(d), 2)})
+
+    # ---- pace dynamics
+    rates = []
+    for si, t0, t1, text, n in spans:
+        if t1 - t0 >= 0.8 and n >= 3:
+            rates.append((si, n / (t1 - t0) * 60, t0, text))
+    rate_cv = 0.0
+    rush, slow = [], []
+    if len(rates) >= 2:
+        r = np.array([x[1] for x in rates])
+        rate_cv = float(np.std(r) / (np.mean(r) + 1e-9))
+        medr = float(np.median(r))
+        for si, wpm_s, t0, text in rates:
+            if wpm_s > 1.28 * medr and wpm_s > 170:
+                rush.append({"t": round(t0, 2), "wpm": round(wpm_s), "text": text[:80]})
+            elif wpm_s < 0.7 * medr and wpm_s < 110:
+                slow.append({"t": round(t0, 2), "wpm": round(wpm_s), "text": text[:80]})
+
+    # ---- tone dynamics
+    pitch_range = float(np.percentile(semis, 95) - np.percentile(semis, 5)) if len(semis) >= 10 else 0.0
+    flat = 0.0
+    if len(f0) > 10:
+        hop_s = 512 / sr
+        run = best = 0
+        win = int(1.0 / hop_s)
+        for k in range(0, len(f0) - win, win // 2 or 1):
+            seg = f0[k:k + win]
+            seg = seg[~np.isnan(seg)]
+            if len(seg) >= win * 0.5 and np.std(12 * np.log2(seg / (np.median(seg) + 1e-9))) < 0.9:
+                run += win // 2 or 1
+                best = max(best, run)
+            else:
+                run = 0
+        flat = round(best * hop_s, 1)
+    rms_full = librosa.feature.rms(y=y, frame_length=2048, hop_length=512)[0]
+    rms_t = librosa.times_like(rms_full, sr=sr, hop_length=512)
+    rms_mean = float(np.mean(rms_full)) + 1e-9
+    timeline, fades, louds = [], 0, []
+    for si, t0, t1, text, n in spans:
+        seg = rms_full[(rms_t >= t0) & (rms_t <= t1)]
+        tail = rms_full[(rms_t >= t1 - 0.5) & (rms_t <= t1)]
+        loud = float(np.mean(seg) / rms_mean) if len(seg) else 1.0
+        fade = bool(len(seg) > 4 and len(tail) and np.mean(tail) < 0.45 * np.mean(seg))
+        fades += int(fade)
+        louds.append(loud)
+        tone = f0[(times >= t0) & (times <= t1)]
+        tone = tone[~np.isnan(tone)]
+        tone_st = float(np.median(12 * np.log2(tone / (pitch_median + 1e-9)))) if (len(tone) and pitch_median > 0) else 0.0
+        wpm_s = n / max(0.5, t1 - t0) * 60
+        timeline.append({"i": si + 1, "t0": round(t0, 1), "t1": round(t1, 1), "text": text[:90], "wpm": round(wpm_s), "tone_st": round(tone_st, 1), "loud": round(loud, 2), "ends_up": si in upward_idx, "fades": fade})
+    loud_cv = float(np.std(louds) / (np.mean(louds) + 1e-9)) if len(louds) >= 2 else 0.0
+
+    # ---- signal moments: one flat list, time-ordered, for the evaluator to cross-reference
+    moments = []
+    moments += [{"t": x["t"], "kind": "filler", "detail": x["word"]} for x in fill]
+    moments += [{"t": x["t"], "kind": "hedge", "detail": x["word"]} for x in hedge]
+    moments += [{"t": x["t"], "kind": "apology", "detail": x["word"]} for x in apol]
+    moments += [{"t": x["t"], "kind": "repeat", "detail": x["word"]} for x in repeats]
+    moments += [{"t": x["t"], "kind": "restart", "detail": f"{x['from']} -> {x['to']}"} for x in restarts]
+    moments += [{"t": x["t"], "kind": "prolongation", "detail": f"{x['word']} held {x['dur']}s"} for x in prolong]
+    moments += [{"t": x["t"], "kind": "rush", "detail": f"{x['wpm']} wpm"} for x in rush]
+    moments += [{"t": x["t"], "kind": "slow", "detail": f"{x['wpm']} wpm"} for x in slow]
+    moments += [{"t": s_["t1"], "kind": "fade", "detail": s_["text"][-40:]} for s_ in timeline if s_["fades"]]
+    for i in range(len(words) - 1):
+        g = words[i + 1].start - words[i].end
+        if g > 1.2:
+            moments.append({"t": round(words[i].end, 2), "kind": "pause", "detail": f"{g:.1f}s after '{words[i].word}'"})
+    moments.sort(key=lambda m: m["t"])
 
     return VoiceFacts(
         duration_s=round(duration, 2),
@@ -191,4 +314,19 @@ def analyse(wav_path: str, dg: dict) -> VoiceFacts:
         energy_cv=round(energy_cv, 2),
         trailing_drop=trailing_drop,
         ended_mid_sentence=ended_mid,
+        repeat_count=len(repeats),
+        repeats=repeats[:12],
+        restart_count=len(restarts),
+        restarts=restarts[:8],
+        prolongation_count=len(prolong),
+        prolongations=prolong[:8],
+        rate_cv=round(rate_cv, 2),
+        rush_moments=rush[:6],
+        slow_moments=slow[:6],
+        pitch_range_st=round(pitch_range, 1),
+        flat_stretch_s=flat,
+        fade_endings=fades,
+        loud_cv=round(loud_cv, 2),
+        timeline=timeline[:24],
+        signal_moments=moments[:40],
     )

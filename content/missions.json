@@ -1,0 +1,15 @@
+{
+  "note": "Field Missions: real-world tasks, debriefed with Poise afterwards. Never film other people; the debrief is spoken or typed by the user.",
+  "missions": [
+    { "id": "m-barista", "title": "One real question", "task": "Ask a barista, cashier or doorman one real question that isn't about the transaction.", "skill": "Curiosity", "difficulty": 1 },
+    { "id": "m-name", "title": "Name, twice", "task": "Learn someone's name today and use it once, naturally, later in the same conversation.", "skill": "Introductions", "difficulty": 1 },
+    { "id": "m-intro", "title": "The connector", "task": "Introduce two people who haven't met, with one detail that gives them something to talk about.", "skill": "Rooms", "difficulty": 2 },
+    { "id": "m-toast", "title": "Twenty seconds", "task": "At the next meal with three or more people, raise a glass and say something for twenty seconds.", "skill": "Rooms", "difficulty": 3 },
+    { "id": "m-no", "title": "One clean no", "task": "Decline one thing today with a single reason and no apology.", "skill": "Holding your ground", "difficulty": 2 },
+    { "id": "m-compliment", "title": "Specific credit", "task": "Give someone specific credit for something they did, in front of others.", "skill": "Status", "difficulty": 2 },
+    { "id": "m-silence", "title": "Let it sit", "task": "In one conversation, let a pause sit for three seconds instead of filling it.", "skill": "Composure", "difficulty": 1 },
+    { "id": "m-story", "title": "Three beats, live", "task": "Tell one story today in three beats: setup, turn, line. Then stop.", "skill": "Stories", "difficulty": 2 },
+    { "id": "m-disagree", "title": "Say the other view", "task": "Disagree with someone once today, calmly, with one reason, and stay friendly.", "skill": "Holding your ground", "difficulty": 3 },
+    { "id": "m-host", "title": "Bring them in", "task": "Notice the quietest person in a group and ask them something real.", "skill": "Rooms", "difficulty": 2 }
+  ]
+}

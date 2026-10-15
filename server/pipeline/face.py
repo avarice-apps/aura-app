@@ -7,7 +7,7 @@ Nothing identifying is stored: landmarks are reduced to numbers per frame and di
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 
 import cv2
 import numpy as np
@@ -29,6 +29,16 @@ class PresenceFacts:
     lean: str = "neutral"  # 'back' | 'neutral' | 'forward'
     smile_ratio: float = 0.0  # proxy for nervous smiling when combined with low speech
     available: bool = False
+    # --- eye movement over time (what the eyes did, and when)
+    gaze_timeline: list[float] = field(default_factory=list)  # per-second fraction of frames on the lens
+    look_aways: list[dict] = field(default_factory=list)  # {t, dir: down|up|left|right, dur}
+    gaze_down_ratio: float = 0.0  # share of off-lens frames that went down (reading / avoiding vs scanning)
+    gaze_shift_rate: float = 0.0  # on/off transitions per minute; high = darting
+    end_contact: bool = False  # on the lens during the final 2 seconds
+    brow_raise_ratio: float = 0.0  # browInnerUp > 0.4 share of frames (surprise / effort)
+    brow_furrow_ratio: float = 0.0  # browDown > 0.4 share (strain / concentration)
+    jaw_tension_ratio: float = 0.0  # mouthPress/jaw clench proxy
+    stillness_s: float = 0.0  # longest stretch with little head motion (composure proxy)
 
     def to_dict(self):
         return asdict(self)
@@ -73,6 +83,8 @@ def analyse(video_path: str, fps_sample: float = 6.0, face_mesh: bool = True) ->
         return PresenceFacts()
 
     gaze_hits, yaws, noses, blinks_series, smiles, fidgets = [], [], [], [], [], 0
+
+    brows_up, brows_down, jaws, off_dir = [], [], [], []
     tilts, leans = [], []
     found = 0
     n = 0
@@ -106,17 +118,37 @@ def analyse(video_path: str, fps_sample: float = 6.0, face_mesh: bool = True) ->
                 w = abs(lm[c1].x - lm[c2].x) + 1e-6
                 return (lm[ic].x - cx) / w
             off = (iris_off(468, 33, 133) + iris_off(473, 362, 263)) / 2 if len(lm) > 473 else 0.0
-            looking = abs(yaw) < 12 and abs(pitch) < 12 and abs(off) < 0.12
+            bs = {b.category_name: b.score for b in (fr.face_blendshapes[0] if fr.face_blendshapes else [])}
+            eye_down = (bs.get("eyeLookDownLeft", 0) + bs.get("eyeLookDownRight", 0)) / 2
+            eye_up = (bs.get("eyeLookUpLeft", 0) + bs.get("eyeLookUpRight", 0)) / 2
+            # Lens gaze: head roughly toward the phone (it sits below eye-line, so allow more pitch) AND the irises centred.
+            looking = abs(yaw) < 15 and -18 < pitch < 15 and abs(off) < 0.12 and eye_down < 0.5 and eye_up < 0.5
             gaze_hits.append(looking)
             yaws.append(yaw)
             noses.append((lm[1].x, lm[1].y))
-            bs = {b.category_name: b.score for b in (fr.face_blendshapes[0] if fr.face_blendshapes else [])}
             blinks_series.append((bs.get("eyeBlinkLeft", 0) + bs.get("eyeBlinkRight", 0)) / 2)
             smiles.append((bs.get("mouthSmileLeft", 0) + bs.get("mouthSmileRight", 0)) / 2)
+            brows_up.append(bs.get("browInnerUp", 0))
+            brows_down.append((bs.get("browDownLeft", 0) + bs.get("browDownRight", 0)) / 2)
+            jaws.append(max(bs.get("mouthPressLeft", 0), bs.get("mouthPressRight", 0), bs.get("jawForward", 0)))
+            if looking:
+                off_dir.append(None)
+            elif pitch < -10 or eye_down > 0.5:
+                off_dir.append("down")
+            elif pitch > 10 or eye_up > 0.5:
+                off_dir.append("up")
+            elif yaw < -8 or off < -0.12:
+                off_dir.append("left")
+            else:
+                off_dir.append("right")
         else:
             gaze_hits.append(False)
             blinks_series.append(0.0)
             smiles.append(0.0)
+            brows_up.append(0.0)
+            brows_down.append(0.0)
+            jaws.append(0.0)
+            off_dir.append("away")
         pr = pose.detect(img)
         if pr.pose_landmarks:
             p = pr.pose_landmarks[0]
@@ -164,6 +196,36 @@ def analyse(video_path: str, fps_sample: float = 6.0, face_mesh: bool = True) ->
     lean_v = float(np.mean(leans)) if leans else 0.0
     lean = "forward" if lean_v < -0.25 else "back" if lean_v > 0.1 else "neutral"
 
+    # eye movement over time
+    step = max(1, int(round(fps_sample)))
+    gaze_tl = [round(float(np.mean(gaze_hits[k:k + step])), 2) for k in range(0, n, step)]
+    look_aways = []
+    k = 0
+    while k < n:
+        if not gaze_hits[k] and found:
+            j = k
+            while j < n and not gaze_hits[j]:
+                j += 1
+            dirs = [d for d in off_dir[k:j] if d and d != "away"]
+            if j - k >= max(2, step // 2) and dirs:
+                look_aways.append({"t": round(k / fps_sample, 1), "dir": max(set(dirs), key=dirs.count), "dur": round((j - k) / fps_sample, 1)})
+            k = j
+        else:
+            k += 1
+    off_frames = [d for d in off_dir if d and d != "away"]
+    gaze_down_ratio = round(sum(1 for d in off_frames if d == "down") / len(off_frames), 2) if off_frames else 0.0
+    shifts = sum(1 for a, b in zip(gaze_hits, gaze_hits[1:]) if a != b)
+    gaze_shift_rate = round(shifts / max(dur, 1) * 60, 1)
+    tail = gaze_hits[-int(2 * fps_sample):] if n >= 2 * fps_sample else gaze_hits
+    end_contact = bool(tail) and float(np.mean(tail)) >= 0.5
+    still = best = 0
+    if len(noses) > 1:
+        d = np.linalg.norm(np.diff(np.array(noses), axis=0), axis=1)
+        for v in d:
+            still = still + 1 if v < 0.008 else 0
+            best = max(best, still)
+    stillness = round(best / fps_sample, 1)
+
     return PresenceFacts(
         frames_analysed=n,
         face_found_ratio=round(found / n, 2),
@@ -177,4 +239,13 @@ def analyse(video_path: str, fps_sample: float = 6.0, face_mesh: bool = True) ->
         lean=lean,
         smile_ratio=round(float(np.mean([s > 0.4 for s in smiles])), 2) if smiles else 0.0,
         available=found > 0,
+        gaze_timeline=gaze_tl[:60],
+        look_aways=look_aways[:12],
+        gaze_down_ratio=gaze_down_ratio,
+        gaze_shift_rate=gaze_shift_rate,
+        end_contact=end_contact,
+        brow_raise_ratio=round(float(np.mean([b > 0.4 for b in brows_up])), 2) if brows_up else 0.0,
+        brow_furrow_ratio=round(float(np.mean([b > 0.4 for b in brows_down])), 2) if brows_down else 0.0,
+        jaw_tension_ratio=round(float(np.mean([j > 0.5 for j in jaws])), 2) if jaws else 0.0,
+        stillness_s=stillness,
     )
