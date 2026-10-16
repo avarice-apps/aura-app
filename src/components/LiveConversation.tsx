@@ -5,9 +5,11 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { ConversationProvider, useConversation } from '@elevenlabs/react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import { Image } from 'expo-image';
 import { File } from 'expo-file-system';
-import { Body, Muted, Tag, Icon, ICON } from '@/ui';
-import { Mark } from '@/components/Mark';
+import { Body, Muted, Icon, ICON, Serif } from '@/ui';
+import { CallFace, VoiceBars } from '@/components/CallFace';
+import { faceFor } from '@/lib/faces';
 import { font, useTheme } from '@/theme';
 import { liveStart, liveFinish, liveState, uploadFrames, reportMic, StartArgs, LiveStart } from '@/lib/api';
 import { useStore } from '@/state/store';
@@ -84,6 +86,8 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
   const [retryId, setRetryId] = useState<string | null>(null);
   const energy = useSharedValue(0);
   const idle = useSharedValue(0);
+  const who = useSharedValue(0); // 1 while they talk
+  const [showTx, setShowTx] = useState(false);
   const scroll = useRef<ScrollView>(null);
   const ending = useRef(false);
   const leavingRef = useRef(false);
@@ -202,6 +206,7 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
           }
         }
         const v = conv.isSpeaking ? conv.getOutputVolume() : conv.getInputVolume();
+        who.value = conv.isSpeaking ? 1 : 0;
         energy.value = withTiming(Math.min(1, (v || 0) * 2.2), { duration: 90 });
       } catch {}
     }, 90);
@@ -210,7 +215,7 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
       clearInterval(id);
       clearInterval(clock);
     };
-  }, [phase, conv, energy]);
+  }, [phase, conv, energy, who]);
 
   useEffect(() => {
     if (!cameraOn || phase !== 'live' || !camPerm?.granted) return;
@@ -360,7 +365,6 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
   });
 
   const speaking = conv.isSpeaking;
-  const shared = phase === 'live' ? energy : idle;
   const name = start?.character.name ?? '';
   const shown = timeLimit ? Math.max(0, timeLimit - secs) : secs;
   const clock = `${Math.floor(shown / 60)}:${String(shown % 60).padStart(2, '0')}`;
@@ -386,78 +390,134 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
               ? 'They’re talking. Cut in whenever you want'
               : 'Your turn. Just talk';
 
+  const last = msgs[msgs.length - 1];
+  const idleNow = phase === 'connecting' || phase === 'evaluating';
+  const face = faceFor(start?.character ?? (isPoise ? 'poise' : null));
+  const round = (bg: string, border?: string) => ({ width: 58, height: 58, borderRadius: 29, backgroundColor: bg, borderWidth: border ? 1 : 0, borderColor: border, alignItems: 'center' as const, justifyContent: 'center' as const });
+
   return (
     <View style={{ flex: 1 }}>
-      {start && (
-        <Animated.View entering={FadeIn.duration(400)} style={{ marginHorizontal: 20, marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: t.card, borderWidth: 1, borderColor: t.line }}>
-          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: t.accentSoft, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: interest !== null && interest >= 55 ? t.accent : 'transparent' }}>
-            <RNText style={{ fontFamily: font.medium, fontSize: 18, color: t.accent }}>{name[0]}</RNText>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Body strong>
-              {name}
-              {present.length ? <RNText style={{ fontFamily: font.regular, color: t.ink2 }}>{`  +  ${present.join(', ')}`}</RNText> : null}
-            </Body>
-            <Muted small numberOfLines={1}>{start.character.style}</Muted>
-          </View>
-          {!isPoise && phase !== 'error' ? (
-            <Pressable onPress={toggleCamera} hitSlop={8} accessibilityLabel={cameraOn ? 'Turn camera off' : 'Turn camera on'} style={{ width: 32, height: 32, borderRadius: 16, borderWidth: 1, borderColor: cameraOn ? t.accent : t.line, backgroundColor: cameraOn ? t.accentSoft : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-              <Icon d={ICON.scan} size={14} color={cameraOn ? t.accent : t.ink2} />
-            </Pressable>
-          ) : null}
-          {phase === 'live' ? <Tag label={clock} tone={timeLimit && shown <= 10 ? 'inverse' : 'accent'} /> : <Tag label="Live" tone="accent" />}
-        </Animated.View>
-      )}
-      {start && (
-        <View style={{ marginHorizontal: 22, marginTop: 12, gap: 4 }}>
-          <Muted small>{label ? `${label} · ` : ''}{start.setting}</Muted>
+      {/* where you are */}
+      <View style={{ alignItems: 'center', paddingHorizontal: 32, paddingTop: 6, gap: 4, minHeight: 44 }}>
+        {start ? <Muted small align="center" numberOfLines={2}>{label ? `${label} · ` : ''}{start.setting}</Muted> : null}
+        <RNText style={{ fontFamily: font.mono, fontSize: 12, letterSpacing: 1.2, color: phase === 'live' && timeLimit && shown <= 10 ? t.accent : t.ink2 }}>
+          {phase === 'live' ? clock : phase === 'connecting' ? 'CALLING' : phase === 'evaluating' ? 'CALL ENDED' : ''}
+        </RNText>
+      </View>
+
+      {/* who you're talking to */}
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
+        <View style={{ marginTop: -18, marginBottom: -26 }}>
+          <CallFace source={face} size={196} energy={energy} who={who} interest={isPoise ? null : interest} leaving={leaving} idle={idleNow} />
         </View>
-      )}
+        <Serif size={34} align="center" style={{ marginTop: 4 }}>{name || (isPoise ? 'Poise' : ' ')}</Serif>
+        {start ? <Muted small align="center" numberOfLines={1}>{start.character.style}</Muted> : null}
+        {present.length ? (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
+            <View style={{ flexDirection: 'row' }}>
+              {present.slice(0, 3).map((p, i) => (
+                <View key={p} style={{ width: 28, height: 28, borderRadius: 14, overflow: 'hidden', marginLeft: i ? -8 : 0, borderWidth: 2, borderColor: t.bg }}>
+                  <Image source={faceFor(p)} style={{ width: 24, height: 24 }} />
+                </View>
+              ))}
+            </View>
+            <Muted small>{`with ${present.join(', ')}`}</Muted>
+          </View>
+        ) : null}
+        <View style={{ marginTop: 18 }}>
+          <VoiceBars energy={phase === 'live' ? energy : idle} who={who} dim={phase !== 'live'} color={t.ink} />
+        </View>
+        {/* the last thing said, as a caption */}
+        <View style={{ minHeight: 96, marginTop: 14, alignSelf: 'stretch', alignItems: 'center' }}>
+          {last ? (
+            <Animated.View key={msgs.length} entering={FadeIn.duration(260)} style={{ maxWidth: 330, alignItems: 'center', gap: 4 }}>
+              <RNText style={{ fontFamily: font.medium, fontSize: 11, letterSpacing: 0.8, color: last.mine ? t.ink3 : t.accent }}>{(last.mine ? 'You' : last.who).toUpperCase()}</RNText>
+              <Body align="center" color={last.mine ? t.ink2 : t.ink} numberOfLines={4}>{last.mine ? last.text : `“${last.text}”`}</Body>
+            </Animated.View>
+          ) : null}
+        </View>
+      </View>
 
       {cameraOn && camPerm?.granted && (phase === 'live' || phase === 'connecting') ? (
-        <View style={{ position: 'absolute', right: 20, top: 150, width: 84, height: 112, borderRadius: 14, overflow: 'hidden', zIndex: 5, borderWidth: 1, borderColor: t.line, backgroundColor: t.card }}>
+        <View style={{ position: 'absolute', right: 20, top: 60, width: 78, height: 104, borderRadius: 14, overflow: 'hidden', zIndex: 5, borderWidth: 1, borderColor: t.line, backgroundColor: t.card }}>
           <CameraView ref={cam} style={{ flex: 1 }} facing="front" mirror animateShutter={false} />
         </View>
       ) : null}
-      <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 10, paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
-        {msgs.map((m, i) => {
-          const showName = !m.mine && (m.who !== name || present.length > 0) && msgs[i - 1]?.who !== m.who;
-          return (
-            <Animated.View key={i} entering={FadeInDown.duration(260)} style={{ alignSelf: m.mine ? 'flex-end' : 'flex-start', maxWidth: '84%', gap: 3 }}>
-              {showName ? <RNText style={{ fontFamily: font.medium, fontSize: 11, letterSpacing: 0.4, color: m.who === name ? t.accent : t.ink2, marginLeft: 6 }}>{m.who.toUpperCase()}</RNText> : null}
-              <View style={{ backgroundColor: m.mine ? t.accent : t.card, borderWidth: m.mine ? 0 : 1, borderColor: t.line, borderRadius: 18, borderBottomLeftRadius: m.mine ? 18 : 6, borderBottomRightRadius: m.mine ? 6 : 18, paddingHorizontal: 14, paddingVertical: 11 }}>
-                <Body color={m.mine ? t.onAccent : t.ink}>{m.text}</Body>
-              </View>
-            </Animated.View>
-          );
-        })}
-      </ScrollView>
 
-      <View style={{ alignItems: 'center', paddingBottom: 18, gap: 12 }}>
-        <Muted small color={phase === 'error' ? t.accent : t.ink2}>{status}</Muted>
-        <View style={{ width: 150, height: 150, alignItems: 'center', justifyContent: 'center' }}>
-          <Mark index={speaking ? 40 : 62} axes={{ voice: 55, presence: 55, command: 55, composure: 55, read: 55 }} size={150} energy={shared} color={t.markInk} animateIn={false} opacity={phase === 'live' ? 0.8 : 0.35} />
-          <View style={{ position: 'absolute', width: 56, height: 56, borderRadius: 28, backgroundColor: speaking ? t.card : t.accent, borderWidth: speaking ? 1 : 0, borderColor: t.line }} />
-        </View>
+      {/* status and controls */}
+      <View style={{ alignItems: 'center', paddingBottom: 16, gap: 14 }}>
+        <Muted small align="center" color={phase === 'error' ? t.accent : t.ink2} style={{ paddingHorizontal: 32 }}>{status}</Muted>
         {phase === 'live' ? (
-          <Pressable onPress={finish} hitSlop={10} style={{ paddingHorizontal: 20, height: 40, borderRadius: 20, backgroundColor: turns > 0 ? t.ink : t.card, borderWidth: turns > 0 ? 0 : 1, borderColor: t.line, justifyContent: 'center' }}>
-            <RNText style={{ fontFamily: font.medium, fontSize: 14, color: turns > 0 ? t.bg : t.ink2 }}>{isPoise ? 'End call' : turns > 0 ? 'End call and get my read' : 'Hang up'}</RNText>
-          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', gap: 34 }}>
+            <View style={{ alignItems: 'center', gap: 6, width: 64 }}>
+              {!isPoise ? (
+                <Pressable onPress={toggleCamera} hitSlop={8} accessibilityLabel={cameraOn ? 'Turn camera off' : 'Turn camera on'} style={round(cameraOn ? t.accentSoft : t.card, cameraOn ? t.accent : t.line)}>
+                  <Icon d={ICON.scan} size={20} color={cameraOn ? t.accent : t.ink} />
+                </Pressable>
+              ) : <View style={{ width: 58, height: 58 }} />}
+              {!isPoise ? <Muted small>{cameraOn ? 'Eyes on' : 'Eyes'}</Muted> : null}
+            </View>
+            <View style={{ alignItems: 'center', gap: 6 }}>
+              <Pressable onPress={finish} hitSlop={10} accessibilityLabel={isPoise ? 'End call' : turns > 0 ? 'End call and get my read' : 'Hang up'} style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: '#E5484D', alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ transform: [{ rotate: '135deg' }] }}>
+                  <Icon d={ICON.phone} size={28} color="#FFFFFF" fill="#FFFFFF" />
+                </View>
+              </Pressable>
+              <Muted small>{isPoise ? 'End' : turns > 0 ? 'End and read' : 'Hang up'}</Muted>
+            </View>
+            <View style={{ alignItems: 'center', gap: 6, width: 64 }}>
+              <Pressable onPress={() => setShowTx(true)} hitSlop={8} accessibilityLabel="Show transcript" style={round(t.card, t.line)}>
+                <Icon d={ICON.chat} size={20} color={t.ink} />
+              </Pressable>
+              <Muted small>Words</Muted>
+            </View>
+          </View>
         ) : phase === 'error' ? (
           <View style={{ flexDirection: 'row', gap: 10 }}>
             {retryId !== null ? (
-              <Pressable onPress={() => readBack(retryId)} hitSlop={10} style={{ paddingHorizontal: 20, height: 40, borderRadius: 20, backgroundColor: t.accent, justifyContent: 'center' }}>
+              <Pressable onPress={() => readBack(retryId)} hitSlop={10} style={{ paddingHorizontal: 20, height: 44, borderRadius: 22, backgroundColor: t.accent, justifyContent: 'center' }}>
                 <RNText style={{ fontFamily: font.medium, fontSize: 14, color: t.onAccent }}>Try the read again</RNText>
               </Pressable>
             ) : null}
-            <Pressable onPress={leave} hitSlop={10} style={{ paddingHorizontal: 20, height: 40, borderRadius: 20, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, justifyContent: 'center' }}>
+            <Pressable onPress={leave} hitSlop={10} style={{ paddingHorizontal: 20, height: 44, borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, justifyContent: 'center' }}>
               <RNText style={{ fontFamily: font.medium, fontSize: 14, color: t.ink }}>Leave</RNText>
             </Pressable>
           </View>
         ) : (
-          <View style={{ height: 40 }} />
+          <View style={{ height: 94 }} />
         )}
       </View>
+
+      {/* the whole conversation, on demand */}
+      {showTx ? (
+        <Animated.View entering={FadeInDown.duration(260)} style={{ position: 'absolute', left: 0, right: 0, bottom: 0, top: '30%', backgroundColor: t.bg, borderTopLeftRadius: 26, borderTopRightRadius: 26, borderWidth: 1, borderColor: t.line, zIndex: 10 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 8 }}>
+            <Serif size={24}>The conversation</Serif>
+            <Pressable onPress={() => setShowTx(false)} hitSlop={10} accessibilityLabel="Close transcript" style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.card, alignItems: 'center', justifyContent: 'center' }}>
+              <Icon d={ICON.close} size={14} />
+            </Pressable>
+          </View>
+          <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 10, paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
+            {msgs.map((m, i) => {
+              const showName = !m.mine && msgs[i - 1]?.who !== m.who;
+              return (
+                <View key={i} style={{ alignSelf: m.mine ? 'flex-end' : 'flex-start', maxWidth: '84%', gap: 3 }}>
+                  {showName ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 2 }}>
+                      <Image source={faceFor(m.who === name ? start?.character ?? m.who : m.who)} style={{ width: 18, height: 18, borderRadius: 9 }} />
+                      <RNText style={{ fontFamily: font.medium, fontSize: 11, letterSpacing: 0.4, color: m.who === name ? t.accent : t.ink2 }}>{m.who.toUpperCase()}</RNText>
+                    </View>
+                  ) : null}
+                  <View style={{ backgroundColor: m.mine ? t.accent : t.card, borderWidth: m.mine ? 0 : 1, borderColor: t.line, borderRadius: 18, borderBottomLeftRadius: m.mine ? 18 : 6, borderBottomRightRadius: m.mine ? 6 : 18, paddingHorizontal: 14, paddingVertical: 11 }}>
+                    <Body color={m.mine ? t.onAccent : t.ink}>{m.text}</Body>
+                  </View>
+                </View>
+              );
+            })}
+            {!msgs.length ? <Muted small align="center">Nothing said yet.</Muted> : null}
+          </ScrollView>
+        </Animated.View>
+      ) : null}
     </View>
   );
 }

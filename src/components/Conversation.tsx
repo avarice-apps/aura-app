@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, Pressable, Text as RNText, NativeModules, TurboModuleRegistry } from 'react-native';
+import { View, ScrollView, Pressable, NativeModules, TurboModuleRegistry } from 'react-native';
 import Animated, { FadeInDown, FadeIn, useSharedValue, withTiming, withRepeat, Easing, cancelAnimation } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useAudioRecorder, useAudioRecorderState, RecordingPresets } from 'expo-audio';
 import { Body, Muted, Icon, ICON, Tag } from '@/ui';
 import { Mark } from '@/components/Mark';
-import { font, useTheme } from '@/theme';
+import { Image } from 'expo-image';
+import { faceFor } from '@/lib/faces';
+import { useTheme } from '@/theme';
 import { startSession, sendTurn, evaluateSession, syncMe, StartArgs } from '@/lib/api';
 import { useStore } from '@/state/store';
 import type { Evaluation, SessionStart } from '@/lib/types';
@@ -240,8 +242,8 @@ export function TurnConversation({ args, onDone, onError, label }: { args: Start
     <View style={{ flex: 1 }}>
       {start && (
         <Animated.View entering={FadeIn.duration(400)} style={{ marginHorizontal: 20, marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: t.card, borderWidth: 1, borderColor: t.line }}>
-          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: t.accentSoft, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: interest !== null && interest >= 55 ? t.accent : 'transparent' }}>
-            <RNText style={{ fontFamily: font.medium, fontSize: 18, color: t.accent }}>{start.character.name[0]}</RNText>
+          <View style={{ width: 48, height: 48, borderRadius: 24, overflow: 'hidden', borderWidth: 2, borderColor: interest !== null && interest >= 55 ? t.accent : 'transparent' }}>
+            <Image source={faceFor(start.character)} style={{ width: 44, height: 44, borderRadius: 22 }} contentFit="cover" />
           </View>
           <View style={{ flex: 1 }}>
             <Body strong>{start.character.name}</Body>
