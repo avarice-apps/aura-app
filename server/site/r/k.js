@@ -1,4 +1,5 @@
 /* Kleos — shared: the collection, the bag, the drawer, the nav. */
+document.documentElement.classList.add('js');
 const K = (() => {
   const API = /^https?:$/.test(location.protocol) && !/claude|anthropic/.test(location.hostname) ? '' : 'https://aura-app-production-c2eb.up.railway.app';
   const store = { get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (_) { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (_) {} } };
@@ -103,7 +104,7 @@ const K = (() => {
   function openPiece(id) {
     ensureShell(); const p = byId[id]; if (!p) return; lastFocus = document.activeElement;
     let view = 'f', size = null;
-    const setView = v => { view = v; $('#dimg').src = `img/${p.img}_${v}.webp`; $('#dimg').alt = `${p.name}, ${v === 'f' ? 'front' : 'back'}`; $('#vf').setAttribute('aria-pressed', v === 'f'); $('#vb').setAttribute('aria-pressed', v === 'b'); };
+    const setView = v => { const im = $('#dimg'); const same = im.dataset.v === v && im.dataset.id === p.id; view = v; if (im.dataset.id === p.id && !same) { im.classList.add('swap'); setTimeout(() => { im.src = `img/${p.img}_${v}.webp`; const done = () => im.classList.remove('swap'); im.onload = done; im.onerror = done; if (im.complete) requestAnimationFrame(done); setTimeout(done, 700); }, 150); } else { im.src = `img/${p.img}_${v}.webp`; } im.dataset.v = v; im.dataset.id = p.id; $('#dimg').alt = `${p.name}, ${v === 'f' ? 'front' : 'back'}`; $('#vf').setAttribute('aria-pressed', v === 'f'); $('#vb').setAttribute('aria-pressed', v === 'b'); };
     $('#vf').onclick = () => setView('f'); $('#vb').onclick = () => setView('b'); setView('f');
     $('#dline').textContent = p.line === 'night' ? 'Chez moi · the night line · Nº 002' : 'La Côte · Issue Nº 001';
     $('#dname').textContent = p.name;
@@ -152,7 +153,14 @@ const K = (() => {
       try { const r = await fetch(API + '/waitlist', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ email:v, source:'release-foot' }) }); if (!r.ok) throw 0; const j = await r.json(); try { localStorage.setItem('kleos.n', j.number); } catch (_) {} f.style.display = 'none'; msg.textContent = `You are on the register, Nº ${String(j.number).padStart(4, '0')}.`; }
       catch (_) { msg.textContent = 'The register didn’t answer. Try again in a moment.'; } });
   }
-  function boot() { nav(); register(); addEventListener('hashchange', () => { const h = location.hash.slice(1); if (byId[h]) openPiece(h); }); if (location.hash && byId[location.hash.slice(1)]) setTimeout(() => openPiece(location.hash.slice(1)), 200); }
+  function motion() {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const els = [...document.querySelectorAll('.reveal')];
+    if (reduce || !('IntersectionObserver' in window)) { els.forEach(e => e.classList.add('seen')); }
+    else { const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('seen'); io.unobserve(e.target); } }), { rootMargin:'0px 0px -12% 0px' }); els.forEach(e => io.observe(e)); }
+    document.querySelectorAll('.stagger').forEach(g => [...g.children].forEach((c, i) => { c.style.animationDelay = Math.min(i, 10) * 45 + 'ms'; }));
+  }
+  function boot() { motion(); nav(); register(); addEventListener('hashchange', () => { const h = location.hash.slice(1); if (byId[h]) openPiece(h); }); if (location.hash && byId[location.hash.slice(1)]) setTimeout(() => openPiece(location.hash.slice(1)), 200); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
   return { P, byId, card, openPiece, openBag, toast, store, API };
 })();

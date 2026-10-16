@@ -13,9 +13,11 @@
   .top { padding:clamp(110px,14vw,170px) var(--gut) 28px; display:grid; grid-template-columns:1fr auto; gap:24px; align-items:end; }
   .top h1 { margin:0; font-family:var(--serif); font-weight:400; font-size:clamp(64px,10vw,168px); line-height:.86; letter-spacing:-.03em; }
   .top p { margin:14px 0 0; max-width:46ch; color:var(--ink2); }
-  .tabs { display:flex; gap:4px; border:1px solid var(--line); padding:4px; align-self:end; }
-  .tabs button { border:0; background:none; padding:10px 16px; cursor:pointer; font-size:14px; white-space:nowrap; }
-  .tabs button[aria-selected="true"] { background:var(--ink); color:var(--paper); }
+  .tabs { position:relative; display:flex; gap:4px; border:1px solid var(--line); padding:4px; align-self:end; }
+  .tabs .thumb { position:absolute; top:4px; bottom:4px; left:0; background:var(--ink); transition:transform 300ms var(--ease-out), width 300ms var(--ease-out); z-index:0; }
+  .tabs button { position:relative; z-index:1; border:0; background:none; padding:10px 16px; cursor:pointer; font-size:14px; white-space:nowrap; transition:color 200ms ease, transform 160ms var(--ease-out); }
+  .tabs button:active { transform:scale(0.97); }
+  .tabs button[aria-selected="true"] { color:var(--paper); }
   @media (max-width:760px){ .top { grid-template-columns:1fr; } .tabs { justify-self:start; } }
   .line { padding:24px var(--gut) clamp(64px,8vw,120px); }
   .line > header { display:flex; justify-content:space-between; align-items:baseline; gap:20px; flex-wrap:wrap; border-top:1px solid var(--line); padding:22px 0 30px; }
@@ -44,7 +46,7 @@
     <h1>The collection</h1>
     <p>Reserve now and we hold your piece until orders open: members on 11 November, everyone else on the 13th. Each piece is one of a hundred, numbered inside the collar.</p>
   </div>
-  <div class="tabs" role="tablist" aria-label="Lines">
+  <div class="tabs" role="tablist" aria-label="Lines"><span class="thumb" aria-hidden="true"></span>
     <button role="tab" aria-selected="true" data-f="all">Everything</button>
     <button role="tab" aria-selected="false" data-f="cote">La Côte</button>
     <button role="tab" aria-selected="false" data-f="night">Chez moi</button>
@@ -53,11 +55,11 @@
 
 <section class="line" id="cote" aria-labelledby="h-cote">
   <header><h2 id="h-cote">La Côte, <em>Issue Nº 001</em></h2><span>Riviera prints in one blue, linen for the deck</span></header>
-  <div class="grid" id="gc"></div>
+  <div class="grid stagger" id="gc"></div>
 </section>
 <section class="line night" id="night" aria-labelledby="h-night">
   <header><h2 id="h-night">Chez moi, <em>the night line</em></h2><span>Nº 002 · reserve now, ships in winter</span></header>
-  <div class="grid" id="gn"></div>
+  <div class="grid stagger" id="gn"></div>
 </section>
 
 <footer class="foot">
@@ -75,7 +77,9 @@
 <script>
   K.P.forEach(p => document.getElementById(p.line === 'night' ? 'gn' : 'gc').appendChild(K.card(p)));
   const tabs = document.querySelectorAll('.tabs button');
-  function filt(f){ tabs.forEach(t => t.setAttribute('aria-selected', t.dataset.f === f)); document.getElementById('cote').hidden = f === 'night'; document.getElementById('night').hidden = f === 'cote'; }
+  function thumb(){ const on=[...tabs].find(t=>t.getAttribute('aria-selected')==='true'); const th=document.querySelector('.tabs .thumb'); if(on&&th){ th.style.width=on.offsetWidth+'px'; th.style.transform=`translateX(${on.offsetLeft}px)`; } }
+  addEventListener('resize', thumb); requestAnimationFrame(thumb); if (document.fonts) document.fonts.ready.then(thumb);
+  function filt(f){ tabs.forEach(t => t.setAttribute('aria-selected', t.dataset.f === f)); thumb(); document.getElementById('cote').hidden = f === 'night'; document.getElementById('night').hidden = f === 'cote'; }
   tabs.forEach(t => t.onclick = () => { filt(t.dataset.f); try { history.replaceState(null,'', t.dataset.f === 'all' ? location.pathname : '#' + t.dataset.f); } catch(_){} });
   if (location.hash === '#night' || location.hash === '#cote') filt(location.hash.slice(1));
 </script>
