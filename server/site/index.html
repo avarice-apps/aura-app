@@ -50,7 +50,7 @@
   @keyframes fade { to{opacity:1} }
   .g .skip { opacity:.7; }
   .g .skip:hover { opacity:1; }
-  @media (max-width:760px){ .g .top .r, .g .bot .r { display:none; } .g .center { bottom:clamp(72px,12vh,120px); } }
+  @media (max-width:760px){ .g .top .r { display:none; } .g .bot .skip .long { display:none; } .g .center { bottom:clamp(72px,12vh,120px); } }
 
   /* ---------- the site ---------- */
   html.snap { scroll-snap-type:y proximity; }
@@ -115,7 +115,7 @@
         <a class="enter mono" href="#one" id="enter">Enter <span aria-hidden="true">→</span></a>
       </div>
     </div>
-    <div class="bot"><span class="mono" id="clock">New York · --:--</span><a class="mono skip r" href="#one" id="skip">Already on the register · Enter</a></div>
+    <div class="bot"><span class="mono" id="clock">New York · --:--</span><a class="mono skip" href="#one" id="skip"><span class="long">Already on the register · </span>Enter</a></div>
   </div>
 </section>
 
@@ -206,7 +206,10 @@ const clock = document.getElementById('clock');
 const tick = () => clock.textContent = 'New York · ' + new Date().toLocaleTimeString('en-US', { timeZone:'America/New_York', hour:'2-digit', minute:'2-digit', hour12:false });
 tick(); setInterval(tick, 10000);
 
+function pending(v){ try { const q = JSON.parse(localStorage.getItem('kleos.pending') || '[]'); if (!q.includes(v)) q.push(v); localStorage.setItem('kleos.pending', JSON.stringify(q)); } catch(_){} }
+async function flush(){ try { const q = JSON.parse(localStorage.getItem('kleos.pending') || '[]'); if (!q.length) return; const left = []; for (const v of q) { try { const n = await register(v); localStorage.setItem('kleos.n', n); } catch(_) { left.push(v); } } localStorage.setItem('kleos.pending', JSON.stringify(left)); } catch(_){} }
 async function register(email){ const r = await fetch(API + '/waitlist', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email, source: location.hostname }) }); const j = await r.json(); if (!r.ok) throw new Error(j.detail || 'failed'); return j.number; }
+setTimeout(flush, 1500);
 const valid = v => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
 const pad = n => 'Nº ' + String(n).padStart(4, '0');
 let burst = 0;
@@ -216,14 +219,14 @@ document.getElementById('f').addEventListener('submit', async e => {
   const v = em.value.trim(); if (!valid(v)) { hint.textContent = 'That doesn’t look like an email'; em.focus(); return; }
   go.disabled = true; hint.textContent = '…';
   try { const n = await register(v); try { localStorage.setItem('kleos.n', n); } catch(_){} issued(n); burst = 1; }
-  catch (err) { go.disabled = false; hint.textContent = 'The register didn’t answer. Try again.'; }
+  catch (err) { go.disabled = false; pending(v); hint.innerHTML = 'Your name is kept. <a href="#one" id="anyway" style="border-bottom:1px solid currentColor">Enter</a>'; document.getElementById('anyway').addEventListener('click', ev => { ev.preventDefault(); open(); }); }
 });
 document.getElementById('f2').addEventListener('submit', async e => {
   e.preventDefault(); const em = document.getElementById('email2'), nl = document.getElementById('numline');
   const v = em.value.trim(); if (!valid(v)) { nl.textContent = 'That doesn’t look like an email'; em.focus(); return; }
   nl.textContent = '…';
   try { const n = await register(v); try { localStorage.setItem('kleos.n', n); } catch(_){} document.getElementById('f2').style.display = 'none'; document.getElementById('endline').textContent = pad(n); nl.textContent = 'You are on the register. Keep this number.'; }
-  catch (err) { nl.textContent = 'The register didn’t answer. Try again.'; }
+  catch (err) { pending(v); nl.textContent = 'Your name is kept. We will add it when the register answers.'; }
 });
 
 function open(){ document.body.classList.add('open'); document.documentElement.classList.add('snap'); document.getElementById('gate').classList.add('away'); try { sessionStorage.setItem('kleos.in', '1'); } catch(_){} }
