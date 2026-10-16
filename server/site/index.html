@@ -14,8 +14,11 @@
   :root { --blue:#1608F2; --ink:#07061A; --ivory:#F1EBDD; --navy:#0C0678; --lav:#8C88D8; --pale:#C9C4F0; }
   * { box-sizing:border-box; }
   html, body { margin:0; background:var(--ink); color:var(--ivory); font-family: Geist, system-ui, sans-serif; -webkit-font-smoothing:antialiased; }
-  body { overflow:hidden; cursor:none; }
-  body.open { overflow:auto; }
+  html, body { overscroll-behavior:none; }
+  html:not(.in), html:not(.in) body { height:100%; overflow:hidden; }
+  body { cursor:none; }
+  /* nothing behind the gate exists until the door opens */
+  html:not(.in) #site, html:not(.in) .topbar, html:not(.in) .progress { display:none; }
   @media (hover:none){ body { cursor:auto; } }
   .mono { font-family:'Geist Mono', ui-monospace, monospace; font-size:10px; letter-spacing:.3em; text-transform:uppercase; }
   .serif { font-family:'Instrument Serif', Georgia, serif; font-weight:400; }
@@ -28,7 +31,7 @@
   @media (hover:none){ #cur { display:none; } }
 
   /* ---------- the gate ---------- */
-  #gate { position:fixed; inset:0; z-index:80; background:var(--ink); transition:opacity 1.6s ease, visibility 0s linear 1.6s; }
+  #gate { position:fixed; inset:0; height:100vh; height:100dvh; z-index:80; background:var(--ink); transition:opacity 1.6s ease, visibility 0s linear 1.6s; }
   #gate.away { opacity:0; visibility:hidden; pointer-events:none; }
   #gl { position:absolute; inset:0; width:100%; height:100%; display:block; }
   .g { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:space-between; padding:clamp(20px,3vw,40px); }
@@ -229,7 +232,7 @@ document.getElementById('f2').addEventListener('submit', async e => {
   catch (err) { pending(v); nl.textContent = 'Your name is kept. We will add it when the register answers.'; }
 });
 
-function open(){ document.body.classList.add('open'); document.documentElement.classList.add('snap'); document.getElementById('gate').classList.add('away'); try { sessionStorage.setItem('kleos.in', '1'); } catch(_){} }
+function open(){ document.documentElement.classList.add('in'); document.body.classList.add('open'); document.documentElement.classList.add('snap'); requestAnimationFrame(() => { try { chs.forEach(c => { io.unobserve(c); io.observe(c); }); } catch(_){} }); document.getElementById('gate').classList.add('away'); try { sessionStorage.setItem('kleos.in', '1'); } catch(_){} }
 document.getElementById('enter').addEventListener('click', e => { e.preventDefault(); open(); });
 document.getElementById('skip').addEventListener('click', e => { e.preventDefault(); open(); });
 try { if (sessionStorage.getItem('kleos.in')) { document.getElementById('gate').style.transition = 'none'; open(); } else { const n = localStorage.getItem('kleos.n'); if (n) issued(n); } } catch(_){}
