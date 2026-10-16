@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Kleos · Members</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 fill=%27%231608F2%27/%3E%3Ctext x=%2732%27 y=%2747%27 font-family=%27Georgia,serif%27 font-size=%2742%27 text-anchor=%27middle%27 fill=%27%23F1EBDD%27%3EK%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500;600&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="k.css">
+<style>
+  :root { --bg:#F7F4EE; --panel:#FFFFFF; --hair:#E6E0D3; --soft:#F1EDE4; --muted:#6B6880; --ok:#2E7D5B; --warn:#B4532A; }
+  body { background:var(--bg); font-size:14px; padding-bottom:0; }
+  /* ---------- entrance ---------- */
+  .ent { min-height:100vh; min-height:100svh; display:grid; grid-template-columns:1.1fr 1fr; background:var(--paper); }
+  .ent .pic { background:url(img/p_sargent.webp) center 25%/cover no-repeat; position:relative; }
+  .ent .pic a { position:absolute; left:var(--gut); top:22px; font-family:var(--serif); font-size:30px; color:var(--ivory); text-decoration:none; }
+  .ent .box { padding:clamp(40px,7vw,110px) var(--gut); display:flex; flex-direction:column; justify-content:center; gap:20px; max-width:560px; }
+  .ent h1 { margin:0; font-family:var(--serif); font-weight:400; font-size:clamp(64px,8vw,120px); line-height:.86; letter-spacing:-.03em; }
+  .ent p { margin:0; color:var(--ink2); font-size:16px; max-width:40ch; }
+  .ent form { display:flex; flex-direction:column; gap:12px; margin-top:8px; }
+  .ent input { height:52px; border:1px solid var(--line); background:#fff; padding:0 16px; font:16px var(--sans); outline:none; }
+  .ent input:focus { border-color:var(--ink); }
+  .ent .or { display:flex; align-items:center; gap:12px; color:var(--muted); font-size:13px; } .ent .or::before, .ent .or::after { content:''; flex:1; height:1px; background:var(--line); }
+  .ent .msg { min-height:20px; font-size:14px; }
+  @media (max-width:860px){ .ent { grid-template-columns:1fr; } .ent .pic { min-height:34vh; } }
+
+  /* ---------- shell ---------- */
+  .app { display:none; min-height:100vh; grid-template-columns:248px minmax(0,1fr); }
+  .app.on { display:grid; }
+  .rail { position:sticky; top:0; height:100vh; background:var(--ink); color:var(--ivory); display:flex; flex-direction:column; gap:22px; padding:22px 16px; overflow:auto; }
+  .rail .brand { display:flex; align-items:baseline; gap:10px; text-decoration:none; padding:0 8px; } .rail .brand b { font-family:var(--serif); font-weight:400; font-size:30px; line-height:1; } .rail .brand span { font-size:12px; color:var(--lav); }
+  .me { display:flex; gap:12px; align-items:center; padding:12px; border-radius:12px; background:rgba(241,235,221,.06); }
+  .me .av { width:40px; height:40px; border-radius:50%; background:url(img/head_blue.webp) center 18%/190%; flex:none; }
+  .me .nm { font-family:var(--serif); font-size:20px; line-height:1.1; } .me .tr { font-size:12px; color:var(--lav); }
+  .menu { display:flex; flex-direction:column; gap:2px; }
+  .menu .grp { font-size:12px; color:var(--lav); padding:14px 10px 6px; }
+  .menu a { display:flex; justify-content:space-between; align-items:center; padding:10px 10px; border-radius:8px; text-decoration:none; font-size:14px; color:rgba(241,235,221,.82); }
+  .menu a:hover { background:rgba(241,235,221,.06); color:var(--ivory); }
+  .menu a[aria-current="page"] { background:rgba(241,235,221,.12); color:var(--ivory); }
+  .menu a small { font-size:11px; color:var(--lav); }
+  .rail .bottom { margin-top:auto; display:flex; flex-direction:column; gap:10px; }
+  .seg { display:grid; grid-template-columns:repeat(3,1fr); background:rgba(241,235,221,.08); border-radius:9px; padding:3px; }
+  .seg button { border:0; background:none; color:rgba(241,235,221,.75); padding:7px 0; border-radius:7px; cursor:pointer; font-size:12px; }
+  .seg button[aria-pressed="true"] { background:var(--ivory); color:var(--ink); }
+  .rail .tiny { font-size:12px; color:var(--lav); padding:0 4px; }
+  .rail .out { background:none; border:0; color:rgba(241,235,221,.7); text-align:left; padding:8px 4px; cursor:pointer; font-size:13px; }
+  .mtop { display:none; }
+  main { min-width:0; padding:28px clamp(18px,3vw,44px) 60px; }
+  .ph1 { display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap:wrap; margin-bottom:24px; }
+  .ph1 h1 { margin:0; font-family:var(--serif); font-weight:400; font-size:clamp(36px,4vw,54px); line-height:1; letter-spacing:-.01em; }
+  .ph1 .d { color:var(--muted); margin-top:6px; }
+  .bt { display:inline-flex; align-items:center; gap:8px; height:40px; padding:0 16px; border-radius:9px; border:1px solid var(--hair); background:var(--panel); cursor:pointer; text-decoration:none; font-size:14px; }
+  .bt.pr { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .bt.bl { background:var(--blue); color:#fff; border-color:var(--blue); }
+  .pn { background:var(--panel); border:1px solid var(--hair); border-radius:16px; padding:20px 22px; min-width:0; }
+  .pn h2 { margin:0; font-size:15px; font-weight:500; } .pn .hd { display:flex; justify-content:space-between; align-items:baseline; gap:12px; margin-bottom:14px; } .pn .hd a, .pn .hd span { font-size:13px; color:var(--muted); }
+  .g2 { display:grid; grid-template-columns:1.55fr 1fr; gap:18px; } .g3 { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; } .gap { height:18px; }
+  @media (max-width:1100px){ .g2, .g3 { grid-template-columns:1fr; } }
+  .muted { color:var(--muted); }
+  /* index hero */
+  .ix { display:grid; grid-template-columns:auto 1fr; gap:28px; align-items:end; }
+  .ix .big { font-family:var(--serif); font-size:clamp(96px,10vw,148px); line-height:.78; letter-spacing:-.03em; }
+  .ix .delta { color:var(--ok); font-weight:500; } .ix .lbl { color:var(--muted); margin-bottom:8px; }
+  .chart { width:100%; height:auto; display:block; }
+  @media (max-width:640px){ .ix { grid-template-columns:1fr; } }
+  .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border-top:1px solid var(--hair); margin-top:20px; }
+  .stats div { padding:16px 16px 2px 0; } .stats div + div { padding-left:16px; border-left:1px solid var(--hair); }
+  .stats b { display:block; font-family:var(--serif); font-weight:400; font-size:34px; line-height:1; margin-top:6px; } .stats span { color:var(--muted); font-size:13px; } .stats em { font-style:normal; font-size:12px; color:var(--ok); }
+  @media (max-width:760px){ .stats { grid-template-columns:repeat(2,1fr); } .stats div:nth-child(3) { border-left:0; padding-left:0; } }
+  .want a { display:block; text-decoration:none; padding:14px 0; border-top:1px solid var(--hair); } .want a:first-of-type { border-top:0; padding-top:4px; }
+  .want .t { font-size:12px; color:var(--muted); } .want .h { font-family:var(--serif); font-size:21px; line-height:1.15; margin:3px 0; } .want .n { color:var(--ink2); }
+  .dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--blue); margin-right:6px; vertical-align:1px; }
+  .axes { display:grid; gap:14px; }
+  .axes .r { display:grid; grid-template-columns:96px 1fr 34px; gap:12px; align-items:center; }
+  .bar { position:relative; height:8px; border-radius:4px; background:var(--soft); }
+  .bar i { position:absolute; left:0; top:0; bottom:0; border-radius:4px; background:var(--blue); }
+  .bar u { position:absolute; top:-4px; width:2px; height:16px; background:var(--ink); opacity:.35; }
+  .axes .v { text-align:right; font-variant-numeric:tabular-nums; }
+  table.t { width:100%; border-collapse:collapse; } .t th { text-align:left; font-weight:400; color:var(--muted); font-size:12.5px; padding:0 8px 10px 0; } .t td { padding:12px 8px 12px 0; border-top:1px solid var(--hair); vertical-align:middle; } .t td.num { text-align:right; font-family:var(--serif); font-size:22px; } .t tr.click { cursor:pointer; } .t tr.click:hover td { background:var(--bg); }
+  .chip { display:inline-block; font-size:12px; padding:3px 8px; border-radius:999px; background:var(--soft); color:var(--ink2); white-space:nowrap; }
+  .chip.b { background:#E7E5FD; color:var(--navy); } .chip.g { background:#E3F1EA; color:var(--ok); } .chip.w { background:#F8E8DF; color:var(--warn); }
+  /* replays */
+  .rp { display:grid; grid-template-columns:minmax(300px,1fr) 1.3fr; gap:18px; align-items:start; }
+  @media (max-width:1100px){ .rp { grid-template-columns:1fr; } }
+  .filters { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; } .filters button { border:1px solid var(--hair); background:var(--panel); border-radius:999px; padding:7px 13px; cursor:pointer; font-size:13px; } .filters button[aria-pressed="true"] { background:var(--ink); color:#fff; border-color:var(--ink); }
+  .rl { display:flex; flex-direction:column; }
+  .ri { display:grid; grid-template-columns:22px 1fr auto; gap:12px; align-items:center; padding:13px 6px; border-top:1px solid var(--hair); cursor:pointer; border-radius:8px; }
+  .ri:hover { background:var(--bg); } .ri.sel { background:#EEECFE; }
+  .ri input { width:16px; height:16px; accent-color:var(--blue); }
+  .ri .ti { font-size:14.5px; } .ri .me2 { font-size:12.5px; color:var(--muted); } .ri .sc { font-family:var(--serif); font-size:26px; }
+  .ri.lock { cursor:default; opacity:.55; }
+  .det .verdict { font-family:var(--serif); font-size:28px; line-height:1.12; margin:6px 0 18px; }
+  .quote { border-left:3px solid var(--blue); padding:6px 0 6px 14px; margin:16px 0; } .quote em { font-family:var(--serif); font-size:21px; display:block; margin-top:2px; }
+  .tx { display:flex; flex-direction:column; gap:10px; margin-top:12px; max-height:340px; overflow:auto; padding-right:6px; }
+  .tx div { max-width:86%; padding:10px 13px; border-radius:14px; background:var(--soft); line-height:1.45; } .tx div.u { align-self:flex-end; background:#ECEAFE; } .tx div.hl { box-shadow:0 0 0 2px var(--blue); } .tx small { display:block; font-size:11.5px; color:var(--muted); margin-bottom:2px; }
+  .alts { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:12px; } .alts div { background:var(--bg); border-radius:12px; padding:12px 14px; } .alts b { font-weight:500; font-size:12.5px; color:var(--muted); display:block; margin-bottom:4px; } .alts span { font-family:var(--serif); font-size:18px; line-height:1.2; }
+  .cmp { display:grid; grid-template-columns:110px 1fr 1fr 60px; gap:10px; align-items:center; padding:10px 0; border-top:1px solid var(--hair); } .cmp.h { border-top:0; color:var(--muted); font-size:12.5px; }
+  .up { color:var(--ok); } .down { color:var(--warn); }
+  /* lock */
+  .locked { position:relative; overflow:hidden; } .locked > .inner { filter:blur(5px); pointer-events:none; user-select:none; opacity:.6; }
+  .locked > .gate { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; text-align:center; padding:20px; background:rgba(247,244,238,.55); }
+  .locked > .gate b { font-family:var(--serif); font-weight:400; font-size:26px; }
+  /* patterns */
+  .tl { display:flex; flex-direction:column; } .tl .r { display:grid; grid-template-columns:1fr 160px 90px; gap:16px; align-items:center; padding:14px 0; border-top:1px solid var(--hair); } .tl .r:first-child { border-top:0; } .tl q { display:block; font-family:var(--serif); font-size:17px; color:var(--ink2); margin-top:2px; quotes:'“' '”'; }
+  @media (max-width:700px){ .tl .r { grid-template-columns:1fr; gap:8px; } }
+  /* wardrobe */
+  .occ { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:16px; } .occ button { border:1px solid var(--hair); background:var(--panel); border-radius:10px; padding:10px 14px; cursor:pointer; text-align:left; } .occ button[aria-pressed="true"] { border-color:var(--ink); box-shadow:inset 0 0 0 1px var(--ink); }
+  .closet { display:grid; grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); gap:12px; }
+  .it { border:1px solid var(--hair); border-radius:12px; overflow:hidden; background:var(--panel); transition:box-shadow .3s, opacity .3s; } .it .sw { height:96px; display:flex; align-items:center; justify-content:center; } .it .sw img { height:90px; object-fit:contain; } .it .l { padding:8px 10px; font-size:12.5px; line-height:1.3; }
+  .it.pick { box-shadow:0 0 0 2px var(--blue); } .closet.picking .it:not(.pick) { opacity:.4; }
+  .look { background:var(--ink); color:var(--ivory); border-radius:16px; padding:20px 22px; } .look h3 { margin:0 0 6px; font-family:var(--serif); font-weight:400; font-size:28px; } .look p { margin:0; color:var(--pale); }
+  /* issued */
+  .pieces { display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:16px; }
+  .piece { border:1px solid var(--hair); border-radius:16px; overflow:hidden; background:var(--panel); } .piece .im { background:var(--soft); aspect-ratio:5/4; display:flex; align-items:center; justify-content:center; } .piece .im img { height:88%; object-fit:contain; } .piece .bd { padding:14px 16px; display:grid; gap:6px; } .piece .n { font-family:var(--serif); font-size:22px; line-height:1.1; } .piece .no { font-family:var(--mono); font-size:12px; color:var(--blue); }
+  .rec { display:grid; grid-template-columns:auto 1fr; gap:4px 14px; font-size:13px; } .rec span:nth-child(odd) { color:var(--muted); }
+  .prog { height:8px; border-radius:4px; background:var(--soft); overflow:hidden; } .prog i { display:block; height:100%; background:var(--blue); }
+  .inv { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; } .card2 { background:var(--paper); border:1px solid var(--hair); border-radius:14px; padding:18px; display:grid; gap:8px; } .card2 .code { font-family:var(--mono); font-size:15px; letter-spacing:.08em; }
+  /* league */
+  .you td { background:#EEECFE; }
+  /* dispatch */
+  .paper { background:#FFFDF8; border:1px solid var(--hair); border-radius:6px; max-width:780px; margin:0 auto; padding:clamp(28px,5vw,60px); box-shadow:0 30px 60px -40px rgba(13,11,30,.3); }
+  .paper .mast { display:flex; justify-content:space-between; align-items:baseline; border-bottom:2px solid var(--ink); padding-bottom:12px; } .paper .mast b { font-family:var(--serif); font-weight:400; font-size:44px; line-height:1; }
+  .paper h3 { font-family:var(--serif); font-weight:400; font-size:30px; line-height:1.1; margin:26px 0 8px; } .paper p { margin:0 0 10px; color:var(--ink2); line-height:1.6; font-size:15px; }
+  .paper .cols2 { display:grid; grid-template-columns:1fr 1fr; gap:28px; } @media (max-width:640px){ .paper .cols2 { grid-template-columns:1fr; } }
+  /* soon */
+  .soonbar { display:flex; gap:14px; align-items:center; background:#EEECFE; color:var(--navy); border-radius:14px; padding:14px 18px; margin-bottom:18px; }
+  .sess { display:grid; grid-template-columns:120px 1fr auto; gap:16px; align-items:center; padding:16px 0; border-top:1px solid var(--hair); } .sess:first-of-type { border-top:0; } .sess .w { font-size:13px; color:var(--muted); } .sess .h { font-family:var(--serif); font-size:22px; line-height:1.1; }
+  @media (max-width:640px){ .sess { grid-template-columns:1fr; gap:6px; } }
+  /* mobile shell */
+  @media (max-width:900px){
+    .app.on { grid-template-columns:minmax(0,1fr); }
+    .mtop { min-width:0; }
+    .rail { display:none; }
+    .mtop { display:flex; position:sticky; top:0; z-index:20; flex-direction:column; background:var(--ink); color:var(--ivory); }
+    .mtop .row { display:flex; justify-content:space-between; align-items:center; padding:12px 16px; } .mtop .row b { font-family:var(--serif); font-weight:400; font-size:26px; } .mtop .row span { font-size:12px; color:var(--lav); }
+    .mtop nav { display:flex; gap:4px; overflow-x:auto; padding:0 12px 10px; scrollbar-width:none; } .mtop nav::-webkit-scrollbar { display:none; }
+    .mtop nav a { flex:none; padding:8px 12px; border-radius:999px; text-decoration:none; color:rgba(241,235,221,.8); font-size:13.5px; } .mtop nav a[aria-current="page"] { background:var(--ivory); color:var(--ink); }
+    main { padding:20px 16px 48px; }
+  }
+  @media print { .rail, .mtop, .noprint { display:none!important; } .app.on { display:block; } main { padding:0; } body { background:#fff; } .paper { box-shadow:none; border:0; } }
+</style>
+</head>
+<body>
+
+<section class="ent" id="ent" aria-label="Members' entrance">
+  <div class="pic" role="img" aria-label="A portrait after Sargent in Kleos blue"><a href="index.html">Kleos</a></div>
+  <div class="box">
+    <h1>Members</h1>
+    <p>Your app, on a bigger screen: every read, every replay, your patterns, your pieces. Use the email you signed up with in the app.</p>
+    <form id="ef" novalidate>
+      <label class="sr" for="ee">Email</label>
+      <input id="ee" type="email" placeholder="Your email" autocomplete="email">
+      <button class="btn fill" type="submit">Email me a sign-in link</button>
+      <div class="msg" id="em" role="status"></div>
+    </form>
+    <div class="or">or</div>
+    <button class="btn" id="demo" type="button">Look around as a sample member</button>
+    <a class="note" href="index.html" style="color:var(--ink2)">Back to Kleos</a>
+  </div>
+</section>
+
+<div class="app" id="app">
+  <aside class="rail" aria-label="Members">
+    <a class="brand" href="index.html"><b>Kleos</b><span>Members</span></a>
+    <div class="me"><div class="av" aria-hidden="true"></div><div><div class="nm" id="mnm">Theo</div><div class="tr" id="mtr">Kleos Black · Nº 0087</div></div></div>
+    <nav class="menu" id="menu"></nav>
+    <div class="bottom">
+      <span class="tiny">Preview as</span>
+      <div class="seg" id="seg"><button data-t="free">Free</button><button data-t="plus">Kleos+</button><button data-t="black">Black</button></div>
+      <span class="tiny">Synced from the app 2 minutes ago</span>
+      <button class="out" id="out">Sign out</button>
+    </div>
+  </aside>
+  <div class="mtop"><div class="row"><a href="index.html" style="text-decoration:none"><b>Kleos</b></a><span id="mtr2">Black · Nº 0087</span></div><nav id="mnav"></nav></div>
+  <main id="main" tabindex="-1"></main>
+</div>
+
+<script src="k.js"></script>
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const S = K.store;
+const VIEWS = [
+  ['g','From the app',''],
+  ['overview','Overview',''], ['replays','Replays',''], ['patterns','Patterns',''],
+  ['g','Only here',''],
+  ['sessions','Sessions','Soon'], ['wardrobe','Wardrobe',''], ['issued','Issued',''], ['league','League',''], ['dispatch','Dispatch','']
+];
+const NEED = { wardrobe:'black', league:'plus' };
+const TIERNAME = { free:'Free', plus:'Kleos+', black:'Kleos Black' };
+let tier = S.get('kleos.tier','black');
+const rank = t => ({ free:0, plus:1, black:2 })[t];
+const can = need => rank(tier) >= rank(need || 'free');
+
+// ---------- sample member data (mirrors what the app stores) ----------
+const D = {
+  name:'Theo', no:87,
+  index:[58,57,59,61,62,63,62,66,67,69,70,74], events:{3:'First date',7:'Interview',11:'Toast'},
+  axes:[['Voice',71,66],['Command',68,61],['Composure',80,77],['Awareness',66,64],['Landed',77,70]],
+  reads:[
+    { id:1, mode:'Live', title:'The maître d’, no table', when:'Today, 19:12', dur:'3:02', score:74, verdict:'You held the ask. You gave it away on the apology.',
+      turn:{ at:'1:14', q:'Sorry, I know it’s a lot to ask.', what:'He stopped looking for a way to help and started looking for a way out.' },
+      tx:[['c','You’re not on the list, and we’re full until eleven. What would you like me to do?'],['u','Hi, yes, we’re four, we were hoping to eat around nine.'],['c','As I said, we’re full.'],['u','Sorry, I know it’s a lot to ask.',1],['c','It is, a little. You could try the bar.'],['u','We’ll be quick. If the corner opens, we’d love it.'],['c','Leave me a name.']],
+      alts:[['Warm','“We’re four, we’ll be quick, and we’d love the corner if it opens.”'],['Direct','“Put us down for the first table that turns. We’ll be at the bar.”']], ax:[72,66,80,64,77] },
+    { id:2, mode:'Rehearse', title:'Second round, the failure question', when:'Mon, 21:40', dur:'4:40', score:70, verdict:'Good story, told too fast. Slow down when it gets hard.',
+      turn:{ at:'2:05', q:'So, um, basically, it didn’t go to plan.', what:'The filler arrived right when the interviewer leaned in.' },
+      tx:[['c','Tell me about a time something you led failed.'],['u','Last spring I ran a launch that missed its date by six weeks.'],['c','What happened?'],['u','So, um, basically, it didn’t go to plan.',1],['c','Go on.'],['u','I’d promised the date before I’d checked with the people who had to hit it.']],
+      alts:[['Plain','“It missed by six weeks, and that was on me.”'],['Measured','“I promised a date before I’d asked the team. Here’s what I do now.”']], ax:[66,63,74,68,71] },
+    { id:3, mode:'Open Floor', title:'The rooftop story', when:'Sat, 23:05', dur:'1:00', score:81, verdict:'Best minute this month. The pause before the punchline did the work.',
+      turn:{ at:'0:41', q:'…and then the lights went out.', what:'You waited a full second. That’s the laugh.' },
+      tx:[['u','So we get to the roof and there’s nobody there.'],['u','Not a soul. Twelve of us, in black tie.'],['u','…and then the lights went out.',1]],
+      alts:[['Tighter','Cut the first line; start on the roof.'],['Bigger','Hold the pause half a second longer.']], ax:[84,76,82,70,85] },
+    { id:4, mode:'Duel', title:'Duel with Marco: city or coast', when:'Fri, 18:30', dur:'3:05', score:68, verdict:'You won the point and lost the room. Let him finish.',
+      turn:{ at:'1:50', q:'No, no, listen—', what:'Interrupting cost you more than the argument won.' },
+      tx:[['c','Marco: the coast wins. Nobody retires to a city.'],['u','People retire to cities all the time, Madrid is full of—'],['c','Marco: let me finish.'],['u','No, no, listen—',1]],
+      alts:[['Generous','“Finish, then I’ll tell you why you’re wrong.”'],['Calm','Wait. Then: “Madrid. Name a coast with better dinners.”']], ax:[70,72,58,60,66] },
+    { id:5, mode:'Live', title:'Asking for the raise', when:'12 Oct', dur:'5:10', score:66, verdict:'The number came out as a question.', turn:{ at:'3:30', q:'Maybe something like… ninety?', what:'Rising pitch on the number invited a counter.' }, tx:[['u','Maybe something like… ninety?',1]], alts:[['Firm','“Ninety. Here’s why.”'],['Soft','“I’m looking for ninety, and I think the year backs it.”']], ax:[62,58,70,66,64] },
+    { id:6, mode:'Open Floor', title:'Introducing yourself, cold', when:'10 Oct', dur:'1:00', score:63, verdict:'You apologised for your own name.', turn:{ at:'0:06', q:'Sorry, I’m Theo.', what:'Lead with the name, not the sorry.' }, tx:[['u','Sorry, I’m Theo.',1]], alts:[['Clean','“Theo. Good to meet you.”'],['Warm','“I’m Theo. I know the host from Madrid.”']], ax:[60,55,68,62,61] },
+  ],
+  tells:[ ['Filler before a number','cleared',100,'Fourteen. Not “like, fourteen-ish.”'], ['Looking down on the ask','working',62,'Hold their eyes for the whole question.'], ['Speeding up when challenged','working',45,'Slower is the answer.'], ['Apologising before an opinion','new',12,'Say it once. Don’t cushion it.'], ['Ending on a question','cleared',100,'Land the sentence.'] ],
+  fillers:[4.1,3.8,3.9,3.3,3.0,2.8,2.9,2.4,2.2,2.0,1.9,1.8],
+  words:[['so',41],['basically',22],['like',19],['sorry',14],['kind of',9]],
+  closet:[ ['Navy blazer','#1E2340',null], ['White oxford','#F7F6F2','oxford_f'], ['Cream linen trouser','#E8DFC9','linen_trouser_f'], ['Grey flannel trouser','#8C8C90',null], ['Brown suede loafer','#7A5233',null], ['The Quarter-zip','#F1EBDD','quarterzip_f'], ['Striped trouser','#fff','stripe_trouser_f'], ['Villa Kleos tee','#fff','villa_tee_f'], ['Black knit polo','#1A1A1F',null], ['White trainers','#F4F4F4',null] ],
+  looks:{
+    dinner:{ name:'Dinner, West Village', items:['Navy blazer','White oxford','Grey flannel trouser','Brown suede loafer'], note:'One level above the room, not two. Leave the top button open and lose the tie.' },
+    deck:{ name:'Lunch on a boat', items:['Villa Kleos tee','Striped trouser','Brown suede loafer'], note:'Stripes on the bottom, one print up top, nothing else. Sleeves rolled once.' },
+    interview:{ name:'Interview, a bank', items:['Navy blazer','White oxford','Grey flannel trouser','Brown suede loafer'], note:'Navy says you’ve done this before. Shoes polished; that’s the detail they see.' },
+    late:{ name:'Late, somewhere loud', items:['Black knit polo','Cream linen trouser','White trainers'], note:'Dark on top so you disappear into the room until you speak.' },
+  },
+  pieces:[ ['villa_tee','Villa Kleos',87,'2 Nov','74'], ['quarterzip','The Quarter-zip',87,'2 Nov','74'] ],
+  league:[ ['Inès',81,'+4'], ['Theo',74,'+6'], ['Marco',72,'+1'], ['Sofía',69,'+3'], ['James',64,'−2'], ['Aurélie',61,'+5'] ],
+};
+const fmtNo = n => 'Nº ' + String(n).padStart(4,'0');
+
+// ---------- charts ----------
+function lineChart(vals, { w=640, h=200, min=50, max=86, mark=80, markLabel='Laurel Cap', events={}, dates=['Jul','Aug','Sep','Oct'] }={}) {
+  const pl=8, pr=40, pt=16, pb=26, W=w-pl-pr, H=h-pt-pb;
+  const x=i=>pl+i*(W/(vals.length-1)), y=v=>pt+H-(v-min)/(max-min)*H;
+  const d=vals.map((v,i)=>`${i?'L':'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`).join(' ');
+  const area=d+` L${x(vals.length-1)} ${pt+H} L${x(0)} ${pt+H} Z`;
+  const ev=Object.entries(events).map(([i,l])=>`<circle cx="${x(+i)}" cy="${y(vals[+i])}" r="4" fill="#fff" stroke="#0D0B1E" stroke-width="1.5"/><text x="${x(+i)}" y="${y(vals[+i])-12}" text-anchor="middle" font-size="11" fill="#6B6880">${l}</text>`).join('');
+  const last=vals.length-1;
+  return `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="Aura Index over twelve weeks, from ${vals[0]} to ${vals[last]}">
+    <defs><linearGradient id="ga" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1608F2" stop-opacity=".14"/><stop offset="1" stop-color="#1608F2" stop-opacity="0"/></linearGradient></defs>
+    ${mark?`<line x1="${pl}" x2="${pl+W}" y1="${y(mark)}" y2="${y(mark)}" stroke="#0D0B1E" stroke-opacity=".3" stroke-dasharray="3 4"/><text x="${pl+W+6}" y="${y(mark)+4}" font-size="11" fill="#6B6880">${mark}</text><text x="${pl+W-4}" y="${y(mark)-6}" font-size="11" fill="#6B6880" text-anchor="end">${markLabel}</text>`:''}
+    <path d="${area}" fill="url(#ga)"/><path d="${d}" fill="none" stroke="#1608F2" stroke-width="2.5" stroke-linejoin="round"/>
+    ${ev}<circle cx="${x(last)}" cy="${y(vals[last])}" r="5.5" fill="#1608F2"/><text x="${x(last)+10}" y="${y(vals[last])+5}" font-size="13" font-weight="600" fill="#0D0B1E">${vals[last]}</text>
+    ${dates.map((m,i)=>`<text x="${pl+i*(W/(dates.length-1))}" y="${h-6}" font-size="11" fill="#6B6880" text-anchor="${i===0?'start':i===dates.length-1?'end':'middle'}">${m}</text>`).join('')}
+  </svg>`;
+}
+const axesHTML = (rows) => `<div class="axes">${rows.map(([n,v,p])=>`<div class="r"><span>${n}</span><div class="bar" role="img" aria-label="${n} ${v}, last month ${p}"><i style="width:${v}%"></i>${p!=null?`<u style="left:${p}%"></u>`:''}</div><span class="v">${v}</span></div>`).join('')}</div>`;
+const lockWrap = (need, inner) => can(need) ? inner : `<div class="locked"><div class="inner">${inner}</div><div class="gate"><b>Opens with ${TIERNAME[need]}</b><span class="muted">${need==='black'?'Black is free for a month with any piece from the collection.':'Unlimited reads, full history and every replay.'}</span><a class="bt pr" href="poise.html#tiers">See the plans</a></div></div>`;
+
+// ---------- views ----------
+const V = {};
+V.overview = () => {
+  const vals = tier==='free' ? D.index.slice(-4) : D.index;
+  const h = new Date().getHours(); const hello = h<12?'Good morning':h<18?'Good afternoon':'Good evening';
+  return `<div class="ph1"><div><h1>${hello}, ${D.name}.</h1><div class="d">${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})} · week 6 of the Path</div></div><div style="display:flex;gap:8px"><a class="bt" href="#dispatch">This week’s Dispatch</a><a class="bt pr" href="#replays">Open the latest read</a></div></div>
+  <div class="g2">
+    <section class="pn" aria-labelledby="h-ix"><div class="hd"><h2 id="h-ix">Aura Index</h2><span>${tier==='free'?'Last 4 weeks':'12 weeks'}</span></div>
+      <div class="ix"><div><div class="lbl">Today</div><div class="big">74</div><div class="delta">+6 this month</div></div><div>${lineChart(vals,{ events: tier==='free'?{}:D.events, dates: tier==='free'?['Sep 22','Oct 15']:['Jul','Aug','Sep','Oct'] })}</div></div>
+      <div class="stats"><div><span>Live minutes, 30 days</span><b>212</b></div><div><span>Tells cleared</span><b>2 <small style="font-size:16px" class="muted">of 5</small></b></div><div><span>Fillers per minute</span><b>1.8</b><em>was 4.1</em></div><div><span>Side Quest streak</span><b>23</b><em>days</em></div></div>
+    </section>
+    <section class="pn want" aria-labelledby="h-w"><div class="hd"><h2 id="h-w">Wants you</h2><span>3</span></div>
+      <a href="#replays"><div class="t"><span class="dot"></span>Rehearse · tomorrow 10:00</div><div class="h">Second round at the bank.</div><div class="n">Poise built twelve minutes from your last two reads. Run it tonight.</div></a>
+      <a href="#dispatch"><div class="t">Sunday re-read</div><div class="h">Week 6 is waiting.</div><div class="n">Your best moment was the pause before the punchline. Confirm it.</div></a>
+      <a href="#issued"><div class="t">The Laurel Cap</div><div class="h">Six points away.</div><div class="n">At 80 it ships, with your number inside.</div></a>
+    </section>
+  </div>
+  <div class="gap"></div>
+  <div class="g2">
+    <section class="pn" aria-labelledby="h-rr"><div class="hd"><h2 id="h-rr">Recent reads</h2><a href="#replays">All replays</a></div>
+      <table class="t"><thead><tr><th>Read</th><th>Mode</th><th>When</th><th style="text-align:right">Score</th></tr></thead><tbody>
+      ${D.reads.slice(0,4).map(r=>`<tr class="click" data-r="${r.id}"><td>${r.title}</td><td><span class="chip ${r.mode==='Live'?'b':''}">${r.mode}</span></td><td class="muted">${r.when}</td><td class="num">${r.score}</td></tr>`).join('')}
+      </tbody></table></section>
+    <section class="pn" aria-labelledby="h-ax"><div class="hd"><h2 id="h-ax">The five</h2><span>This month · line shows last month</span></div>${axesHTML(D.axes)}</section>
+  </div>`;
+};
+let selRead = 1, cmpSel = new Set(), modeF = 'All';
+V.replays = () => {
+  const visible = tier==='free' ? 3 : D.reads.length;
+  const modes = ['All','Live','Rehearse','Open Floor','Duel'];
+  const list = D.reads.filter(r => modeF==='All' || r.mode===modeF);
+  const r = D.reads.find(x=>x.id===selRead) || D.reads[0];
+  const cmp = [...cmpSel].map(id=>D.reads.find(x=>x.id===id));
+  const names=['Voice','Command','Composure','Awareness','Landed'];
+  const detail = cmp.length===2 ? `<section class="pn det"><div class="hd"><h2>Comparing two reads</h2><button class="bt" id="clr">Clear</button></div>
+      <div class="cmp h"><span></span><span>${cmp[0].title}</span><span>${cmp[1].title}</span><span style="text-align:right">Change</span></div>
+      ${names.map((n,i)=>{ const a=cmp[0].ax[i], b=cmp[1].ax[i], d=b-a; return `<div class="cmp"><span>${n}</span><span>${a}</span><span>${b}</span><span style="text-align:right" class="${d>=0?'up':'down'}">${d>=0?'+':''}${d}</span></div>`; }).join('')}
+      <div class="cmp"><span><b>Score</b></span><span>${cmp[0].score}</span><span>${cmp[1].score}</span><span style="text-align:right" class="${cmp[1].score-cmp[0].score>=0?'up':'down'}">${cmp[1].score-cmp[0].score>=0?'+':''}${cmp[1].score-cmp[0].score}</span></div></section>`
+    : `<section class="pn det" aria-labelledby="h-det"><div class="hd"><h2 id="h-det">${r.title}</h2><span>${r.mode} · ${r.when} · ${r.dur}</span></div>
+      <div style="display:flex;justify-content:space-between;gap:16px;align-items:flex-start"><div class="verdict">${r.verdict}</div><div style="font-family:var(--serif);font-size:64px;line-height:.8">${r.score}</div></div>
+      ${axesHTML(names.map((n,i)=>[n,r.ax[i],null]))}
+      <div class="quote"><span class="muted">At ${r.turn.at} it turned</span><em>“${r.turn.q}”</em><span class="muted">${r.turn.what}</span></div>
+      <div class="hd" style="margin:18px 0 0"><h2>Two ways in</h2></div><div class="alts">${r.alts.map(([a,b])=>`<div><b>${a}</b><span>${b}</span></div>`).join('')}</div>
+      <div class="hd" style="margin:20px 0 0"><h2>Transcript</h2><span>The turn is outlined</span></div>
+      <div class="tx">${r.tx.map(([who,t,hl])=>`<div class="${who==='u'?'u':''} ${hl?'hl':''}"><small>${who==='u'?'You':'Poise'}</small>${t}</div>`).join('')}</div></section>`;
+  return `<div class="ph1"><div><h1>Replays</h1><div class="d">Every read you’ve taken in the app. Tick two to compare.</div></div></div>
+  <div class="rp"><section class="pn" aria-label="All reads"><div class="filters">${modes.map(m=>`<button aria-pressed="${m===modeF}" data-m="${m}">${m}</button>`).join('')}</div>
+    <div class="rl">${list.map((x,i)=>{ const lk = D.reads.indexOf(x) >= visible; return `<div class="ri ${x.id===selRead&&cmp.length<2?'sel':''} ${lk?'lock':''}" data-r="${lk?'':x.id}" ${lk?'aria-disabled="true"':''}>${lk?'<span aria-hidden="true">·</span>':`<input type="checkbox" aria-label="Compare ${x.title}" data-c="${x.id}" ${cmpSel.has(x.id)?'checked':''}>`}<div><div class="ti">${x.title}</div><div class="me2">${lk?'Opens with Kleos+':`${x.mode} · ${x.when}`}</div></div><div class="sc">${lk?'':x.score}</div></div>`; }).join('')}</div></section>
+    ${detail}</div>`;
+};
+V.patterns = () => {
+  const inner = `<div class="g2"><section class="pn" aria-labelledby="h-t"><div class="hd"><h2 id="h-t">Your tells</h2><span>From every read</span></div><div class="tl">
+    ${D.tells.map(([n,s,p,q])=>`<div class="r"><div>${n}<q>${q}</q></div><div class="prog" role="img" aria-label="${p}% cleared"><i style="width:${p}%"></i></div><span class="chip ${s==='cleared'?'g':s==='working'?'b':'w'}">${s==='cleared'?'Cleared':s==='working'?'Working on it':'New'}</span></div>`).join('')}</div></section>
+    <div style="display:grid;gap:18px"><section class="pn" aria-labelledby="h-f"><div class="hd"><h2 id="h-f">Fillers per minute</h2><span>12 weeks</span></div>${lineChart(D.fillers,{min:1,max:4.5,mark:0,events:{},w:420,h:170})}</section>
+    <section class="pn" aria-labelledby="h-wd"><div class="hd"><h2 id="h-wd">Your words</h2><span>Times said, last 30 days</span></div><div class="axes">${D.words.map(([w,c])=>`<div class="r"><span>“${w}”</span><div class="bar" role="img" aria-label="${w}, ${c} times"><i style="width:${c/41*100}%"></i></div><span class="v">${c}</span></div>`).join('')}</div></section></div></div>`;
+  return `<div class="ph1"><div><h1>Patterns</h1><div class="d">What keeps showing up, and what you’ve already beaten.</div></div></div>${lockWrap('plus', inner)}`;
+};
+V.sessions = () => `<div class="ph1"><div><h1>Sessions</h1><div class="d">Thirty minutes with a person, who has read your replays first.</div></div></div>
+  <div class="soonbar"><span class="dot"></span><span>Sessions open this winter. Hold a seat and we’ll email you when booking starts.</span></div>
+  <section class="pn">${[
+    ['Thu 22 Oct, 19:00','The interview room','Six members, one coach, live reads on the big screen.','plus'],
+    ['Sat 24 Oct, 11:00','One to one','A coach reads your last ten replays, then thirty minutes together.','black'],
+    ['Sun, 20:00','The Sunday re-read','Everyone takes the same prompt. Results read out at the end.','free'],
+    ['Thu 29 Oct, 19:00','Toasts and speeches','Bring the one you’re dreading.','plus'],
+  ].map(([w,h,n,need],i)=>{ const held=S.get('kleos.seat'+i,false); return `<div class="sess"><div class="w">${w}</div><div><div class="h">${h}</div><div class="muted">${n}</div></div>${can(need)?`<button class="bt ${held?'':'pr'}" data-seat="${i}" aria-pressed="${held}">${held?'Seat held':'Hold a seat'}</button>`:`<a class="bt" href="poise.html#tiers">${TIERNAME[need]}</a>`}</div>`; }).join('')}</section>`;
+let occ = 'dinner';
+V.wardrobe = () => {
+  const L = D.looks[occ];
+  const inner = `<div class="occ">${Object.entries(D.looks).map(([k,v])=>`<button aria-pressed="${k===occ}" data-o="${k}">${v.name}</button>`).join('')}</div>
+   <div class="g2"><section class="pn" aria-labelledby="h-cl"><div class="hd"><h2 id="h-cl">Your closet</h2><span>${D.closet.length} pieces scanned in the app</span></div>
+     <div class="closet picking">${D.closet.map(([n,c,img])=>`<div class="it ${L.items.includes(n)?'pick':''}"><div class="sw" style="background:${img?'#F1EDE4':c}">${img?`<img src="img/${img}.webp" alt="">`:''}</div><div class="l">${n}</div></div>`).join('')}</div></section>
+   <div class="look"><span class="muted" style="color:var(--lav)">Poise’s pick</span><h3>${L.name}</h3><p>${L.note}</p><ul style="margin:16px 0 0;padding-left:18px;color:var(--ivory);line-height:1.8">${L.items.map(i=>`<li>${i}</li>`).join('')}</ul></div></div>`;
+  return `<div class="ph1"><div><h1>Wardrobe</h1><div class="d">Pick the room. Poise builds the look from what you own.</div></div></div>${lockWrap('black', inner)}`;
+};
+V.issued = () => `<div class="ph1"><div><h1>Issued</h1><div class="d">Your numbered pieces, what you’ve earned, and who you can bring in.</div></div><a class="bt" href="collection.html">The collection</a></div>
+  <div class="pieces">${D.pieces.map(([img,n,no,when,ix])=>`<div class="piece"><div class="im"><img src="img/${img}_f.webp" alt="${n}"></div><div class="bd"><div class="n">${n}</div><span class="no">${String(no).padStart(3,'0')} / 100</span><div class="rec"><span>Issued</span><span>${when}</span><span>Index that day</span><span>${ix}</span><span>Black, from the label</span><span>Used, 30 days</span></div><button class="bt" data-repair="${n}" style="margin-top:8px">Send for repair</button></div></div>`).join('')}
+    <div class="piece" style="display:flex;flex-direction:column"><div class="im" style="background:#ECEAFE"><img src="img/laurel_cap_f.webp" alt="The Laurel Cap"></div><div class="bd"><div class="n">The Laurel Cap</div><span class="muted">Earned at an Index of 80</span><div class="prog" role="img" aria-label="74 of 80"><i style="width:${(74-58)/(80-58)*100}%"></i></div><span class="muted">74 now. Six to go.</span></div></div></div>
+  <div class="gap"></div>
+  <div class="g2"><section class="pn" aria-labelledby="h-bars"><div class="hd"><h2 id="h-bars">Bars</h2><span>Woven, posted to you, sewn inside the hem</span></div>
+    <table class="t"><tbody>${[['Index 70','Earned 9 Oct','g'],['A 21-day streak','Earned 30 Sep','g'],['First Duel won','Earned 2 Oct','g'],['Index 80','6 points to go','b'],['A season in the League top three','Ends 31 Oct','b']].map(([a,b,c])=>`<tr><td>${a}</td><td style="text-align:right"><span class="chip ${c}">${b}</span></td></tr>`).join('')}</tbody></table></section>
+   <section class="pn" aria-labelledby="h-inv"><div class="hd"><h2 id="h-inv">Invitations</h2><span>2 left this drop</span></div>
+    <p class="muted" style="margin:0 0 14px">Each lets one person order on members’ day. No discount; just the door.</p>
+    <div class="inv">${['KLEOS-0087-A','KLEOS-0087-B'].map(c=>`<div class="card2"><span class="muted">For a friend</span><span class="code">${c}</span><button class="bt" data-copy="${c}">Copy</button></div>`).join('')}</div></section></div>`;
+V.league = () => {
+  const inner = `<div class="g2"><section class="pn" aria-labelledby="h-lg"><div class="hd"><h2 id="h-lg">This season</h2><span>Ends 31 October</span></div>
+    <table class="t"><thead><tr><th>#</th><th>Member</th><th style="text-align:right">Index</th><th style="text-align:right">This month</th></tr></thead><tbody>
+    ${D.league.map(([n,ix,d],i)=>`<tr class="${n==='Theo'?'you':''}"><td>${i+1}</td><td>${n}${n==='Theo'?' (you)':''}</td><td class="num">${ix}</td><td style="text-align:right" class="${d.startsWith('+')?'up':'down'}">${d}</td></tr>`).join('')}</tbody></table></section>
+    <section class="pn" aria-labelledby="h-du"><div class="hd"><h2 id="h-du">Duels</h2><span>Won 4, lost 2</span></div>
+    <table class="t"><tbody>${[['Marco','City or coast','Won'],['Inès','Is punctuality a virtue','Lost'],['Sofía','Should you split the bill','Won'],['James','Tipping in Europe','Won']].map(([a,b,c])=>`<tr><td>${a}<div class="muted">${b}</div></td><td style="text-align:right"><span class="chip ${c==='Won'?'g':'w'}">${c}</span></td></tr>`).join('')}</tbody></table>
+    <div style="margin-top:14px"><button class="bt pr" data-toast="Challenge sent to the app">Challenge a friend</button></div></section></div>`;
+  return `<div class="ph1"><div><h1>League</h1><div class="d">You and the friends you’ve added in the app.</div></div></div>${lockWrap('plus', inner)}`;
+};
+V.dispatch = () => `<div class="ph1 noprint"><div><h1>Dispatch</h1><div class="d">Your week on one page. Every Sunday, by email or on paper.</div></div><button class="bt pr" id="print">Print it</button></div>
+  <article class="paper"><div class="mast"><b>The Dispatch</b><span class="muted">Week 6 · ${D.name} · ${fmtNo(D.no)}</span></div>
+   <div class="cols2"><div><h3>The Index rose six.</h3><p>From 68 to 74, mostly on Composure. You took eleven reads this week, four of them live.</p>${lineChart(D.index.slice(-6),{w:320,h:130,min:60,max:82,mark:80,dates:['Sep','Oct']})}</div>
+   <div><h3>Your best minute</h3><p>Saturday, the rooftop story. You waited a full second before “and then the lights went out.” That second was the laugh.</p><h3>One thing</h3><p>Speeding up when challenged. Next time someone pushes, finish your sentence at the same pace you started it.</p></div></div>
+   <h3>This week’s Side Quests</h3><p>Monday, order for the table. Wednesday, hold eye contact through a whole toast. Friday, send something back politely.</p>
+   <p class="muted" style="margin-top:22px;font-size:13px">Kleos · Saint-Tropez · Paris · Madrid · London · New York</p></article>`;
+
+// ---------- router ----------
+const ROUTES = VIEWS.filter(v=>v[0]!=='g').map(v=>v[0]);
+function menu(cur) {
+  $('#menu').innerHTML = VIEWS.map(([k,l,s])=> k==='g' ? `<span class="grp">${l}</span>` : `<a href="#${k}" ${k===cur?'aria-current="page"':''}><span>${l}</span>${s?`<small>${s}</small>`:(NEED[k]&&!can(NEED[k])?`<small>${TIERNAME[NEED[k]]}</small>`:'')}</a>`).join('');
+  $('#mnav').innerHTML = VIEWS.filter(v=>v[0]!=='g').map(([k,l])=>`<a href="#${k}" ${k===cur?'aria-current="page"':''}>${l}</a>`).join('');
+  const cur2 = $('#mnav [aria-current]'); if (cur2) cur2.scrollIntoView({ inline:'center', block:'nearest' });
+  document.querySelectorAll('#seg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.t===tier));
+  $('#mtr').textContent = `${TIERNAME[tier]} · ${fmtNo(D.no)}`; $('#mtr2').textContent = `${TIERNAME[tier]} · ${fmtNo(D.no)}`;
+}
+function render(focus) {
+  let r = location.hash.slice(1); if (!ROUTES.includes(r)) r = 'overview';
+  menu(r); $('#main').innerHTML = V[r](); wire(r); if (focus) { $('#main').focus({ preventScroll:true }); scrollTo(0,0); }
+  document.title = 'Kleos · ' + (VIEWS.find(v=>v[0]===r)||[])[1];
+}
+function wire(r) {
+  document.querySelectorAll('tr.click[data-r]').forEach(tr=>tr.onclick=()=>{ selRead=+tr.dataset.r; cmpSel.clear(); location.hash='replays'; });
+  document.querySelectorAll('.ri[data-r]').forEach(el=>el.onclick=e=>{ if (!el.dataset.r || e.target.matches('input')) return; selRead=+el.dataset.r; cmpSel.clear(); render(); });
+  document.querySelectorAll('.ri input[data-c]').forEach(c=>c.onchange=()=>{ const id=+c.dataset.c; if (c.checked){ if (cmpSel.size>=2) cmpSel.delete([...cmpSel][0]); cmpSel.add(id); } else cmpSel.delete(id); render(); });
+  document.querySelectorAll('.filters button').forEach(b=>b.onclick=()=>{ modeF=b.dataset.m; render(); });
+  const clr=$('#clr'); if (clr) clr.onclick=()=>{ cmpSel.clear(); render(); };
+  document.querySelectorAll('.occ button').forEach(b=>b.onclick=()=>{ occ=b.dataset.o; render(); });
+  document.querySelectorAll('[data-seat]').forEach(b=>b.onclick=()=>{ const k='kleos.seat'+b.dataset.seat; const v=!S.get(k,false); S.set(k,v); K.toast(v?'Seat held. We’ll email you when booking opens.':'Seat released'); render(); });
+  document.querySelectorAll('[data-copy]').forEach(b=>b.onclick=async()=>{ try { await navigator.clipboard.writeText(b.dataset.copy); K.toast('Copied '+b.dataset.copy); } catch(_) { K.toast(b.dataset.copy); } });
+  document.querySelectorAll('[data-repair]').forEach(b=>b.onclick=()=>K.toast('We’ll email a prepaid label for '+b.dataset.repair));
+  document.querySelectorAll('[data-toast]').forEach(b=>b.onclick=()=>K.toast(b.dataset.toast));
+  const pr=$('#print'); if (pr) pr.onclick=()=>print();
+}
+function enter() { $('#ent').style.display='none'; $('#app').classList.add('on'); render(true); }
+document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>{ tier=b.dataset.t; S.set('kleos.tier',tier); render(); });
+addEventListener('hashchange', ()=>{ if ($('#app').classList.contains('on')) render(true); });
+$('#demo').onclick = () => { S.set('kleos.member','sample'); enter(); };
+$('#out').onclick = () => { S.set('kleos.member',null); $('#app').classList.remove('on'); $('#ent').style.display=''; try{history.replaceState(null,'',location.pathname);}catch(_){} };
+$('#ef').onsubmit = e => { e.preventDefault(); const v=$('#ee').value.trim(); const m=$('#em');
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { m.textContent='That doesn’t look like an email.'; return; }
+  m.textContent='Sign-in links open with the app’s release. Until then, look around as a sample member.'; };
+if (S.get('kleos.member',null)) enter();
+else if (location.hash && ROUTES.includes(location.hash.slice(1))) { /* deep link: stay on entrance */ }
+})();
+</script>
+</body>
+</html>

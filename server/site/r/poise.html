@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Kleos · Poise</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 fill=%27%231608F2%27/%3E%3Ctext x=%2732%27 y=%2747%27 font-family=%27Georgia,serif%27 font-size=%2742%27 text-anchor=%27middle%27 fill=%27%23F1EBDD%27%3EK%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="k.css">
+<style>
+  body { background:var(--ink); color:var(--ivory); }
+  .hero { position:relative; min-height:100vh; min-height:100svh; display:flex; align-items:flex-end; overflow:hidden; }
+  .hero .bg { position:absolute; inset:0; background:url(img/p_rembrandt.webp) center 28%/cover no-repeat; transform:scale(1.06); animation:settle 3s cubic-bezier(.2,.7,.2,1) forwards; }
+  @keyframes settle { to { transform:scale(1); } }
+  .hero::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(13,11,30,.15) 20%, rgba(13,11,30,.55) 60%, var(--ink) 98%); }
+  .hero .in { position:relative; z-index:2; padding:0 var(--gut) clamp(40px,7vh,80px); display:grid; grid-template-columns:1fr auto; gap:28px; align-items:end; width:100%; }
+  .hero h1 { margin:0; font-family:var(--serif); font-weight:400; font-size:clamp(130px,24vw,400px); line-height:.76; letter-spacing:-.04em; }
+  .hero .side { max-width:340px; display:flex; flex-direction:column; gap:16px; padding-bottom:1.4vw; }
+  .hero .side p { margin:0; color:var(--pale); }
+  .hero .side .first { color:var(--ivory); font-family:var(--serif); font-size:28px; line-height:1.1; }
+  .soon { display:inline-flex; align-items:center; gap:12px; min-height:52px; padding:0 22px; background:var(--ivory); color:var(--ink); text-decoration:none; font-size:15px; align-self:flex-start; }
+    @media (max-width:760px){ .hero .in { grid-template-columns:1fr; } }
+
+  .how { display:grid; grid-template-columns:1fr minmax(300px,380px); gap:clamp(32px,6vw,100px); padding:clamp(80px,10vw,150px) var(--gut); align-items:start; }
+  .steps { display:flex; flex-direction:column; }
+  .step { min-height:72vh; display:flex; flex-direction:column; justify-content:center; gap:16px; border-top:1px solid rgba(241,235,221,.14); padding:40px 0; opacity:.35; transition:opacity .5s; }
+  .step.on { opacity:1; }
+  .step .n { font-family:var(--serif); font-size:22px; color:var(--lav); }
+  .step h2 { margin:0; font-family:var(--serif); font-weight:400; font-size:clamp(52px,6vw,96px); line-height:.92; letter-spacing:-.02em; }
+  .step p { margin:0; max-width:42ch; color:var(--pale); font-size:18px; }
+  .phone { position:sticky; top:12vh; width:100%; aspect-ratio:9/19; border-radius:46px; background:#05040E; padding:12px; box-shadow:0 40px 120px rgba(22,8,242,.25), inset 0 0 0 1px rgba(241,235,221,.12); }
+  .screen { position:relative; width:100%; height:100%; border-radius:36px; overflow:hidden; background:var(--ink); }
+  .scr { position:absolute; inset:0; padding:54px 22px 26px; display:flex; flex-direction:column; gap:14px; opacity:0; transition:opacity .6s; }
+  .scr.on { opacity:1; }
+  .scr .sm { font-size:11px; color:var(--lav); }
+  .bust { width:132px; height:132px; border-radius:50%; margin:10px auto 0; background:url(img/head_blue.webp) center 22%/170% no-repeat; box-shadow:0 0 0 1px rgba(241,235,221,.2), 0 0 60px rgba(22,8,242,.5); }
+  .who { text-align:center; font-family:var(--serif); font-size:24px; line-height:1.1; }
+  .wave { display:flex; gap:4px; align-items:center; justify-content:center; height:46px; }
+  .wave i { width:4px; border-radius:2px; background:var(--ivory); animation:wv 1.1s ease-in-out infinite; }
+  @keyframes wv { 0%,100% { height:8px; } 50% { height:40px; } }
+  .cap { margin-top:auto; background:rgba(241,235,221,.06); border:1px solid rgba(241,235,221,.12); border-radius:16px; padding:14px; font-size:13.5px; line-height:1.45; }
+  .cap b { font-weight:500; color:var(--lav); display:block; margin-bottom:4px; font-size:11px; }
+  .end { display:flex; justify-content:center; } .end span { width:58px; height:58px; border-radius:50%; background:#C8343C; display:block; }
+  .score { display:flex; align-items:baseline; gap:10px; } .score b { font-family:var(--serif); font-weight:400; font-size:76px; line-height:.9; } .score span { color:var(--lav); font-size:14px; }
+  .verdict { font-family:var(--serif); font-size:22px; line-height:1.15; }
+  .ax { display:grid; gap:9px; font-size:12.5px; }
+  .ax div { display:grid; grid-template-columns:86px 1fr 26px; gap:8px; align-items:center; }
+  .ax i { height:4px; background:rgba(241,235,221,.14); border-radius:2px; position:relative; overflow:hidden; } .ax i::after { content:''; position:absolute; inset:0; width:var(--w); background:var(--blue); box-shadow:0 0 0 1px rgba(241,235,221,.15) inset; }
+  .ax s { text-decoration:none; text-align:right; color:var(--pale); }
+  .turn { border-left:2px solid var(--blue); padding:2px 0 2px 12px; font-size:13.5px; color:var(--pale); }
+  .turn em { color:var(--ivory); font-family:var(--serif); font-size:17px; }
+  .try { background:var(--blue); border-radius:16px; padding:16px; font-family:var(--serif); font-size:21px; line-height:1.2; }
+  .pill { align-self:center; border:1px solid rgba(241,235,221,.4); border-radius:999px; padding:12px 22px; font-size:14px; }
+  @media (max-width:900px){ .how { grid-template-columns:1fr; } .phone { position:relative; top:0; max-width:340px; margin:0 auto; order:-1; } .step { min-height:auto; opacity:1; padding:28px 0; } }
+
+  .inside { padding:clamp(72px,9vw,140px) var(--gut); border-top:1px solid rgba(241,235,221,.12); }
+  .inside h2, .tiers h2 { margin:0 0 40px; font-family:var(--serif); font-weight:400; font-size:clamp(46px,6vw,96px); line-height:.92; letter-spacing:-.02em; }
+  .inside ul { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr 1fr; column-gap:clamp(32px,5vw,80px); }
+  .inside li { display:grid; grid-template-columns:minmax(140px,200px) 1fr; gap:20px; padding:18px 0; border-top:1px solid rgba(241,235,221,.14); }
+  .inside li b { font-family:var(--serif); font-weight:400; font-size:26px; line-height:1.05; }
+  .inside li span { color:var(--pale); }
+  @media (max-width:900px){ .inside ul { grid-template-columns:1fr; } .inside li { grid-template-columns:1fr; gap:4px; } }
+
+  .tiers { padding:clamp(72px,9vw,140px) var(--gut); background:var(--paper); color:var(--ink); }
+  .tgrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border:1px solid var(--line); }
+  .tier { padding:clamp(24px,3vw,40px); display:flex; flex-direction:column; gap:14px; border-right:1px solid var(--line); }
+  .tier:last-child { border-right:0; }
+  .tier.plus { background:var(--blue); color:var(--ivory); }
+  .tier.black { background:var(--ink); color:var(--ivory); }
+  .tier h3 { margin:0; font-family:var(--serif); font-weight:400; font-size:48px; line-height:1; }
+  .tier .pr { font-size:15px; opacity:.85; }
+  .tier ul { margin:8px 0 0; padding:0; list-style:none; display:grid; gap:10px; font-size:15px; }
+  .tier li { padding-top:10px; border-top:1px solid currentColor; border-top-color:color-mix(in srgb, currentColor 18%, transparent); }
+  .tier .gift { margin-top:auto; font-size:13px; opacity:.8; }
+  @media (max-width:900px){ .tgrid { grid-template-columns:1fr; } .tier { border-right:0; border-bottom:1px solid var(--line); } }
+</style>
+</head>
+<body>
+<nav class="nav" data-dark="1" aria-label="Main">
+  <a class="brand" href="index.html">Kleos</a>
+  <div class="links"><a href="collection.html">Collection</a><a href="poise.html" aria-current="page">Poise</a><a href="members.html">Members</a></div>
+  <div class="right"><button class="bagbtn" data-bag data-bagcount>Bag</button></div>
+</nav>
+
+<header class="hero">
+  <div class="bg" role="img" aria-label="A young man in a gold chain, after Rembrandt, in Kleos blue"></div>
+  <div class="in">
+    <h1>Poise.</h1>
+    <div class="side">
+      <p class="first">The coach inside the Kleos app.</p>
+      <p>She listens to how you talk, not just what you say, and tells you the truth about it.</p>
+      <a class="soon" href="#tiers">Coming to the App Store</a>
+    </div>
+  </div>
+</header>
+
+<section class="how" aria-label="How it works">
+  <div class="steps">
+    <div class="step on" data-s="0"><span class="n">First</span><h2>Call her.</h2><p>Pick the moment: a first date, a pay rise, getting four people into a full restaurant. Poise plays the other side, out loud, and doesn’t make it easy.</p></div>
+    <div class="step" data-s="1"><span class="n">Then</span><h2>Hear how it went.</h2><p>The read comes back in seconds: how your voice held, where you hedged, the exact moment it turned and what they were thinking when it did.</p></div>
+    <div class="step" data-s="2"><span class="n">Again</span><h2>Run it back.</h2><p>She gives you one line to try. You go again until it sounds like you meant it the first time.</p></div>
+  </div>
+  <div class="phone" aria-hidden="true"><div class="screen">
+    <div class="scr on">
+      <span class="sm">Live · 1:42</span>
+      <div class="bust"></div>
+      <div class="who">The maître d’<br><span style="font-size:15px;color:var(--lav);font-family:var(--sans)">Friday, 9 pm, no table</span></div>
+      <div class="wave"><i style="animation-delay:-.1s"></i><i style="animation-delay:-.5s"></i><i style="animation-delay:-.3s"></i><i style="animation-delay:-.8s"></i><i style="animation-delay:-.2s"></i><i style="animation-delay:-.6s"></i><i style="animation-delay:-.4s"></i><i style="animation-delay:-.9s"></i><i style="animation-delay:-.15s"></i></div>
+      <div class="cap"><b>Poise</b>“You’re not on the list, and we’re full until eleven. What would you like me to do?”</div>
+      <div class="end"><span></span></div>
+    </div>
+    <div class="scr">
+      <span class="sm">The read</span>
+      <div class="score"><b>74</b><span>+6 since Tuesday</span></div>
+      <div class="verdict">You held the ask. You gave it away on the apology.</div>
+      <div class="ax"><div>Voice<i style="--w:71%"></i><s>71</s></div><div>Command<i style="--w:68%"></i><s>68</s></div><div>Composure<i style="--w:80%"></i><s>80</s></div><div>Awareness<i style="--w:66%"></i><s>66</s></div><div>Landed<i style="--w:77%"></i><s>77</s></div></div>
+      <div class="turn">At 1:14 it turned:<br><em>“Sorry, I know it’s a lot to ask.”</em></div>
+    </div>
+    <div class="scr">
+      <span class="sm">Run it back</span>
+      <div class="verdict" style="font-size:26px">Drop the sorry. Give him a reason to say yes.</div>
+      <div class="try">“We’re four, we’ll be quick, and we’d love the corner if it opens.”</div>
+      <div class="cap"><b>Why</b>A specific ask with an easy out lets him help you without losing face.</div>
+      <span class="pill">Go again</span>
+    </div>
+  </div></div>
+</section>
+
+<section class="inside" aria-labelledby="h-in">
+  <h2 id="h-in">What’s inside</h2>
+  <ul>
+    <li><b>Open Floor</b><span>Talk about anything for a minute and get the read.</span></li>
+    <li><b>Side Quests</b><span>A small real-world dare every day, from holding eye contact to sending back the wine.</span></li>
+    <li><b>Rehearse</b><span>Describe tomorrow’s interview or date and play it tonight.</span></li>
+    <li><b>Duels</b><span>Argue a point against a friend. Poise judges.</span></li>
+    <li><b>Fit check</b><span>A mirror photo, and what to change before you leave the house.</span></li>
+    <li><b>Wardrobe</b><span>Scan what you own; get the outfit for any room.</span></li>
+    <li><b>The Portrait</b><span>A long read of every conversation you’ve had, and who it adds up to.</span></li>
+    <li><b>The Index</b><span>One number for how you come across, and how it’s moving.</span></li>
+  </ul>
+</section>
+
+<section class="tiers" id="tiers" aria-labelledby="h-t">
+  <h2 id="h-t">Three doors</h2>
+  <div class="tgrid">
+    <div class="tier"><h3>Free</h3><div class="pr">$0</div><ul><li>The daily Side Quest</li><li>Two live calls a week, with the verdict and score</li><li>Duels with friends</li><li>Your last four weeks in the members’ area</li></ul></div>
+    <div class="tier plus"><h3>Kleos+</h3><div class="pr">$6.99 a week, or $49.99 a year</div><ul><li>Unlimited calls and the full read</li><li>Run it back and replay any moment</li><li>Patterns, cleared tells and the Index over time</li><li>Your full history and every replay on the web</li></ul></div>
+    <div class="tier black"><h3>Kleos Black</h3><div class="pr">$19.99 a month, or $129.99 a year</div><ul><li>Everything in Kleos+</li><li>Rehearse your real situation</li><li>The Wardrobe and the Portrait</li><li>First look at every drop</li></ul><span class="gift">Free for a month with any piece from the collection.</span></div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="big">Kleos</div>
+  <div class="cols">
+    <div><a href="index.html">Home</a><a href="collection.html">Collection</a><a href="members.html">Members</a></div>
+    <div>Saint-Tropez<br>Paris<br>Madrid<br>London<br>New York</div>
+    <div><div style="margin-bottom:8px">What is heard of you?</div>
+      <form id="foot-f" novalidate><label class="sr" for="foot-e">Email</label><input id="foot-e" type="email" placeholder="Leave your email" autocomplete="email"><button type="submit" aria-label="Join the register">Join</button></form>
+      <div id="foot-m" style="margin-top:10px;color:var(--ivory)" role="status"></div></div>
+  </div>
+  <div class="fine"><span>© MMXXVI Kleos</span><span>Paintings after Rembrandt, public domain, Cleveland Museum of Art open access</span></div>
+</footer>
+<script src="k.js"></script>
+<script>
+  const steps=[...document.querySelectorAll('.step')], scr=[...document.querySelectorAll('.scr')];
+  const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ const i=+e.target.dataset.s; steps.forEach((s,k)=>s.classList.toggle('on',k===i)); scr.forEach((s,k)=>s.classList.toggle('on',k===i)); } }),{ rootMargin:'-45% 0px -45% 0px' });
+  steps.forEach(s=>io.observe(s));
+</script>
+</body>
+</html>

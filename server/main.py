@@ -18,7 +18,7 @@ import time
 import uuid
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
-from fastapi.responses import JSONResponse, Response, HTMLResponse, FileResponse, StreamingResponse
+from fastapi.responses import JSONResponse, Response, HTMLResponse, FileResponse, StreamingResponse, RedirectResponse
 from fastapi import Request
 
 from pipeline import audio, face, rubric, poise, tts, converse, live, vision, duel, legal, referrals, clips
@@ -85,6 +85,42 @@ async def site_asset(name: str):
     if not os.path.isfile(path):
         raise HTTPException(404)
     return FileResponse(path, headers={**_CORS, "Cache-Control": "public, max-age=86400"})
+
+
+# The release site (Collection · Poise · Members) lives in site/r/ and stays private until launch:
+# /r/?k=<preview key> sets a cookie; without it /r/ answers 404. Only the key's hash is kept here.
+_RELEASE = os.path.join(_SITE, "r")
+_PREVIEW_SHA = "b1372a5d042aff5d9392f69e2888082d4f9cc16bbeb06d667d1a17b370c8ae34"
+_TYPES = {".html": "text/html", ".css": "text/css", ".js": "text/javascript", ".webp": "image/webp", ".png": "image/png"}
+
+
+def _preview_ok(value: str) -> bool:
+    import hashlib, hmac
+    return bool(value) and hmac.compare_digest(hashlib.sha256(value.encode()).hexdigest(), _PREVIEW_SHA)
+
+
+@app.get("/r", include_in_schema=False)
+async def release_root(request: Request):
+    return RedirectResponse("/r/" + (("?" + request.url.query) if request.url.query else ""))
+
+
+@app.get("/r/{path:path}", include_in_schema=False)
+async def release(path: str, request: Request, k: str = ""):
+    if k and _preview_ok(k):
+        resp = RedirectResponse("/r/" + path)
+        resp.set_cookie("kleos_preview", k, max_age=60 * 60 * 24 * 60, httponly=True, samesite="lax", secure=request.url.scheme == "https")
+        return resp
+    if not _preview_ok(request.cookies.get("kleos_preview", "")):
+        raise HTTPException(404)
+    path = path or "index.html"
+    if not re.fullmatch(r"(img/)?[A-Za-z0-9_.-]{1,80}", path) or ".." in path:
+        raise HTTPException(404)
+    full = os.path.join(_RELEASE, path)
+    if not os.path.isfile(full):
+        raise HTTPException(404)
+    ext = os.path.splitext(full)[1]
+    cache = "no-cache" if ext in (".html", ".js", ".css") else "private, max-age=86400"
+    return FileResponse(full, media_type=_TYPES.get(ext), headers={"Cache-Control": cache, "X-Robots-Tag": "noindex"})
 
 
 @app.options("/waitlist", include_in_schema=False)

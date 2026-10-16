@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Kleos · Collection</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 fill=%27%231608F2%27/%3E%3Ctext x=%2732%27 y=%2747%27 font-family=%27Georgia,serif%27 font-size=%2742%27 text-anchor=%27middle%27 fill=%27%23F1EBDD%27%3EK%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="k.css">
+<style>
+  .top { padding:clamp(110px,14vw,170px) var(--gut) 28px; display:grid; grid-template-columns:1fr auto; gap:24px; align-items:end; }
+  .top h1 { margin:0; font-family:var(--serif); font-weight:400; font-size:clamp(64px,10vw,168px); line-height:.86; letter-spacing:-.03em; }
+  .top p { margin:14px 0 0; max-width:46ch; color:var(--ink2); }
+  .tabs { display:flex; gap:4px; border:1px solid var(--line); padding:4px; align-self:end; }
+  .tabs button { border:0; background:none; padding:10px 16px; cursor:pointer; font-size:14px; white-space:nowrap; }
+  .tabs button[aria-selected="true"] { background:var(--ink); color:var(--paper); }
+  @media (max-width:760px){ .top { grid-template-columns:1fr; } .tabs { justify-self:start; } }
+  .line { padding:24px var(--gut) clamp(64px,8vw,120px); }
+  .line > header { display:flex; justify-content:space-between; align-items:baseline; gap:20px; flex-wrap:wrap; border-top:1px solid var(--line); padding:22px 0 30px; }
+  .line > header h2 { margin:0; font-family:var(--serif); font-weight:400; font-size:clamp(34px,3.6vw,52px); line-height:1; }
+  .line > header h2 em { font-style:italic; }
+  .line > header span { color:var(--ink2); font-size:14px; }
+  .grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:clamp(18px,2.4vw,36px) clamp(14px,2vw,28px); }
+  @media (max-width:1100px){ .grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+  @media (max-width:700px){ .grid { grid-template-columns:repeat(2,minmax(0,1fr)); } .card .nm { font-size:19px; } }
+  .line.night { background:var(--claret); color:var(--blush); padding-top:48px; }
+  .line.night > header { border-top-color:rgba(242,217,218,.25); }
+  .line.night > header span, .line.night .card .pr, .line.night .card .sub { color:#D9AEB3; }
+  .line.night .card .ph { background:#5A1B19; }
+  [hidden] { display:none!important; }
+</style>
+</head>
+<body>
+<nav class="nav solid" data-solid="1" aria-label="Main">
+  <a class="brand" href="index.html">Kleos</a>
+  <div class="links"><a href="collection.html" aria-current="page">Collection</a><a href="poise.html">Poise</a><a href="members.html">Members</a></div>
+  <div class="right"><button class="bagbtn" data-bag data-bagcount>Bag</button></div>
+</nav>
+
+<header class="top">
+  <div>
+    <h1>The collection</h1>
+    <p>Reserve now and we hold your piece until orders open: members on 11 November, everyone else on the 13th. Each piece is one of a hundred, numbered inside the collar.</p>
+  </div>
+  <div class="tabs" role="tablist" aria-label="Lines">
+    <button role="tab" aria-selected="true" data-f="all">Everything</button>
+    <button role="tab" aria-selected="false" data-f="cote">La Côte</button>
+    <button role="tab" aria-selected="false" data-f="night">Chez moi</button>
+  </div>
+</header>
+
+<section class="line" id="cote" aria-labelledby="h-cote">
+  <header><h2 id="h-cote">La Côte, <em>Issue Nº 001</em></h2><span>Riviera prints in one blue, linen for the deck</span></header>
+  <div class="grid" id="gc"></div>
+</section>
+<section class="line night" id="night" aria-labelledby="h-night">
+  <header><h2 id="h-night">Chez moi, <em>the night line</em></h2><span>Nº 002 · reserve now, ships in winter</span></header>
+  <div class="grid" id="gn"></div>
+</section>
+
+<footer class="foot">
+  <div class="big">Kleos</div>
+  <div class="cols">
+    <div><a href="index.html">Home</a><a href="poise.html">Poise</a><a href="members.html">Members</a></div>
+    <div>Saint-Tropez<br>Paris<br>Madrid<br>London<br>New York</div>
+    <div><div style="margin-bottom:8px">What is heard of you?</div>
+      <form id="foot-f" novalidate><label class="sr" for="foot-e">Email</label><input id="foot-e" type="email" placeholder="Leave your email" autocomplete="email"><button type="submit" aria-label="Join the register">Join</button></form>
+      <div id="foot-m" style="margin-top:10px;color:var(--ivory)" role="status"></div></div>
+  </div>
+  <div class="fine"><span>© MMXXVI Kleos</span><span>Prints after paintings in the public domain, Cleveland Museum of Art open access</span></div>
+</footer>
+<script src="k.js"></script>
+<script>
+  K.P.forEach(p => document.getElementById(p.line === 'night' ? 'gn' : 'gc').appendChild(K.card(p)));
+  const tabs = document.querySelectorAll('.tabs button');
+  function filt(f){ tabs.forEach(t => t.setAttribute('aria-selected', t.dataset.f === f)); document.getElementById('cote').hidden = f === 'night'; document.getElementById('night').hidden = f === 'cote'; }
+  tabs.forEach(t => t.onclick = () => { filt(t.dataset.f); try { history.replaceState(null,'', t.dataset.f === 'all' ? location.pathname : '#' + t.dataset.f); } catch(_){} });
+  if (location.hash === '#night' || location.hash === '#cote') filt(location.hash.slice(1));
+</script>
+</body>
+</html>
