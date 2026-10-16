@@ -10,6 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="k.css">
 <style>
+  /* Three planes everywhere: big type at the back, the thing in the middle, the controls on top.
+     Two sizes of type: huge, or small. Nothing in between. */
   .hero { position:relative; height:100vh; height:100svh; min-height:620px; overflow:hidden; background:var(--paper); }
   .hero .img { position:absolute; inset:0; background:url(img/hero_villa.png) center 38%/cover no-repeat; transform:scale(1.08); animation:settle 2.4s var(--ease-out) forwards; }
   @keyframes settle { to { transform:scale(1); } }
@@ -22,54 +24,71 @@
   @keyframes rise { to { opacity:1; transform:none; } }
   .hero .side { max-width:300px; display:flex; flex-direction:column; gap:14px; padding-bottom:1.2vw; }
   .hero .side p { margin:0; font-size:15px; color:var(--ink2); }
-  .hero .side .issue { font-family:var(--serif); font-size:24px; line-height:1.1; color:var(--ink); }
+  .hero .side .mono { color:var(--ink); }
   @media (max-width:760px){ .hero { height:calc(100svh - 64px); min-height:560px; } .hero .in { grid-template-columns:1fr; gap:18px; } .hero .side { max-width:none; } .hero .img { background-position:62% 0; background-size:auto 70%; } .hero::after { background:linear-gradient(180deg, rgba(244,239,228,0) 25%, rgba(244,239,228,.85) 50%, var(--paper) 60%); } }
 
-  .sec { padding:clamp(72px,10vw,150px) var(--gut); }
-  .head { display:flex; justify-content:space-between; align-items:end; gap:24px; flex-wrap:wrap; margin-bottom:clamp(32px,4vw,56px); }
-  .head h2 { margin:0; font-family:var(--serif); font-weight:400; font-size:clamp(46px,6.4vw,104px); line-height:.92; letter-spacing:-.02em; max-width:12ch; }
-  .head p { margin:0; max-width:40ch; color:var(--ink2); }
+  /* ---- plates: one piece per screen ---- */
+  .plate { position:relative; min-height:100svh; display:grid; place-items:center; overflow:hidden; padding:12vh var(--gut); }
+  .plate.alt { background:var(--paper2); }
+  .plate .back { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; margin:0; font-family:var(--serif); font-weight:400; font-size:clamp(120px,24vw,400px); line-height:.8; letter-spacing:-.04em; color:var(--blue); pointer-events:none; user-select:none; }
+  .plate .back span { display:block; }
+  .plate .back span:nth-child(2) { align-self:flex-end; }
+  .plate.ink .back { color:var(--ink); }
+  .plate .mid { position:relative; z-index:1; height:min(74svh,760px); width:auto; max-width:92vw; object-fit:contain; filter:drop-shadow(0 34px 44px rgba(13,11,30,.16)); }
+  .plate .top { position:absolute; z-index:2; left:var(--gut); bottom:clamp(28px,5vh,56px); display:flex; flex-direction:column; gap:14px; align-items:flex-start; }
+  .plate.r .top { left:auto; right:var(--gut); align-items:flex-end; text-align:right; }
+  .plate .top .mono { color:var(--ink); }
+  .plate .top .l { font-size:15px; color:var(--ink2); max-width:30ch; margin:0; }
+  .plate .n { position:absolute; z-index:2; top:clamp(80px,12vh,120px); left:var(--gut); font-family:var(--mono); font-size:11px; letter-spacing:.14em; }
+  .plate.r .n { left:auto; right:var(--gut); }
+  @media (max-width:760px){ .plate { min-height:92svh; padding:14vh var(--gut) 20vh; } .plate .back { font-size:30vw; } .plate .mid { height:min(56svh,520px); } .plate .top { bottom:92px; } .plate .top .l { display:none; } }
 
-  .feature { display:grid; grid-template-columns:1.25fr 1fr; gap:clamp(20px,3vw,44px); align-items:start; }
-  .feature .col { display:flex; flex-direction:column; gap:clamp(28px,4vw,56px); }
-  .feature .card .ph { aspect-ratio:4/5; }
-  .feature .text { font-family:var(--serif); font-size:clamp(24px,2.3vw,34px); line-height:1.2; margin:0; max-width:24ch; }
-  .feature .text em { color:var(--blue); font-style:italic; }
-  .grid4 { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:clamp(14px,2vw,28px); margin-top:clamp(40px,6vw,88px); }
-  @media (max-width:900px){ .feature { grid-template-columns:1fr; } .grid4 { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-  .more { margin-top:40px; display:flex; justify-content:center; }
+  /* the other twelve, kept small */
+  .rest { padding:clamp(48px,7vw,96px) var(--gut) clamp(72px,9vw,130px); }
+  .rest .head { display:flex; justify-content:space-between; align-items:baseline; gap:16px; margin-bottom:22px; }
+  .rest .head a { font-size:14px; }
+  .grid6 { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:clamp(10px,1.6vw,22px); }
+  @media (max-width:1100px){ .grid6 { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+  @media (max-width:640px){ .grid6 { grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; } .grid6 .card .sub, .grid6 .card .tag { display:none; } .grid6 .card .nm { font-size:12.5px; } .grid6 .card .pr { font-size:12px; } }
 
+  /* ---- Chez moi ---- */
   .night { position:relative; background:var(--claret); color:var(--blush); overflow:hidden; }
   .night .bg { position:absolute; inset:0 0 auto 0; height:min(92vh,900px); background:url(img/hero_moon.png) center/cover no-repeat; opacity:.9; }
   .night .bg::after { content:''; position:absolute; inset:0; background:linear-gradient(180deg, rgba(74,20,16,.1) 40%, var(--claret) 100%); }
   .night .top { position:relative; min-height:min(80vh,780px); display:flex; flex-direction:column; justify-content:flex-end; padding:0 var(--gut) clamp(40px,6vw,80px); gap:18px; }
   .night h2 { margin:0; font-family:var(--serif); font-style:italic; font-weight:400; font-size:clamp(96px,17vw,280px); line-height:.82; letter-spacing:-.03em; }
-  .night .lede { margin:0; max-width:44ch; font-size:17px; color:#E9C3C7; }
+  .night .lede { margin:0; max-width:44ch; font-size:15px; color:#E9C3C7; }
+  .night .mono { color:#E9C3C7; }
   .night .cards { position:relative; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:clamp(14px,2vw,28px); padding:0 var(--gut) clamp(72px,9vw,130px); }
   .night .card .ph { background:#5A1B19; }
   .night .card .pr, .night .card .sub { color:#D9AEB3; }
   @media (max-width:900px){ .night .cards { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 
-  .number { background:var(--paper2); display:grid; grid-template-columns:1fr 1fr; gap:clamp(32px,5vw,80px); align-items:center; }
-  .number h2 { margin:0 0 28px; font-family:var(--serif); font-weight:400; font-size:clamp(46px,6vw,96px); line-height:.92; letter-spacing:-.02em; }
-  .number dl { margin:0; display:grid; gap:0; border-top:1px solid var(--line); }
-  .number dl div { display:grid; grid-template-columns:160px 1fr; gap:20px; padding:18px 0; border-bottom:1px solid var(--line); }
-  .number dt { font-family:var(--serif); font-size:24px; line-height:1.1; }
-  .number dd { margin:0; color:var(--ink2); }
-  .number .cap { background:var(--paper); aspect-ratio:1; display:flex; align-items:center; justify-content:center; position:relative; }
-  .number .cap img { width:78%; }
-  .number .cap span { position:absolute; left:20px; bottom:18px; font-size:13px; color:var(--ink2); }
-  @media (max-width:900px){ .number { grid-template-columns:1fr; } .number dl div { grid-template-columns:1fr; gap:4px; } }
+  /* ---- the label: one object, one line ---- */
+  .label-sec { background:var(--paper2); padding:clamp(72px,11vw,160px) var(--gut); display:grid; justify-items:center; gap:28px; text-align:center; }
+  .label-sec svg { width:min(620px,88vw); height:auto; transform:rotate(-2deg); filter:drop-shadow(0 18px 30px rgba(13,11,30,.14)); }
+  .label-sec p { margin:0; max-width:46ch; font-size:15px; color:var(--ink2); }
+  .label-sec .mono { color:var(--ink); }
 
-  .poise { background:var(--ink); color:var(--ivory); display:grid; grid-template-columns:1fr 1.1fr; min-height:92vh; }
-  .poise .pic { background:url(img/head_blue.webp) center 30%/cover no-repeat; min-height:420px; }
-  .poise .tx { padding:clamp(48px,7vw,120px) var(--gut); display:flex; flex-direction:column; justify-content:center; gap:22px; }
-  .poise h2 { margin:0; font-family:var(--serif); font-weight:400; font-size:clamp(96px,14vw,220px); line-height:.8; letter-spacing:-.03em; }
-  .poise p { margin:0; max-width:40ch; color:var(--pale); font-size:18px; }
-  .poise p.first { color:var(--ivory); font-family:var(--serif); font-size:clamp(26px,2.4vw,34px); line-height:1.15; }
-  .poise .btn { align-self:flex-start; color:var(--ivory); }
-  @media (hover:hover) and (pointer:fine){ .poise .btn:hover { background:var(--ivory); color:var(--ink); } }
-  @media (max-width:900px){ .poise { grid-template-columns:1fr; } .poise .pic { min-height:56vh; } }
+  /* ---- Poise: the call screen, on the page ---- */
+  .poise { position:relative; background:var(--ink); color:var(--ivory); min-height:100svh; display:grid; place-items:center; overflow:hidden; padding:14vh var(--gut); }
+  .poise .back { position:absolute; inset:0; display:grid; place-items:center; margin:0; font-family:var(--serif); font-weight:400; font-size:clamp(160px,34vw,560px); line-height:.8; letter-spacing:-.04em; color:var(--ivory); opacity:.95; pointer-events:none; user-select:none; }
+  .poise .mid { position:relative; z-index:1; display:grid; justify-items:center; gap:28px; }
+  .poise .ring { position:relative; width:min(44vw,300px); aspect-ratio:1; display:grid; place-items:center; }
+  .poise .ring::before { content:''; position:absolute; inset:-14%; border-radius:50%; background:radial-gradient(circle, rgba(22,8,242,.55), rgba(22,8,242,0) 68%); filter:blur(14px); animation:breathe 3.2s ease-in-out infinite; }
+  .poise .ring::after { content:''; position:absolute; inset:-5%; border-radius:50%; border:1.5px solid rgba(241,235,221,.22); }
+  .poise .ring img { position:relative; width:100%; height:100%; border-radius:50%; object-fit:cover; }
+  .poise .arc { position:absolute; inset:-5%; width:110%; height:110%; transform:rotate(-90deg); }
+  .poise .arc circle { fill:none; stroke:var(--blue); stroke-width:2; stroke-linecap:round; stroke-dasharray:314; stroke-dashoffset:88; }
+  @keyframes breathe { 50% { transform:scale(1.08); opacity:.8; } }
+  .bars { display:flex; align-items:center; gap:5px; height:44px; }
+  .bars i { display:block; width:4px; height:100%; border-radius:2px; background:var(--ivory); transform-origin:center; animation:talk 900ms ease-in-out infinite alternate; }
+  @keyframes talk { from { transform:scaleY(.18); } to { transform:scaleY(1); } }
+  .poise .top { position:absolute; z-index:2; left:var(--gut); right:var(--gut); bottom:clamp(28px,5vh,56px); display:flex; justify-content:space-between; align-items:flex-end; gap:20px; }
+  .poise .top .mono { color:var(--pale); }
+  .poise .top .l { margin:6px 0 0; font-size:15px; color:var(--pale); max-width:34ch; }
+  @media (max-width:760px){ .poise .back { font-size:42vw; } .poise .top { flex-direction:column; align-items:flex-start; bottom:92px; } .poise .top .l { max-width:none; } }
+  @media (prefers-reduced-motion:reduce){ .poise .ring::before, .bars i { animation:none; } .bars i { transform:scaleY(.5); } }
 </style>
 </head>
 <body>
@@ -84,58 +103,88 @@
   <div class="in">
     <h1><span>La</span> <span>Côte</span></h1>
     <div class="side">
-      <span class="issue">Issue Nº 001</span>
-      <p>Fifteen pieces from the coast, printed in one blue, numbered and made once.</p>
+      <span class="mono">Issue Nº 001 · fifteen pieces · made once</span>
       <p>Members order from 11 November. Everyone else on the 13th.</p>
       <a class="btn fill" href="collection.html">See the collection</a>
     </div>
   </div>
 </header>
 
-<section class="sec" aria-labelledby="h-pieces">
-  <div class="head"><h2 id="h-pieces">Made once, then never again.</h2><p>Each print comes from a painting now in the public domain, Caillebotte, Eakins, Manet, Boudin, screen printed in a single blue on white and cream.</p></div>
-  <div class="feature">
-    <div id="f1"></div>
-    <div class="col">
-      <p class="text">A villa above Trouville. Two brothers turning the stake. <em>Boats off Berck in a hard wind.</em></p>
-      <div id="f2"></div>
+<section aria-label="Three pieces from the Issue">
+  <article class="plate" id="p1">
+    <span class="n">01 / 15</span>
+    <h2 class="back" aria-hidden="true"><span>Villa</span><span>Kleos</span></h2>
+    <img class="mid reveal" src="img/villa_tee_b.webp" alt="Villa Kleos T-shirt, back: Caillebotte’s villas above Trouville, printed in blue">
+    <div class="top">
+      <span class="mono">Villa Kleos · T-shirt · White · $68</span>
+      <p class="l">Caillebotte’s villas above Trouville across the back. A small Kleos at the chest.</p>
+      <button class="btn fill" data-open="villa_tee">Reserve</button>
     </div>
-  </div>
-  <div class="grid4 stagger" id="g4"></div>
-  <div class="more"><a class="btn" href="collection.html">All fifteen pieces</a></div>
+  </article>
+  <article class="plate alt ink r" id="p2">
+    <span class="n">02 / 15</span>
+    <h2 class="back" aria-hidden="true"><span>Rowing</span><span>Club</span></h2>
+    <img class="mid reveal" src="img/rowing_long_b.webp" alt="Kleos Rowing Club long sleeve, back: Eakins’ pair turning the stake, in an arch">
+    <div class="top">
+      <span class="mono">Kleos Rowing Club · Long sleeve · Ivory · $78</span>
+      <p class="l">Eakins’ pair turning the stake, set in an arch. Crossed oars at the chest.</p>
+      <button class="btn fill" data-open="rowing_long">Reserve</button>
+    </div>
+  </article>
+  <article class="plate" id="p3">
+    <span class="n">03 / 15</span>
+    <h2 class="back" aria-hidden="true"><span>Régates</span></h2>
+    <img class="mid reveal" src="img/regates_crew_b.webp" alt="Régates crewneck, back: Manet’s boats off Berck in an oval">
+    <div class="top">
+      <span class="mono">Régates · Crewneck · Cream · $128</span>
+      <p class="l">Loopback cotton. Manet’s boats off Berck in an oval, ringed in type.</p>
+      <button class="btn fill" data-open="regates_crew">Reserve</button>
+    </div>
+  </article>
+</section>
+
+<section class="rest" aria-labelledby="h-rest">
+  <div class="head"><span class="mono" id="h-rest">The other twelve</span><a class="link" href="collection.html">All fifteen</a></div>
+  <div class="grid6 stagger" id="g6"></div>
 </section>
 
 <section class="night" aria-labelledby="h-night">
   <div class="bg" role="img" aria-label="A moonlit bay, after Heade, printed in pink"></div>
   <div class="top">
-    <span style="font-size:14px;color:#E9C3C7">Nº 002 · the night line</span>
+    <span class="mono">Nº 002 · the night line · winter</span>
     <h2 id="h-night">Chez moi</h2>
     <p class="lede">Martinis, long tables, the walk home when the sun’s already up. Saint-Tropez, Paris, Madrid, Mayfair.</p>
   </div>
   <div class="cards stagger" id="nc"></div>
 </section>
 
-<section class="sec number" aria-labelledby="h-num">
-  <div>
-    <h2 id="h-num">Every piece is numbered.</h2>
-    <dl>
-      <div><dt>Your number</dt><dd>It’s inside the collar and on the envelope. Scan it in the app and Kleos Black is yours for a month.</dd></div>
-      <div><dt>Made once</dt><dd>One hundred of each. A return goes to the next name on the register, never back on a shelf.</dd></div>
-      <div><dt>Repairs</dt><dd>For life, by number. Send it back and it comes home mended.</dd></div>
-      <div><dt>Earned</dt><dd>The Laurel Cap isn’t sold. It arrives when your Aura Index reaches 80.</dd></div>
-    </dl>
-  </div>
-  <a class="cap reveal" href="collection.html#laurel_cap"><img src="img/laurel_cap_f.webp" alt="The Laurel Cap, ivory, with a blue laurel K"><span>The Laurel Cap · earned at 80</span></a>
+<section class="label-sec" aria-labelledby="h-label">
+  <span class="mono" id="h-label">Inside every collar</span>
+  <svg viewBox="0 0 600 230" role="img" aria-label="The woven Kleos label: Kleos, number 041 of 100, La Côte, Issue 001, made once">
+    <rect x="4" y="4" width="592" height="222" rx="3" fill="#F1EBDD"/>
+    <rect x="12" y="12" width="576" height="206" rx="2" fill="none" stroke="#1608F2" stroke-width="1.5"/>
+    <path d="M4 4h592M4 226h592" stroke="#0D0B1E" stroke-width="2" stroke-dasharray="3 5" opacity=".35"/>
+    <text x="300" y="118" text-anchor="middle" font-family="Instrument Serif, Times New Roman, serif" font-size="112" letter-spacing="-3" fill="#1608F2">Kleos</text>
+    <text x="300" y="158" text-anchor="middle" font-family="Geist Mono, ui-monospace, monospace" font-size="13" letter-spacing="3.5" fill="#0D0B1E">Nº 041 / 100</text>
+    <text x="300" y="186" text-anchor="middle" font-family="Geist Mono, ui-monospace, monospace" font-size="10" letter-spacing="3" fill="#1608F2">LA CÔTE · ISSUE 001 · MADE ONCE</text>
+    <text x="36" y="40" font-family="Geist Mono, ui-monospace, monospace" font-size="9" letter-spacing="2.5" fill="#0D0B1E" opacity=".6">PORTUGAL</text>
+    <text x="564" y="40" text-anchor="end" font-family="Geist Mono, ui-monospace, monospace" font-size="9" letter-spacing="2.5" fill="#0D0B1E" opacity=".6">MMXXVI</text>
+  </svg>
+  <p>Your number is the code. Scan it in the app for a month of Kleos Black. Repairs are for life, by number, and a return goes to the next name on the register.</p>
 </section>
 
 <section class="poise" aria-labelledby="h-poise">
-  <div class="pic reveal" role="img" aria-label="A marble head of Alexander in Kleos blue"></div>
-  <div class="tx">
-    <span style="font-size:14px;color:var(--lav)">The app</span>
-    <h2 id="h-poise">Poise.</h2>
-    <p class="first">The coach inside the Kleos app.</p>
-    <p>Call her before the dinner, the interview, the toast. She plays the other side, then tells you how it went and what to say next time.</p>
-    <a class="btn" href="poise.html">Meet Poise</a>
+  <h2 class="back" id="h-poise">Poise.</h2>
+  <div class="mid">
+    <div class="ring">
+      <img src="img/poise.webp" alt="Poise, a marble head in Kleos blue">
+      <svg class="arc" viewBox="0 0 110 110" aria-hidden="true"><circle cx="55" cy="55" r="50"/></svg>
+    </div>
+    <div class="bars" aria-hidden="true"><i style="animation-delay:0s"></i><i style="animation-delay:.2s"></i><i style="animation-delay:.5s"></i><i style="animation-delay:.1s"></i><i style="animation-delay:.4s"></i><i style="animation-delay:.3s"></i><i style="animation-delay:.6s"></i><i style="animation-delay:.15s"></i><i style="animation-delay:.45s"></i><i style="animation-delay:.25s"></i><i style="animation-delay:.05s"></i></div>
+  </div>
+  <div class="top">
+    <div><span class="mono">The app · she plays the other side</span><p class="l">Call her before the dinner, the interview, the toast. She tells you how it went and what to say next time.</p></div>
+    <a class="btn ivory" href="poise.html">Meet Poise</a>
   </div>
 </section>
 
@@ -155,9 +204,8 @@
 
 <script src="k.js"></script>
 <script>
-  const feat = (id, el) => { const c = K.card(K.byId[id]); const ph = c.querySelector('.ph'); const f = ph.querySelector('.f'), b = ph.querySelector('.b'); f.classList.replace('f','b'); b.classList.replace('b','f'); document.getElementById(el).appendChild(c); };
-  feat('villa_tee','f1'); feat('rowing_long','f2');
-  ['regates_crew','quarterzip','oxford','stripe_trouser'].forEach(i => document.getElementById('g4').appendChild(K.card(K.byId[i])));
+  document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => K.openPiece(b.dataset.open)));
+  ['bains_tee','quarterzip','oxford','linen_trouser','stripe_trouser','laurel_cap'].forEach(i => document.getElementById('g6').appendChild(K.card(K.byId[i])));
   ['dry_tee','dernier_baby','sobremesa_long','insomnie_baby'].forEach(i => { const c = K.card(K.byId[i]); const ph = c.querySelector('.ph'); const f = ph.querySelector('.f'), b = ph.querySelector('.b'); f.classList.replace('f','b'); b.classList.replace('b','f'); document.getElementById('nc').appendChild(c); });
 </script>
 </body>

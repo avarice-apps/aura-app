@@ -71,6 +71,23 @@ const K = (() => {
     return b;
   }
 
+  // ---------- size & fit: how to measure, then the garment laid flat, in cm
+  const TEE_SVG = `<svg viewBox="0 0 120 130" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M38 8h44l6 10 24 10-8 22-12-4v76H28V46l-12 4L8 28l24-10z"/><path d="M38 8c4 8 18 8 22 8s18 0 22-8" stroke-dasharray="2 2"/><path d="M28 48h64" stroke="#1608F2"/><text x="60" y="44" font-size="7" text-anchor="middle" fill="#1608F2" stroke="none" font-family="Geist Mono,monospace">A chest</text><path d="M108 20v102" stroke="#1608F2"/><text x="114" y="74" font-size="7" fill="#1608F2" stroke="none" font-family="Geist Mono,monospace" transform="rotate(90 114 74)">B length</text></svg>`;
+  const TRS_SVG = `<svg viewBox="0 0 120 130" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M30 8h60l6 114H70l-10-70-10 70H24z"/><path d="M30 8h60" stroke="#1608F2"/><text x="60" y="5" font-size="7" text-anchor="middle" fill="#1608F2" stroke="none" font-family="Geist Mono,monospace">A waist</text><path d="M60 52v70" stroke="#1608F2"/><text x="66" y="92" font-size="7" fill="#1608F2" stroke="none" font-family="Geist Mono,monospace" transform="rotate(90 66 92)">B inseam</text></svg>`;
+  const FIT = {
+    tee:   { sizes:['XS','S','M','L','XL'], a:[50,53,56,59,62], b:[66,69,72,75,78], how:['A, chest: 2 cm below the armhole, edge to edge.','B, length: from the highest point of the shoulder to the hem.'] },
+    baby:  { sizes:['XS','S','M','L'], a:[38,40,43,46], b:[46,48,50,52], how:['A, chest: 2 cm below the armhole, edge to edge. Cut to sit close; take your usual size.','B, length: from the shoulder to the hem. Cropped.'] },
+    knit:  { sizes:['XS','S','M','L','XL'], a:[52,55,58,61,64], b:[64,67,70,73,76], how:['A, chest: 2 cm below the armhole, edge to edge.','B, length: shoulder to hem. Knits give; between sizes, take the smaller.'] },
+    shirt: { sizes:['XS','S','M','L','XL'], a:[52,55,58,61,64], b:[72,75,78,81,84], how:['A, chest: 2 cm below the armhole, edge to edge.','B, length: from the collar seam to the hem, at the back.'] },
+    trs:   { sizes:['28','30','32','34','36'], a:[38,40.5,43,45.5,48], b:[76,77,78,79,80], how:['A, waist: laid flat, edge to edge; double it for the full waist.','B, inseam: from the crotch seam to the hem.'] },
+  };
+  function fitGuide(p) {
+    const k = p.kind === 'Trouser' ? 'trs' : p.kind === 'Baby tee' ? 'baby' : p.kind === 'Shirt' ? 'shirt' : /Knit|Crewneck/.test(p.kind) ? 'knit' : p.kind === 'Cap' ? null : 'tee';
+    if (!k) return '<p>One size. Adjustable strap at the back, 55 to 60 cm.</p>';
+    const f = FIT[k], fit = (p.facts.find(x => x[0] === 'Fit') || [])[1];
+    return `<p>${fit ? fit + '. ' : ''}Garment laid flat, in cm.</p><div class="measure">${k === 'trs' ? TRS_SVG : TEE_SVG}<table><thead><tr><th>Size</th>${f.sizes.map(s => `<th>${s}</th>`).join('')}</tr></thead><tbody><tr><td>A</td>${f.a.map(v => `<td>${v}</td>`).join('')}</tr><tr><td>B</td>${f.b.map(v => `<td>${v}</td>`).join('')}</tr></tbody></table></div><ul>${f.how.map(h => `<li>${h}</li>`).join('')}</ul>`;
+  }
+
   // ---------- drawer
   let lastFocus = null;
   function ensureShell() {
@@ -84,11 +101,15 @@ const K = (() => {
           <span class="note" id="dline"></span>
           <h2 id="dname"></h2>
           <div class="price" id="dprice"></div>
-          <p id="dblurb"></p>
           <div><div class="note" style="margin-bottom:8px">Size</div><div class="sizes" id="dsizes"></div></div>
           <button class="btn fill" id="dadd">Reserve</button>
           <span class="note" id="dnote"></span>
-          <div class="facts" id="dfacts"></div>
+          <div class="acc">
+            <details open><summary>Details</summary><div class="body" id="dfacts"></div></details>
+            <details id="dfit"><summary>Size &amp; fit</summary><div class="body" id="dfitb"></div></details>
+            <details><summary>Shipping &amp; returns</summary><div class="body"><p>Made to your order, shipped within 14 days, tracked. Free over $150.</p><ul><li>Returns within 14 days, unworn, with the number card.</li><li>A returned piece goes to the next name on the register, never back on a shelf.</li><li>Repairs for life, by number. Send it back and it comes home mended.</li></ul></div></details>
+          </div>
+          <div class="worn"><span class="note">Worn with</span><div class="row" id="dworn"></div></div>
         </div>
       </aside>
       <div class="scrim" id="bscrim"></div>
@@ -109,7 +130,6 @@ const K = (() => {
     $('#dline').textContent = p.line === 'night' ? 'Chez moi · the night line · Nº 002' : 'La Côte · Issue Nº 001';
     $('#dname').textContent = p.name;
     $('#dprice').textContent = p.earned ? 'Earned at an Aura Index of 80' : `${money(p.price)} · edition of ${p.ed}, numbered`;
-    $('#dblurb').textContent = p.blurb;
     const sz = SIZES[p.kind] || ['XS','S','M','L','XL'];
     $('#dsizes').innerHTML = sz.map(s => `<button type="button" aria-pressed="false">${s}</button>`).join('');
     $('#dsizes').querySelectorAll('button').forEach(b => b.onclick = () => { size = b.textContent; $('#dsizes').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', x === b)); });
@@ -118,7 +138,11 @@ const K = (() => {
     if (p.earned) { add.textContent = 'See your Index'; add.onclick = () => { location.href = 'members.html#issued'; }; $('#dnote').textContent = 'Members who reach 80 are sent theirs. Your number is stitched inside.'; }
     else { add.textContent = 'Reserve'; $('#dnote').textContent = 'Every piece comes with a month of Kleos Black. Your serial number is the code.';
       add.onclick = () => { if (!size) { toast('Choose a size first'); return; } const b = store.get('kleos.bag', []); b.push({ id:p.id, size }); store.set('kleos.bag', b); paintBag(); toast(`${p.name}, ${size}, reserved`); }; }
-    $('#dfacts').innerHTML = p.facts.map(([a, b]) => `<div><span>${a}</span><span>${b}</span></div>`).join('');
+    $('#dfacts').innerHTML = `<p>${p.blurb}</p><ul>${p.facts.map(([a, b]) => `<li>${a}: ${b}</li>`).join('')}<li>Edition: ${p.earned ? 'earned, numbered' : p.ed + ', numbered inside the collar'}</li></ul>`;
+    $('#dfitb').innerHTML = fitGuide(p);
+    const worn = $('#dworn'); worn.innerHTML = '';
+    P.filter(x => x.line === p.line && x.id !== p.id && !x.earned && x.kind !== p.kind).slice(0, 2).forEach(x => worn.appendChild(card(x)));
+    $('#drawer .info').scrollTop = 0;
     $('#drawer').classList.add('open'); $('#scrim').classList.add('open'); $('#drawer').setAttribute('aria-hidden', 'false');
     document.documentElement.style.overflow = 'hidden'; setTimeout(() => $('#dx').focus(), 50);
     try { history.replaceState(null, '', '#' + id); } catch (_) {}

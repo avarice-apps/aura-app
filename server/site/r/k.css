@@ -20,7 +20,6 @@ button { font:inherit; color:inherit; }
 :focus-visible { outline:2px solid var(--blue); outline-offset:3px; }
 .serif { font-family:var(--serif); font-weight:400; }
 .it { font-style:italic; }
-.mono { font-family:var(--mono); font-size:11px; letter-spacing:.14em; }
 .sr { position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 
 /* ---------- nav ---------- */
@@ -47,9 +46,11 @@ button { font:inherit; color:inherit; }
 .btn { display:inline-flex; align-items:center; justify-content:center; gap:10px; min-height:48px; padding:0 26px; border:1px solid currentColor; background:transparent; text-decoration:none; font-size:15px; cursor:pointer; transition:background-color 200ms ease, color 200ms ease, border-color 200ms ease, transform 160ms var(--ease-out); }
 .btn:active, .bagbtn:active, .sizes button:active, .drawer .views button:active, .x:active { transform:scale(0.97); }
 .sizes button, .drawer .views button, .x, .bagbtn { transition:transform 160ms var(--ease-out), background-color 150ms ease, color 150ms ease, border-color 150ms ease; }
+/* One signal colour: a filled ink block means "tap this". Blue is the print colour and never a control. */
 .btn.fill { background:var(--ink); color:var(--paper); border-color:var(--ink); }
-@media (hover:hover) and (pointer:fine){ .btn.fill:hover { background:var(--blue); border-color:var(--blue); } .btn.blue:hover { background:var(--navy); border-color:var(--navy); } }
-.btn.blue { background:var(--blue); color:var(--ivory); border-color:var(--blue); }
+.btn.ivory { background:var(--ivory); color:var(--ink); border-color:var(--ivory); }
+@media (hover:hover) and (pointer:fine){ .btn.fill:hover { background:var(--ink2); border-color:var(--ink2); } .btn.ivory:hover { background:#fff; border-color:#fff; } }
+.mono { font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; }
 .btn:disabled { opacity:.45; cursor:not-allowed; }
 .link { text-decoration:none; border-bottom:1px solid currentColor; padding-bottom:2px; }
 
@@ -61,11 +62,12 @@ button { font:inherit; color:inherit; }
 .card .ph img { position:absolute; inset:6% 8%; width:84%; height:88%; object-fit:contain; transition:opacity 260ms ease, filter 260ms ease, transform 600ms var(--ease-out); }
 .card .ph img.b { opacity:0; filter:blur(4px); }
 @media (hover:hover) and (pointer:fine){ .card:hover .ph img.f { opacity:0; filter:blur(4px); } .card:hover .ph img.b { opacity:1; filter:blur(0); } .card:hover .ph img { transform:scale(1.025); } }
+/* Product type stays small: the garment is the big thing, the words are the label. */
 .card .meta { display:flex; justify-content:space-between; gap:12px; align-items:baseline; }
-.card .nm { font-family:var(--serif); font-size:24px; line-height:1.1; }
-.card .pr { font-size:14px; color:var(--ink2); white-space:nowrap; }
-.card .sub { font-size:13px; color:var(--ink2); margin-top:-8px; }
-.card .tag { position:absolute; left:12px; top:12px; font-size:12px; background:var(--paper); padding:4px 8px; }
+.card .nm { font-size:14px; font-weight:500; line-height:1.3; }
+.card .pr { font-size:13px; color:var(--ink2); white-space:nowrap; font-variant-numeric:tabular-nums; }
+.card .sub { font-size:12.5px; color:var(--ink2); margin-top:-9px; }
+.card .tag { position:absolute; left:10px; top:10px; font-size:11px; line-height:1; background:var(--paper); padding:5px 7px; }
 
 /* ---------- drawer ---------- */
 .scrim { position:fixed; inset:0; z-index:80; background:rgba(13,11,30,.35); opacity:0; pointer-events:none; transition:opacity 220ms ease; }
@@ -87,10 +89,29 @@ button { font:inherit; color:inherit; }
 .sizes { display:flex; flex-wrap:wrap; gap:8px; }
 .sizes button { min-width:52px; height:44px; border:1px solid var(--line); background:transparent; cursor:pointer; }
 .sizes button[aria-pressed="true"] { border-color:var(--ink); background:var(--ink); color:var(--paper); }
-.facts { border-top:1px solid var(--line); margin-top:6px; }
-.facts div { display:flex; justify-content:space-between; gap:16px; padding:12px 0; border-bottom:1px solid var(--line); font-size:14px; }
-.facts div span:last-child { color:var(--ink2); text-align:right; }
 .note { font-size:13px; color:var(--ink2); }
+/* ALD-style product details: dropdowns, not tabs; a short factual paragraph, then the facts line by line. */
+.acc { border-top:1px solid var(--line); margin-top:4px; }
+.acc details { border-bottom:1px solid var(--line); }
+.acc summary { list-style:none; cursor:pointer; display:flex; justify-content:space-between; align-items:center; padding:14px 0; font-size:14px; font-weight:500; }
+.acc summary::-webkit-details-marker { display:none; }
+.acc summary::after { content:''; width:8px; height:8px; border-right:1px solid currentColor; border-bottom:1px solid currentColor; transform:rotate(45deg); transition:transform 220ms var(--ease-out); margin-right:4px; }
+.acc details[open] summary::after { transform:rotate(225deg) translate(-1px,-1px); }
+.acc .body { padding:0 0 16px; font-size:14px; color:var(--ink2); display:grid; gap:10px; }
+.acc .body ul { margin:0; padding:0; list-style:none; display:grid; gap:4px; }
+.acc .body li { display:flex; gap:10px; }
+.acc .body li::before { content:'·'; color:var(--ink); }
+.acc .body p { margin:0; color:var(--ink); }
+.measure { display:grid; grid-template-columns:120px 1fr; gap:16px; align-items:start; }
+.measure svg { width:120px; height:auto; }
+.measure table { border-collapse:collapse; width:100%; font-size:13px; font-variant-numeric:tabular-nums; }
+.measure th, .measure td { text-align:left; padding:5px 6px 5px 0; border-bottom:1px solid var(--line); font-weight:400; }
+.measure th { color:var(--ink2); font-size:11px; letter-spacing:.08em; text-transform:uppercase; }
+.worn { display:grid; gap:8px; }
+.worn .row { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+.worn .card .ph { aspect-ratio:1; }
+.worn .card .nm { font-size:13px; }
+@media (max-width:460px){ .measure { grid-template-columns:1fr; } .measure svg { width:100px; } }
 @media (max-width:820px){ .drawer { grid-template-columns:1fr; grid-template-rows:46vh 1fr; } .drawer .stage img { height:90%; } }
 
 /* bag */
