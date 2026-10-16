@@ -64,6 +64,63 @@ PUBLIC_URL = os.environ.get("AURA_PUBLIC_URL", "http://localhost:8787")
 ADMIN_KEY = os.environ.get("AURA_ADMIN_KEY", "")
 
 
+# ---------------------------------------------------------------- the site (joinkleos.com)
+# The waitlist page lives at /, its assets under /site/. The page is also previewed from claude.ai, so these
+# two paths (and POST /waitlist) answer cross-origin; nothing else does.
+_SITE = os.path.join(os.path.dirname(__file__), "site")
+_WAITLIST = os.path.join(os.path.dirname(__file__), "data", "waitlist.jsonl")
+_CORS = {"Access-Control-Allow-Origin": "*", "Access-Control-Allow-Methods": "GET, POST, OPTIONS", "Access-Control-Allow-Headers": "Content-Type"}
+
+
+@app.get("/", include_in_schema=False)
+async def site_home():
+    return FileResponse(os.path.join(_SITE, "index.html"), media_type="text/html", headers={"Cache-Control": "no-cache"})
+
+
+@app.get("/site/{name}", include_in_schema=False)
+async def site_asset(name: str):
+    if not re.fullmatch(r"[A-Za-z0-9_.-]{1,64}", name) or ".." in name:
+        raise HTTPException(404)
+    path = os.path.join(_SITE, name)
+    if not os.path.isfile(path):
+        raise HTTPException(404)
+    return FileResponse(path, headers={**_CORS, "Cache-Control": "public, max-age=86400"})
+
+
+@app.options("/waitlist", include_in_schema=False)
+async def waitlist_options():
+    return Response(status_code=204, headers=_CORS)
+
+
+@app.post("/waitlist")
+async def waitlist(request: Request):
+    body = await request.json()
+    email = str(body.get("email", "")).strip().lower()[:120]
+    if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
+        raise HTTPException(422, "That email doesn't look right.")
+    os.makedirs(os.path.dirname(_WAITLIST), exist_ok=True)
+    rows = []
+    if os.path.exists(_WAITLIST):
+        with open(_WAITLIST) as f:
+            rows = [json.loads(l) for l in f if l.strip()]
+    for r in rows:
+        if r.get("email") == email:
+            return JSONResponse({"number": r["number"], "again": True}, headers=_CORS)
+    number = len(rows) + 1
+    with open(_WAITLIST, "a") as f:
+        f.write(json.dumps({"number": number, "email": email, "at": time.time(), "source": str(body.get("source", ""))[:80]}) + "\n")
+    return JSONResponse({"number": number}, headers=_CORS)
+
+
+@app.get("/admin/waitlist")
+async def admin_waitlist(request: Request):
+    _admin(request.headers.get("x-admin-key", ""))
+    if not os.path.exists(_WAITLIST):
+        return []
+    with open(_WAITLIST) as f:
+        return [json.loads(l) for l in f if l.strip()]
+
+
 @app.get("/health")
 async def health():
     return {"ok": True, "t": time.time()}

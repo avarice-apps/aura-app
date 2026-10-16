@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kleos</title>
+<meta name="description" content="What is heard of you. Kleos is a members' house for presence: the coach, the goods, the register. By invitation.">
+<meta property="og:title" content="Kleos — What is heard of you.">
+<meta property="og:description" content="Members' Goods Nº 001. Issued 11.11.26. Request your place.">
+<meta name="theme-color" content="#1608F2">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { --blue:#1608F2; --ink:#0D0B1E; --ivory:#F1EBDD; --navy:#0C0678; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:var(--blue); color:var(--ivory); font-family: Geist, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  body { overflow:hidden; }
+  #gl { position:fixed; inset:0; width:100%; height:100%; display:block; }
+  .ui { position:fixed; inset:0; display:flex; flex-direction:column; justify-content:space-between; padding: clamp(18px, 3vw, 40px); pointer-events:none; }
+  .ui > * { pointer-events:auto; }
+  .top, .bottom { display:flex; justify-content:space-between; align-items:baseline; gap:16px; }
+  .mono { font-family:'Geist Mono', ui-monospace, monospace; font-size: 11px; letter-spacing: .22em; text-transform: uppercase; opacity:.85; }
+  .brand { font-family:'Instrument Serif', serif; font-size: clamp(30px, 3.4vw, 44px); line-height:1; color:var(--ivory); text-decoration:none; }
+  .mid { text-align:left; display:flex; flex-direction:column; align-items:flex-start; gap: 14px; margin-top:auto; margin-bottom:auto; max-width: 640px; }
+  .statement { font-family:'Instrument Serif', serif; font-style:italic; font-weight:400; font-size: clamp(44px, 7.2vw, 108px); line-height:.95; letter-spacing:-.01em; margin:0; text-shadow: 0 2px 40px rgba(12,6,120,.55); }
+  .sub { max-width: min(520px, 90vw); font-size: clamp(14px, 1.3vw, 17px); line-height:1.5; opacity:.9; margin:0; }
+  form { display:flex; width:min(520px, 92vw); border:1px solid rgba(241,235,221,.7); background: rgba(12,6,120,.35); backdrop-filter: blur(10px); margin-top:8px; }
+  form:focus-within { border-color: var(--ivory); }
+  input { flex:1; min-width:0; height:54px; padding:0 18px; border:0; background:transparent; color:var(--ivory); font: 16px Geist, system-ui, sans-serif; outline:none; }
+  input::placeholder { color: rgba(241,235,221,.55); }
+  button { height:54px; padding:0 22px; border:0; background:var(--ivory); color:var(--navy); font-family:'Geist Mono', monospace; font-size:12px; letter-spacing:.18em; cursor:pointer; }
+  button:hover { background:#fff; }
+  button:disabled { opacity:.6; cursor:default; }
+  .note { font-size:12px; opacity:.7; margin:0; }
+  .done { display:none; flex-direction:column; align-items:center; gap:10px; }
+  .done .num { font-family:'Instrument Serif', serif; font-size: clamp(40px, 6vw, 80px); line-height:1; }
+  .live { display:flex; align-items:center; gap:8px; }
+  .live i { width:6px; height:6px; border-radius:50%; background:var(--ivory); display:inline-block; animation: pulse 1.6s ease-in-out infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+  @media (max-width:760px){ .top .mono.right, .bottom .mono.right { display:none; } .ui { padding:18px; } .mid { gap:10px; margin-top:auto; margin-bottom:28px; } .statement { font-size: clamp(40px, 12vw, 56px); } }
+  @media (prefers-reduced-motion: reduce){ .live i { animation:none; } }
+</style>
+</head>
+<body>
+<canvas id="gl" aria-hidden="true"></canvas>
+
+<div class="ui">
+  <div class="top">
+    <a class="brand" href="/" aria-label="Kleos">Kleos</a>
+    <span class="mono right">Nº 001 · MMXXVI · By invitation</span>
+  </div>
+
+  <div class="mid">
+    <span class="mono live"><i></i> Members' Goods · issued 11.11.26</span>
+    <h1 class="statement">What is heard<br>of you.</h1>
+    <p class="sub">A house for presence. The coach that tells you the truth, and the goods that say it for you. Places are limited and numbered.</p>
+    <form id="f" novalidate>
+      <label for="email" style="position:absolute;left:-9999px">Email</label>
+      <input id="email" type="email" name="email" placeholder="Your email" autocomplete="email" required>
+      <button id="go" type="submit">REQUEST A PLACE</button>
+    </form>
+    <p class="note" id="note">We write once, when a place opens. Nothing else.</p>
+    <div class="done" id="done">
+      <span class="mono">You're on the register</span>
+      <div class="num" id="num">Nº —</div>
+      <span class="note">Keep this number. It's yours at the first drop.</span>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <span class="mono">ΚΛΕΟΣ · New York · Madrid</span>
+    <span class="mono right">The App · The Goods · The House</span>
+  </div>
+</div>
+
+<script>
+// ---------- waitlist ----------
+const API = location.protocol.startsWith('http') && !location.hostname.endsWith('claude.ai') && !location.hostname.endsWith('claudeusercontent.com') ? '' : 'https://aura-app-production-c2eb.up.railway.app';
+const f = document.getElementById('f'), email = document.getElementById('email'), go = document.getElementById('go'), note = document.getElementById('note'), done = document.getElementById('done');
+f.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const v = email.value.trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { note.textContent = 'That email doesn’t look right.'; email.focus(); return; }
+  go.disabled = true; go.textContent = '…';
+  try {
+    const r = await fetch(API + '/waitlist', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email: v, source: location.hostname }) });
+    const j = await r.json();
+    if (!r.ok) throw new Error(j.detail || 'failed');
+    f.style.display = 'none'; note.style.display = 'none'; done.style.display = 'flex';
+    document.getElementById('num').textContent = 'Nº ' + String(j.number).padStart(4, '0');
+    burst = 1.0;
+  } catch (err) {
+    go.disabled = false; go.textContent = 'REQUEST A PLACE';
+    note.textContent = 'The register didn’t answer. Try again in a moment.';
+  }
+});
+
+// ---------- the colossus (WebGL) ----------
+const canvas = document.getElementById('gl');
+const gl = canvas.getContext('webgl', { antialias:false, alpha:false, premultipliedAlpha:false });
+let burst = 0;
+if (gl) {
+const vs = `attribute vec2 p; varying vec2 v; void main(){ v = p*.5+.5; gl_Position = vec4(p,0.,1.); }`;
+const fs = `
+precision highp float;
+varying vec2 v;
+uniform vec2 res; uniform float t; uniform vec2 mouse; uniform float mv; uniform sampler2D head; uniform vec2 headAspect; uniform float burst; uniform vec2 headPos; uniform float hs;
+const vec3 BLUE = vec3(0.086,0.031,0.949);
+const vec3 INK  = vec3(0.035,0.016,0.44);
+const vec3 IVORY= vec3(0.945,0.922,0.867);
+float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
+float noise(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.-2.*f);
+  return mix(mix(hash(i),hash(i+vec2(1,0)),f.x), mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x), f.y); }
+float fbm(vec2 p){ float a=.5, s=0.; for(int i=0;i<5;i++){ s+=a*noise(p); p=p*2.03+vec2(1.7,9.2); a*=.5; } return s; }
+void main(){
+  vec2 uv = v; float ar = res.x/res.y;
+  vec2 q = (uv-.5)*vec2(ar,1.);
+  // domain-warped field (the "fractal" behind the head)
+  float tt = t*.06;
+  vec2 w = vec2(fbm(q*1.6+tt), fbm(q*1.6-tt*1.3+5.));
+  float field = fbm(q*2.2 + 2.4*w + vec2(0.,tt*.5));
+  // mouse: a slow ripple that pushes the field and the head
+  vec2 m = (mouse-.5)*vec2(ar,1.);
+  float d = length(q-m);
+  float ripple = sin(d*18.-t*4.)*exp(-d*3.2)*(.015+.035*mv) + burst*sin(d*22.-t*9.)*exp(-d*2.)*.05;
+  vec2 warp = (q-m)/max(d,.001)*ripple;
+  // head sampling (centred, fit to height)
+  vec2 hp = (q - headPos + warp*1.4 + (w-.5)*.012) / hs;
+  hp.x /= headAspect.x/headAspect.y;
+  vec2 huv = hp + .5; huv.y = 1.-huv.y - 0.02;
+  vec4 h = vec4(0.);
+  if(huv.x>0.&&huv.x<1.&&huv.y>0.&&huv.y<1.){
+    // chromatic split along the ripple
+    vec2 ca = warp*2.5;
+    float r = texture2D(head, huv+ca).r, g = texture2D(head, huv).r, b = texture2D(head, huv-ca).r;
+    float a = texture2D(head, huv).a;
+    h = vec4(r,g,b,a);
+  }
+  // background: blue field with ink depths and ivory glints
+  float f1 = smoothstep(.25,.9,field);
+  vec3 bg = mix(INK, BLUE, f1);
+  bg += IVORY*pow(smoothstep(.72,.98,field),3.)*.35;
+  // scanlines + dither grain
+  float scan = .93 + .07*sin(gl_FragCoord.y*3.14159);
+  float grain = (hash(gl_FragCoord.xy + t)-.5)*.06;
+  // head tone: luminance -> ink/blue/ivory duotone
+  float lum = (h.r+h.g+h.b)/3.;
+  vec3 ht = lum<.5 ? mix(INK, BLUE, lum*2.) : mix(BLUE, IVORY, (lum-.5)*2.);
+  // halftone sparkle on the highlights
+  vec2 cell = fract(gl_FragCoord.xy/4.)-.5;
+  float dot = smoothstep(.5, .1, length(cell)) * smoothstep(.55,.95,lum);
+  ht = mix(ht, IVORY, dot*.45);
+  // rim glow where ripple passes
+  ht += IVORY*abs(ripple)*8.*h.a;
+  vec3 col = mix(bg, ht, h.a);
+  // soft vignette so the type reads
+  float vig = smoothstep(1.35,.35,length((uv-.5)*vec2(1.,1.35)));
+  col = mix(col, INK, (1.-vig)*.55);
+  col = col*scan + grain;
+  gl_FragColor = vec4(col,1.);
+}`;
+function sh(type, src){ const s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s); if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s)); return s; }
+const prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs)); gl.linkProgram(prog); gl.useProgram(prog);
+const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+const loc = gl.getAttribLocation(prog,'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+const U = (n)=>gl.getUniformLocation(prog,n);
+const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([0,0,0,0]));
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+let aspect=[587,1024];
+const img = new Image(); img.crossOrigin='anonymous';
+img.onload = ()=>{ gl.bindTexture(gl.TEXTURE_2D, tex); gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false); gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,img); aspect=[img.width,img.height]; };
+img.src = API + '/site/head.png';
+let mouse=[.5,.5], target=[.5,.5], mv=0;
+addEventListener('pointermove', e=>{ target=[e.clientX/innerWidth, 1-e.clientY/innerHeight]; mv=1; });
+addEventListener('touchmove', e=>{ const t=e.touches[0]; target=[t.clientX/innerWidth, 1-t.clientY/innerHeight]; mv=1; }, {passive:true});
+function resize(){ const dpr=Math.min(devicePixelRatio||1, 1.5); canvas.width=innerWidth*dpr; canvas.height=innerHeight*dpr; gl.viewport(0,0,canvas.width,canvas.height); }
+addEventListener('resize', resize); resize();
+const t0=performance.now();
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function frame(now){
+  const t=(now-t0)/1000;
+  mouse[0]+=(target[0]-mouse[0])*.06; mouse[1]+=(target[1]-mouse[1])*.06; mv*=.97; burst*=.985;
+  gl.uniform2f(U('res'),canvas.width,canvas.height); gl.uniform1f(U('t'), reduce? 0.0 : t); gl.uniform2f(U('mouse'),mouse[0],mouse[1]); gl.uniform1f(U('mv'),mv); gl.uniform1f(U('burst'),burst);
+  gl.uniform2f(U('headAspect'),aspect[0],aspect[1]); const narrow=innerWidth<760; gl.uniform2f(U('headPos'), narrow?0.0:0.30, narrow?0.22:-0.02); gl.uniform1f(U('hs'), narrow?0.60:0.92); gl.uniform1i(U('head'),0);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+} else {
+  document.body.style.background = 'var(--blue) url(' + API + '/site/head_blue.webp) center/auto 80% no-repeat';
+}
+</script>
+</body>
+</html>
