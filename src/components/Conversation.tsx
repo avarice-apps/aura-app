@@ -1,12 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Pressable, NativeModules, TurboModuleRegistry } from 'react-native';
+import { View, Pressable, NativeModules, TurboModuleRegistry, Text as RNText } from 'react-native';
 import { useSharedValue, withTiming, withRepeat, Easing, cancelAnimation } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useAudioRecorder, useAudioRecorderState, RecordingPresets } from 'expo-audio';
 import { Icon, ICON } from '@/ui';
+import { ReadingVeil } from '@/components/ReadingVeil';
 import { CallStage } from '@/components/CallStage';
 import { faceFor } from '@/lib/faces';
-import { useTheme } from '@/theme';
+import { font, useTheme } from '@/theme';
 import { startSession, sendTurn, evaluateSession, syncMe, StartArgs } from '@/lib/api';
 import { useStore } from '@/state/store';
 import type { Evaluation, SessionStart } from '@/lib/types';
@@ -51,6 +52,8 @@ export function TurnConversation({ args, onDone, onError, label }: { args: Start
   const [left, setLeft] = useState(0);
   const [interest, setInterest] = useState<number | null>(null);
   const [err, setErr] = useState('');
+  const [revealing, setRevealing] = useState(false); // the veil dissolving into the read
+  const [readFailed, setReadFailed] = useState(false);
   const recorder = useAudioRecorder(VOICE_PRESET);
   const rec = useAudioRecorderState(recorder, 80);
   const energy = useSharedValue(0);
@@ -188,6 +191,28 @@ export function TurnConversation({ args, onDone, onError, label }: { args: Start
     }, 1000);
   }
 
+  /** The read. It can fail or time out; then they can ask for it again instead of being stuck. */
+  async function readBack() {
+    setReadFailed(false);
+    setErr('');
+    setPhase('evaluating');
+    let e;
+    try {
+      e = await evaluateSession(sessionRef.current);
+    } catch (x: any) {
+      setErr(x?.message ?? 'Poise couldn’t read that one.');
+      setReadFailed(true);
+      setPhase('error');
+      return;
+    }
+    play('reveal');
+    if (!args.poise) {
+      setRevealing(true);
+      await new Promise((r) => setTimeout(r, 450)); // the veil dissolves into the read
+    }
+    onDone({ sessionId: sessionRef.current, evaluation: e, start: start! });
+  }
+
   async function finish() {
     if (finishing.current) return;
     finishing.current = true;
@@ -209,10 +234,9 @@ export function TurnConversation({ args, onDone, onError, label }: { args: Start
       setPhase('speaking');
       await speak(r.replyAudio);
       if (r.done) {
-        setPhase('evaluating');
-        const e = await evaluateSession(sessionRef.current);
-        play('reveal');
-        onDone({ sessionId: sessionRef.current, evaluation: e, start: start! });
+        finishing.current = false;
+        await readBack();
+        return;
       } else {
         finishing.current = false;
         listen();
@@ -233,9 +257,13 @@ export function TurnConversation({ args, onDone, onError, label }: { args: Start
   const level = phase === 'recording' && typeof rec.metering === 'number' ? Math.max(0, Math.min(1, (rec.metering + 55) / 45)) : 0;
   const name = start?.character.name ?? '';
   const status =
-    phase === 'loading' ? 'Setting the scene' : phase === 'speaking' ? `${name} is talking` : phase === 'yourturn' ? err || 'Tap to talk' : phase === 'recording' ? (heard.current ? 'Listening… pause when you’re done' : meterSeen.current ? 'Your turn. Just talk' : 'Talk, then tap the square') : phase === 'sending' ? notice || `${name} is thinking…` : phase === 'evaluating' ? 'Poise is reading it back' : err;
+    phase === 'loading' ? 'Setting the scene' : phase === 'speaking' ? `${name} is talking` : phase === 'yourturn' ? err || 'Tap to talk' : phase === 'recording' ? (heard.current ? 'Listening… pause when you’re done' : meterSeen.current ? 'Your turn. Just talk' : 'Talk, then tap the square') : phase === 'sending' ? notice || `${name} is thinking…` : phase === 'evaluating' ? 'Call ended' : err;
   const last = msgs[msgs.length - 1];
   const live = phase === 'yourturn' || phase === 'recording';
+
+  if (phase === 'evaluating' && !args.poise) {
+    return <ReadingVeil face={start ? faceFor(start.character, { seed: start.session_id, stranger: !!start.masked }) : null} leaving={revealing} />;
+  }
 
   return (
     <CallStage
@@ -256,6 +284,11 @@ export function TurnConversation({ args, onDone, onError, label }: { args: Start
       status={status}
       statusError={phase === 'error'}
     >
+      {readFailed ? (
+        <Pressable onPress={readBack} accessibilityLabel="Try the read again" style={{ alignSelf: 'center', height: 48, paddingHorizontal: 24, borderRadius: 24, backgroundColor: t.accent, justifyContent: 'center' }}>
+          <RNText style={{ fontFamily: font.medium, fontSize: 16, color: t.onAccent }}>Try the read again</RNText>
+        </Pressable>
+      ) : (
       <View style={{ alignItems: 'center', gap: 8 }}>
         <Pressable
           accessibilityLabel={phase === 'recording' ? 'Finish answer' : 'Start answering'}
@@ -269,6 +302,7 @@ export function TurnConversation({ args, onDone, onError, label }: { args: Start
           <View style={{ width: `${Math.round(level * 100)}%`, height: 3, borderRadius: 2, backgroundColor: t.ink }} />
         </View>
       </View>
+      )}
     </CallStage>
   );
 }

@@ -184,7 +184,8 @@ def test_straight_voice_may_not_swear(monkeypatch):
         return fixed
     monkeypatch.setattr(converse, "_json_call", fake_call)
     out = asyncio.run(converse.evaluate(_played_session()))
-    assert calls == [converse.M_EVAL, converse.M_CHAR]  # one read, one voice rewrite, no second read
+    assert calls[:2] == [converse.M_EVAL, converse.M_CHAR]  # the quick read, one voice rewrite; then only the detail
+    assert calls.count(converse.M_EVAL) == 2
     assert "shit" not in out["voices"]["straight"]["script"] and out["change"] == bad["change"]
 
 
@@ -242,3 +243,25 @@ def test_prompts_dont_assume_the_player_is_a_man():
     for name in ("LIVE_SYSTEM", "CHAR_SYSTEM", "EVAL_SYSTEM", "POISE_LIVE_SYSTEM", "LEDGER_SYSTEM", "PORTRAIT_SYSTEM"):
         txt = getattr(converse, name)
         assert not re.search(r"\b(him|his)\b", txt), name
+
+
+def test_quick_read_comes_first_and_detail_follows(monkeypatch):
+    calls = []
+
+    async def fake_call(model, system, user, **kw):
+        calls.append(system)
+        if system == converse.EVAL_DETAIL:
+            assert "FINDINGS (fixed)" in user
+            await asyncio.sleep(0.05)
+            return {"evidence": [{"turn": 1, "quote": "split", "observation": "x"}], "uncertainties": [], "alternatives": [{"style": "a", "line": "One."}, {"style": "b", "line": "Two."}], "signal": None, "turning_point": None, "compare": None}
+        return _fake_eval()
+    monkeypatch.setattr(converse, "_json_call", fake_call)
+    sid = _played_session()
+
+    async def go():
+        quick = await converse.evaluate(sid, detail=False)
+        assert quick["detail_pending"] is True and quick["alternatives"] == [] and quick["rating"] is not None
+        full = await converse.full_read(sid)
+        assert full["detail_pending"] is False and len(full["alternatives"]) == 2 and full["rating"] == quick["rating"]
+    asyncio.run(go())
+    assert calls[0] == converse.EVAL_QUICK

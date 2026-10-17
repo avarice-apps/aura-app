@@ -1,3 +1,4 @@
+import { useFullRead } from '@/lib/reads';
 import React, { useState } from 'react';
 import { View, ScrollView } from 'react-native';
 import { router } from 'expo-router';
@@ -18,7 +19,7 @@ export default function Retry() {
   const [show, setShow] = useState<'hint' | 'example' | null>(null);
   const [alt, setAlt] = useState<number | undefined>();
   const [go, setGo] = useState(false);
-  const e = ob.first;
+  const e = useFullRead(ob.first);
   if (!e) return null;
 
   if (go) {

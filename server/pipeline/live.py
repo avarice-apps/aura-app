@@ -65,7 +65,11 @@ def _supported_voices() -> list[dict]:
 TTS_MODELS = ["eleven_v3_conversational", "eleven_flash_v2"]
 
 
-def _agent_config(public_url: str, tts_model: str = TTS_MODELS[0]) -> dict:
+# A touch quicker and less even than the defaults: real people in their twenties don't speak like narrators.
+VOICE_SETTINGS = {"speed": float(os.environ.get("KLEOS_VOICE_SPEED", "1.07")), "stability": 0.38, "similarity_boost": 0.8}
+
+
+def _agent_config(public_url: str, tts_model: str = TTS_MODELS[0], tuned: bool = True) -> dict:
     return {
         "name": "Kleos Live",
         "conversation_config": {
@@ -82,7 +86,7 @@ def _agent_config(public_url: str, tts_model: str = TTS_MODELS[0]) -> dict:
                     },
                 },
             },
-            "tts": {"voice_id": "EXAVITQu4vr4xnSDxMaL", "model_id": tts_model, "supported_voices": _supported_voices()},
+            "tts": {"voice_id": "EXAVITQu4vr4xnSDxMaL", "model_id": tts_model, "supported_voices": _supported_voices(), **(VOICE_SETTINGS if tuned else {})},
             "turn": {"turn_timeout": 7, "turn_eagerness": "eager"},  # mid-thought pauses get an "Mm-hm" (converse.unfinished)
             "conversation": {"max_duration_seconds": 1200, "client_events": ["audio", "interruption", "agent_response", "user_transcript", "agent_response_correction"]},
         },
@@ -107,8 +111,9 @@ async def ensure_agent(public_url: str) -> str:
     last = None
     async with httpx.AsyncClient(timeout=30) as c:
         # Expressive voices first; fall back to Flash if the account can't use them.
-        for model in TTS_MODELS:
-            cfg = _agent_config(public_url, model)
+        # Expressive model with tuned voice settings first; if the account or model refuses a setting, step down.
+        for model, tuned in [(m, t) for m in TTS_MODELS for t in (True, False)]:
+            cfg = _agent_config(public_url, model, tuned)
             if d.get("agent_id"):
                 r = await c.patch(f"{API}/convai/agents/{d['agent_id']}", headers={"xi-api-key": _key()}, json=cfg)
                 if r.status_code < 300:
@@ -122,7 +127,7 @@ async def ensure_agent(public_url: str) -> str:
                     _save(d)
                     return d["agent_id"]
             last = r
-            print(f"live agent: {model} rejected ({r.status_code}): {r.text[:200]}")
+            print(f"live agent: {model} (tuned={tuned}) rejected ({r.status_code}): {r.text[:200]}")
         last.raise_for_status()
         return d["agent_id"]
 

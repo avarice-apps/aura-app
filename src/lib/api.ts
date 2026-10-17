@@ -1,5 +1,6 @@
 import { API_URL, OFFLINE } from './config';
 import type { BuiltFit, DraftRead, Duel, Evaluation, FitRead, Lesson, Moment, ProfileRead, Receipt, ScanResult, SessionStart, ShotMessage, StyleProfile, StyleRead, Swatch, TurnResult, WardrobeItem } from './types';
+import { useReads, pickDetail } from './reads';
 import { useStore, type Goal, type Account } from '@/state/store';
 import { File, Directory, Paths } from 'expo-file-system';
 import { QUESTS } from './quests';
@@ -284,7 +285,8 @@ export async function evaluateSession(sessionId: string): Promise<Evaluation & {
     const e = demo.attempt === 1 ? DEMO_EVAL_1 : DEMO_EVAL_2;
     return { ...e, scriptAudio: demo.attempt === 1 ? DEMO_AUDIO.poise_1 : DEMO_AUDIO.poise_2 };
   }
-  const r = await postJSON<Evaluation>(`/session/${sessionId}/evaluate`, {});
+  const r = await withTimeout(postJSON<Evaluation>(`/session/${sessionId}/evaluate`, {}), 45000);
+  followDetail(sessionId, r);
   return { ...r, scriptAudio: r.script_audio };
 }
 
@@ -530,18 +532,53 @@ export function reportMic(sessionId: string, diag: Record<string, unknown>) {
 }
 
 export async function liveFinish(sessionId: string, conversationId: string, frames = false): Promise<Evaluation & { scriptAudio: AudioSrc }> {
-  // The read can take a while (recording analysis + evaluation). The server answers within ~25s,
-  // or says it's still working; then poll until it's ready. `frames`: camera stills are on their way.
-  let e = await postJSON<Evaluation & { script_audio?: string; pending?: boolean }>(`/live/${sessionId}/finish`, { conversation_id: conversationId, frames });
-  const until = Date.now() + 180000;
+  // The quick read comes back in a few seconds; if the server is still busy it says so and we poll.
+  // `frames`: camera stills are on their way. Never waits more than 90 seconds in all.
+  let e = await withTimeout(postJSON<Evaluation & { script_audio?: string; pending?: boolean }>(`/live/${sessionId}/finish`, { conversation_id: conversationId, frames }), 40000);
+  const until = Date.now() + 90000;
   while (e.pending && Date.now() < until) {
     await sleep(1000);
-    const r = await call(`/live/${sessionId}/result`);
+    const r = await withTimeout(call(`/live/${sessionId}/result`), 15000);
     if (!r.ok) throw new Error((await r.json().catch(() => ({})))?.detail ?? 'Poise could not read that one.');
     e = await r.json();
   }
-  if (e.pending) throw new Error('Poise is taking too long. Try the read again.');
+  if (e.pending) throw new Error('That read is taking too long. Try it again.');
+  followDetail(sessionId, e);
   return { ...e, scriptAudio: e.script_audio };
+}
+
+/** A request that never answers would leave the screen waiting forever: give up and let them retry. */
+function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const t = setTimeout(() => reject(new Error('That took too long. Check your connection and try again.')), ms);
+    p.then((v) => { clearTimeout(t); resolve(v); }, (x) => { clearTimeout(t); reject(x); });
+  });
+}
+
+/** The read's second half (evidence, alternatives, signal, turning point) is written after the quick read. */
+function followDetail(sessionId: string, e: any) {
+  if (!e?.detail_pending) return;
+  (async () => {
+    const until = Date.now() + 45000;
+    while (Date.now() < until) {
+      await sleep(1500);
+      try {
+        const r = await call(`/live/${sessionId}/result`);
+        if (!r.ok) return;
+        const full = await r.json();
+        if (!full?.detail_pending) {
+          const d = pickDetail(full);
+          useReads.getState().put(sessionId, d);
+          // The saved copy of this call gets the full read too, so it's complete in history.
+          const st = useStore.getState();
+          if (st.sessions.some((x) => x.evaluation?.session_id === sessionId)) {
+            st.set({ sessions: st.sessions.map((x) => (x.evaluation?.session_id === sessionId ? { ...x, evaluation: { ...x.evaluation, ...d } } : x)) });
+          }
+          return;
+        }
+      } catch {}
+    }
+  })();
 }
 
 // ------------------------------------------------------------------ rate a clip / profile read

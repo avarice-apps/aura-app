@@ -908,23 +908,16 @@ async def _read_back(sid: str, cid: str | None, voice: bool, frames: bool = Fals
         frag = s.pop("pending_user")
         s["turns"].append({"role": "user", "text": frag, "facts": converse.text_facts(frag)})
     camera = asyncio.create_task(_wait_for_camera(s, 8)) if frames and not s.get("camera") else None
+    analysis = None
     if cid:
-        # The recording takes ElevenLabs a few seconds to finalise. Give the voice measurement a short window,
-        # then read the call anyway (voice axes stay neutral without it). The analysis keeps running in the
-        # background so the recording is still deleted.
+        # The recording takes ElevenLabs a few seconds to finalise. It's measured while the read is being
+        # written; the read waits for it only up to KLEOS_AUDIO_WAIT seconds in total, then goes without voice
+        # facts. The analysis keeps running in the background so the recording is still deleted.
         analysis = asyncio.create_task(live.analyse_call(sid, cid))
         s["analysis_task"] = analysis
-        try:
-            await asyncio.wait_for(asyncio.shield(analysis), timeout=float(os.environ.get("KLEOS_AUDIO_WAIT", "6")))
-        except asyncio.TimeoutError:
-            print("live analysis still running; reading without voice facts")
-        except KeyError:
-            raise
-        except Exception as e:
-            print("live analysis failed:", e)
     if camera:
         await camera  # usually already done: it ran alongside the recording's analysis
-    out = await converse.evaluate(sid)
+    out = await converse.evaluate(sid, detail=False, audio=analysis, audio_budget=float(os.environ.get("KLEOS_AUDIO_WAIT", "6")))
     if s.get("subject") and not out.get("insufficient"):
         try:
             referrals.activate(s["subject"])
@@ -1083,7 +1076,7 @@ async def session_evaluate(sid: str, request: Request, voice: bool = True):
     s = _session_for(request, sid)
     _settle(s, _spoke(s))
     try:
-        out = await converse.evaluate(sid)
+        out = await converse.evaluate(sid, detail=False)  # the detail follows; the app picks it up from /live/{sid}/result
     except KeyError as e:
         raise HTTPException(410, str(e))
     if voice and out.get("script"):
@@ -1505,6 +1498,7 @@ async def make_clip(sid: str, request: Request):
             await asyncio.wait_for(asyncio.shield(task), timeout=20)
         except Exception:
             pass
+    await converse.full_read(sid, timeout=25)  # the clip is cut around the turning point, which is in the detail
     try:
         path = await clips.make(sid, s, s["evaluation"], tts_bytes=lambda t: tts.speak(t))
     except Exception as e:

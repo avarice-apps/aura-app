@@ -8,6 +8,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Image } from 'expo-image';
 import { File } from 'expo-file-system';
 import { Body, Muted, Icon, ICON, Serif } from '@/ui';
+import { ReadingVeil } from '@/components/ReadingVeil';
 import { CallStage } from '@/components/CallStage';
 import { faceFor } from '@/lib/faces';
 import { font, useTheme } from '@/theme';
@@ -84,7 +85,7 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
   const [turns, setTurns] = useState(0);
   const [err, setErr] = useState('');
   const [retryId, setRetryId] = useState<string | null>(null);
-  const [waited, setWaited] = useState(0); // seconds since hang-up, so the wait says what's happening
+  const [revealing, setRevealing] = useState(false); // the veil dissolving into the read
   const energy = useSharedValue(0);
   const idle = useSharedValue(0);
   const who = useSharedValue(0); // 1 while they talk
@@ -219,15 +220,6 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
   }, [phase, conv, energy, who]);
 
   useEffect(() => {
-    if (phase !== 'evaluating') return;
-    const t = setInterval(() => setWaited((w) => w + 1), 1000);
-    return () => {
-      clearInterval(t);
-      setWaited(0);
-    };
-  }, [phase]);
-
-  useEffect(() => {
     if (!cameraOn || phase !== 'live' || !camPerm?.granted) return;
     let busy = false;
     const id = setInterval(async () => {
@@ -328,6 +320,10 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
       return;
     }
     play('reveal');
+    if (!isPoise) {
+      setRevealing(true);
+      await new Promise((r) => setTimeout(r, 450)); // the veil dissolves into the read
+    }
     try {
       onDone({ sessionId: startRef.current.session_id, evaluation: e, start: startRef.current, micDead: listenMs.current >= 4000 && heard.current < DEAD });
     } catch (x: any) {
@@ -394,11 +390,7 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
       : phase === 'evaluating'
         ? isPoise
           ? 'Call ended'
-          : waited < 4
-            ? 'Call ended. Poise is listening back'
-            : waited < 9
-              ? 'Measuring how you sounded'
-              : 'Poise is writing your read'
+          : 'Call ended'
         : phase === 'error'
           ? err
           : turns === 0 && listenMs.current >= 9000 && heard.current < DEAD
@@ -422,6 +414,8 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
     : start
       ? { label: label || 'The scene', text: start.setting, mine: true, key: 0 }
       : null;
+
+  if (phase === 'evaluating' && !isPoise) return <ReadingVeil face={face} leaving={revealing} />;
 
   return (
     <View style={{ flex: 1 }}>

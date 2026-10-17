@@ -1,3 +1,4 @@
+import { useFullRead } from '@/lib/reads';
 import React, { useState } from 'react';
 import { View, Pressable, Text as RNText } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -124,7 +125,8 @@ export function ResultHero({ e, label = 'This answer read as' }: { e: Evaluation
   );
 }
 
-export function FeedbackCard({ e }: { e: Evaluation }) {
+export function FeedbackCard({ e: e0 }: { e: Evaluation }) {
+  const e = useFullRead(e0);
   const t = useTheme();
   const toneNow = useStore((st) => st.tone);
   const both = !!(e.voices?.straight?.verdict && e.voices?.unfiltered?.verdict);
@@ -173,7 +175,8 @@ export function FeedbackCard({ e }: { e: Evaluation }) {
 }
 
 /** The Moment: where two channels lined up. Words x voice, or voice x eyes. Measured, then interpreted. */
-export function SignalCard({ e }: { e: Evaluation }) {
+export function SignalCard({ e: e0 }: { e: Evaluation }) {
+  const e = useFullRead(e0);
   const t = useTheme();
   if (!e.signal) return null;
   return (
@@ -187,7 +190,8 @@ export function SignalCard({ e }: { e: Evaluation }) {
 }
 
 /** Turning point: the exchange where the other person's inner state moved. Only shown when the evaluator found one. */
-export function TurningPoint({ e }: { e: Evaluation }) {
+export function TurningPoint({ e: e0 }: { e: Evaluation }) {
+  const e = useFullRead(e0);
   const t = useTheme();
   if (!e.turning_point) return null;
   return (
@@ -200,7 +204,8 @@ export function TurningPoint({ e }: { e: Evaluation }) {
 }
 
 /** Two viable ways to handle the change moment. He picks the one that sounds like him. */
-export function Alternatives({ e, onPick, picked }: { e: Evaluation; onPick?: (i: number) => void; picked?: number }) {
+export function Alternatives({ e: e0, onPick, picked }: { e: Evaluation; onPick?: (i: number) => void; picked?: number }) {
+  const e = useFullRead(e0);
   const t = useTheme();
   if (!e.alternatives?.length) return null;
   return (
@@ -265,7 +270,8 @@ export function AxesCard({ e }: { e: Evaluation }) {
 }
 
 /** What the read rests on, and what Poise couldn't tell. */
-export function Grounds({ e }: { e: Evaluation }) {
+export function Grounds({ e: e0 }: { e: Evaluation }) {
+  const e = useFullRead(e0);
   const t = useTheme();
   const ev = (e.evidence ?? []).slice(0, 3);
   const un = (e.uncertainties ?? []).slice(0, 2);
@@ -367,7 +373,8 @@ export function Appear({ children, delay = 0 }: { children: React.ReactNode; del
 }
 
 /** Everything beyond the headline read, folded. Results stay clean; depth is one tap away. */
-export function FullRead({ e, showAlternatives = true }: { e: Evaluation; showAlternatives?: boolean }) {
+export function FullRead({ e: e0, showAlternatives = true }: { e: Evaluation; showAlternatives?: boolean }) {
+  const e = useFullRead(e0);
   const t = useTheme();
   const tier = useTier();
   const [open, setOpen] = useState(false);

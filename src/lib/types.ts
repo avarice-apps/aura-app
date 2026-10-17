@@ -39,6 +39,10 @@ export type Axes = { voice: number | null; command: number | null; composure: nu
 
 export type Evaluation = {
   rating: number;
+  /** The session this read belongs to; the detail half arrives later under this id (lib/reads.ts). */
+  session_id?: string;
+  /** True while the detail (evidence, alternatives, signal, turning point) is still being written. */
+  detail_pending?: boolean;
   axes: Axes;
   axes_status?: Partial<Record<keyof Axes, AxisStatus>>;
   /** Both voices; the top-level verdict/script are the one chosen for the player's tone. */
