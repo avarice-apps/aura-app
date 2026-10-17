@@ -46,7 +46,7 @@ export default function DuelStart() {
     return <TakeRecorder seconds={TAKE_S} kicker={`Your side: ${topic.a}`} title={topic.topic} sub="Make your case. Your opponent argues the other side later." onDone={send} onClose={() => setStep('setup')} />;
   }
 
-  const invite = duel ? `I just argued “${duel.topic}” (${duel.side_a}). You take ${duel.side_b}. Open Kleos → Farm → Join a duel → ${duel.code}` : '';
+  const invite = duel ? `I just argued “${duel.topic}” (${duel.side_a}). You take ${duel.side_b}. Open Kleos → Play → Join with a code → ${duel.code}` : '';
 
   return (
     <Screen edges={['top', 'bottom']}>
@@ -82,7 +82,7 @@ export default function DuelStart() {
             <View style={{ borderRadius: 22, backgroundColor: t.accent, padding: 22, alignItems: 'center', gap: 6 }}>
               <RNText style={{ fontFamily: font.mono, fontSize: 10.5, letterSpacing: 1.4, color: 'rgba(255,255,255,0.75)' }}>DUEL CODE</RNText>
               <RNText style={{ fontFamily: font.mono, fontSize: 44, letterSpacing: 8, color: '#FFF' }}>{duel?.code}</RNText>
-              <RNText style={{ fontFamily: font.regular, fontSize: 13, color: 'rgba(255,255,255,0.86)', textAlign: 'center' }}>They argue “{duel?.side_b}”. You’ll see the verdict in Farm once they’ve gone.</RNText>
+              <RNText style={{ fontFamily: font.regular, fontSize: 13, color: 'rgba(255,255,255,0.86)', textAlign: 'center' }}>They argue “{duel?.side_b}”. You’ll see the verdict in Play once they’ve gone.</RNText>
             </View>
             <Button label="Send the challenge" onPress={() => { track('share', { what: 'duel_invite' }); Share.share({ message: invite }); }} />
             <Button label="They’re here: pass the phone" variant="secondary" onPress={() => duel && router.replace({ pathname: '/duel/[code]', params: { code: duel.code } })} />

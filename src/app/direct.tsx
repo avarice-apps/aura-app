@@ -9,6 +9,7 @@ import { Display, Kicker, Pill, RowLink, Hair } from '@/components/Kit';
 import { directStatus, directLink, directUnlink, directHistory, directClearHistory, type DirectStatus } from '@/lib/api';
 import { syncDirectContext } from '@/lib/direct';
 import { useTier } from '@/lib/plan';
+import { track } from '@/lib/analytics';
 
 /**
  * Poise Direct (Kleos Black): text Poise from Messages. You link your number by texting a one-time code from it
@@ -40,6 +41,7 @@ export default function Direct() {
     try {
       const c = await directLink();
       setCode(c);
+      track('direct_code');
       // Watch for the link to land (they text the code, the server binds the number).
       if (poll.current) clearInterval(poll.current);
       const started = Date.now();

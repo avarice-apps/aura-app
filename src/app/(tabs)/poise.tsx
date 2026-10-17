@@ -21,6 +21,7 @@ import { spend, refund, gate, requireTier } from '@/lib/plan';
 import { liveAvailable } from '@/components/Conversation';
 import { Display, Kicker, WAVE_ICON } from '@/components/Kit';
 import { occasionFresh } from '@/lib/occasion';
+import { track } from '@/lib/analytics';
 import { faceFor } from '@/lib/faces';
 
 const POISE_FACE = faceFor('poise');
@@ -145,6 +146,7 @@ export default function PoiseTab() {
       s.set({ drafts: [...(s.drafts ?? []).filter((d) => Date.parse(d.createdAt) > cut), entry].slice(-30) });
       setText('');
       closeDraft();
+      track('draft_read', { mode: read.mode, alternatives: read.alternatives.length, send_as_is: read.send_as_is, screenshot: !!shot?.length });
       play('reveal');
     } catch (e: any) {
       refund('poise');
@@ -516,6 +518,7 @@ function DraftExchange({ d, onEdit, onAnswer }: { d: DraftEntry; onEdit: (t: str
 
   async function copy(i: number, txt: string) {
     await Clipboard.setStringAsync(txt);
+    track('draft_copy', { option: i, send_as_is: r.send_as_is });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setCopied(i);
     setTimeout(() => setCopied((c) => (c === i ? null : c)), 1600);

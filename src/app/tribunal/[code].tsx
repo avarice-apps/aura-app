@@ -10,6 +10,7 @@ import { useStore } from '@/state/store';
 import { Kicker, Pill, Hair } from '@/components/Kit';
 import { tribunalGet, tribunalJoin, tribunalSubmit, tribunalAction, type Tribunal, type TribunalSeat } from '@/lib/api';
 import { play } from '@/lib/sound';
+import { track } from '@/lib/analytics';
 
 const BLUE = '#1608F2';
 const FORMAT_LABEL = { settle: 'Settle it', tribunal: 'The Tribunal', common: 'Find the disagreement' } as const;
@@ -77,6 +78,7 @@ export default function TribunalRoom() {
     try {
       const x = await tribunalJoin(code, { name: name.trim() || 'Guest', side: side.trim() || undefined, seat });
       setV(x);
+      track('tribunal_join', { seat });
       s.set({ tribunals: [{ code, topic: x.topic, createdAt: new Date().toISOString() }, ...(s.tribunals ?? []).filter((y) => y.code !== code)].slice(0, 20) });
       play('select');
     } catch (e: any) {
@@ -92,6 +94,7 @@ export default function TribunalRoom() {
       const x = await tribunalSubmit(code, kind, text.trim());
       setV(x);
       setText('');
+      track('tribunal_submit', { kind });
       play('reveal');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (e: any) {

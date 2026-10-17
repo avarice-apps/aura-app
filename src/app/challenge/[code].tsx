@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Screen, Body, Muted, Label, Button, Card, IconButton, Icon, ICON, Row } from '@/ui';
 import { Conversation } from '@/components/Conversation';
+import { NightCall } from '@/components/NightCall';
 import { ResultHero, FeedbackCard, Appear } from '@/components/Results';
 import { font, useTheme } from '@/theme';
 import { useStore } from '@/state/store';
@@ -41,7 +42,7 @@ export default function ChallengeScreen() {
 
   if (step === 'talk' && c) {
     return (
-      <Screen edges={['top', 'bottom']}>
+      <NightCall label={`Challenge · ${c.a_name}`} onClose={() => router.back()}>
         <Conversation
           label={`Challenge · ${c.a_name}`}
           metered={c.kind === 'floor'}
@@ -59,7 +60,7 @@ export default function ChallengeScreen() {
             }
           }}
         />
-      </Screen>
+      </NightCall>
     );
   }
 
@@ -106,7 +107,7 @@ export default function ChallengeScreen() {
                 <Appear delay={120}><FeedbackCard e={ev} /></Appear>
               </Stack12>
             )}
-            {ev?.insufficient ? <Muted small align="center">You barely said anything, so it didn’t count. Try again from the Farm tab.</Muted> : null}
+            {ev?.insufficient ? <Muted small align="center">You barely said anything, so it didn’t count. Try again from Play.</Muted> : null}
           </View>
         )}
       </ScrollView>

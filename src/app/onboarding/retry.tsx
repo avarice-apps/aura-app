@@ -4,6 +4,7 @@ import { router } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Screen, Title, Muted, Body, Button, Segments, Stack, Label, Pill, Row } from '@/ui';
 import { Conversation } from '@/components/Conversation';
+import { NightCall } from '@/components/NightCall';
 import { useTheme } from '@/theme';
 import { useStore } from '@/state/store';
 import { Alternatives } from '@/components/Results';
@@ -22,10 +23,7 @@ export default function Retry() {
 
   if (go) {
     return (
-      <Screen edges={['top', 'bottom']}>
-        <View style={{ paddingHorizontal: 20, paddingTop: 12 }}>
-          <Segments total={6} done={5} />
-        </View>
+      <NightCall label="Take two">
         <Conversation
           label="Take two"
           args={{ goal, attempt_of: ob.firstSession }}
@@ -34,7 +32,7 @@ export default function Retry() {
             router.replace('/onboarding/compare');
           }}
         />
-      </Screen>
+      </NightCall>
     );
   }
 
