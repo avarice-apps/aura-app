@@ -894,3 +894,15 @@ export async function tableVerdict(players: TablePlayer[]): Promise<TableVerdict
   if (OFFLINE) throw new Error('offline');
   return postJSON<TableVerdict>('/table/verdict', { players, tone: tone() });
 }
+
+/** A screen crashed: send the message and the top of the stack (no personal data) so it can be fixed. */
+export async function reportClientError(error: Error, path?: string): Promise<void> {
+  if (OFFLINE) return;
+  try {
+    await call('/client/error', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: String(error?.message ?? error).slice(0, 300), stack: String(error?.stack ?? '').slice(0, 1500), path: path ?? '' }),
+    });
+  } catch {}
+}

@@ -52,7 +52,10 @@ export function TurnConversation({ args, onDone, onError, label }: { args: Start
   const [left, setLeft] = useState(0);
   const [interest, setInterest] = useState<number | null>(null);
   const [err, setErr] = useState('');
-  const [revealing, setRevealing] = useState(false); // the veil dissolving into the read
+  const mounted = useRef(true);
+  useEffect(() => () => {
+    mounted.current = false;
+  }, []);
   const [readFailed, setReadFailed] = useState(false);
   const recorder = useAudioRecorder(VOICE_PRESET);
   const rec = useAudioRecorderState(recorder, 80);
@@ -206,11 +209,19 @@ export function TurnConversation({ args, onDone, onError, label }: { args: Start
       return;
     }
     play('reveal');
-    if (!args.poise) {
-      setRevealing(true);
-      await new Promise((r) => setTimeout(r, 450)); // the veil dissolves into the read
+    setTimeout(() => {
+      // The screen should have moved on to the read by now; never leave them on an empty veil.
+      if (mounted.current) {
+        setErr('Your read is ready but didn’t open. Tap to try again.');
+        setReadFailed(true);
+        setPhase('error');
+      }
+    }, 4000);
+    try {
+      onDone({ sessionId: sessionRef.current, evaluation: e, start: start! });
+    } catch (x: any) {
+      console.warn('onDone failed', x);
     }
-    onDone({ sessionId: sessionRef.current, evaluation: e, start: start! });
   }
 
   async function finish() {
@@ -262,7 +273,7 @@ export function TurnConversation({ args, onDone, onError, label }: { args: Start
   const live = phase === 'yourturn' || phase === 'recording';
 
   if (phase === 'evaluating' && !args.poise) {
-    return <ReadingVeil face={start ? faceFor(start.character, { seed: start.session_id, stranger: !!start.masked }) : null} leaving={revealing} />;
+    return <ReadingVeil face={start ? faceFor(start.character, { seed: start.session_id, stranger: !!start.masked }) : null} />;
   }
 
   return (

@@ -88,9 +88,7 @@ function SkiaFace({
   const ringO = useDerivedValue(() => Math.min(0.9, you.value * 1.4));
 
   const arc = useMemo(() => {
-    const p = Skia.Path.Make();
-    p.addArc({ x: c - r - 12, y: c - r - 12, width: (r + 12) * 2, height: (r + 12) * 2 }, -90, 359.9);
-    return p;
+    return Skia.PathBuilder.Make().addArc({ x: c - r - 12, y: c - r - 12, width: (r + 12) * 2, height: (r + 12) * 2 }, -90, 359.9).detach();
   }, [c, r]);
   const lvl = useSharedValue(interest == null ? 0 : interest / 100);
   useEffect(() => {

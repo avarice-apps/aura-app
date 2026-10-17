@@ -85,7 +85,6 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
   const [turns, setTurns] = useState(0);
   const [err, setErr] = useState('');
   const [retryId, setRetryId] = useState<string | null>(null);
-  const [revealing, setRevealing] = useState(false); // the veil dissolving into the read
   const energy = useSharedValue(0);
   const idle = useSharedValue(0);
   const who = useSharedValue(0); // 1 while they talk
@@ -320,10 +319,15 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
       return;
     }
     play('reveal');
-    if (!isPoise) {
-      setRevealing(true);
-      await new Promise((r) => setTimeout(r, 450)); // the veil dissolves into the read
-    }
+    // If the screen hasn't moved on to the read a few seconds after it arrived, never leave them on an empty
+    // veil: show it as a failed read with "Try again" (the server answers that instantly from its copy).
+    setTimeout(() => {
+      if (alive.current && startRef.current) {
+        setErr('Your read is ready but didn’t open. Tap to try again.');
+        setPhase('error');
+        setRetryId(id);
+      }
+    }, 4000);
     try {
       onDone({ sessionId: startRef.current.session_id, evaluation: e, start: startRef.current, micDead: listenMs.current >= 4000 && heard.current < DEAD });
     } catch (x: any) {
@@ -415,7 +419,7 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
       ? { label: label || 'The scene', text: start.setting, mine: true, key: 0 }
       : null;
 
-  if (phase === 'evaluating' && !isPoise) return <ReadingVeil face={face} leaving={revealing} />;
+  if (phase === 'evaluating' && !isPoise) return <ReadingVeil face={face} />;
 
   return (
     <View style={{ flex: 1 }}>

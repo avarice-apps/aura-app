@@ -64,7 +64,7 @@ async def _denied(request: Request, exc: accounts.Denied):
 # Every expensive endpoint costs real money (models, voice). Cap requests per caller so nobody can use the server
 # as a free AI proxy. Allowances per plan are enforced per account (pipeline/accounts.py); this is the outer fence.
 # ElevenLabs' /llm calls are exempt (authenticated with the agent secret and bounded by the live session).
-_EXPENSIVE = ("/read", "/fit", "/wardrobe", "/style", "/pressure", "/silence", "/scan", "/live/", "/session/", "/situations/", "/lesson", "/ledger", "/poise/", "/tribunal", "/direct/link", "/portrait", "/duel", "/moment", "/profile", "/clip/", "/redeem", "/challenge", "/auth/", "/table", "/waitlist")
+_EXPENSIVE = ("/read", "/fit", "/wardrobe", "/style", "/pressure", "/silence", "/scan", "/live/", "/session/", "/situations/", "/lesson", "/ledger", "/poise/", "/tribunal", "/direct/link", "/portrait", "/duel", "/moment", "/profile", "/clip/", "/redeem", "/challenge", "/auth/", "/table", "/waitlist", "/client/")
 _LIMITS = ((120, 600), (1000, 86400))  # per caller: 120 per 10 minutes, 1000 per day
 _AUTH_LIMITS = ((30, 600), (200, 86400))  # sign-in attempts per network
 # New installs per network. Campus wifi and mobile carriers put thousands of phones behind one address, so this is
@@ -927,6 +927,16 @@ async def _read_back(sid: str, cid: str | None, voice: bool, frames: bool = Fals
         out["script_audio"] = _voice_url(out["script"], tts.VOICE_ID)
     s["evaluation"] = out
     return out
+
+
+@app.post("/client/error")
+async def client_error(request: Request):
+    """A screen in the app crashed. Logged (message, top of the stack, screen) so it can be fixed; nothing kept."""
+    b = await _body(request)
+    msg = re.sub(r"\s+", " ", str(b.get("message") or ""))[:300]
+    stack = re.sub(r"\s+", " ", str(b.get("stack") or ""))[:900]
+    print(f"client error on {str(b.get('path') or '')[:80]!r}: {msg} | {stack}")
+    return {"ok": True}
 
 
 @app.post("/live/{sid}/mic")

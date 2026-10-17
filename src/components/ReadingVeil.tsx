@@ -14,6 +14,7 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 import { font, useTheme } from '@/theme';
 
 const GLOW = {
@@ -25,6 +26,7 @@ const GLOW = {
 // What the wait says. Short, in the house voice; the last one stays until the read is ready.
 const LINES = ['That’s the call.', 'Playing it back.', 'Every pause counts.', 'What they heard.', 'Almost.'];
 const EASE = Easing.inOut(Easing.sin);
+const BEAT_MS = 2200;
 
 /**
  * Between hanging up and the read: light drifting through the dark like ink in water, the face receding into it,
@@ -42,6 +44,17 @@ export function ReadingVeil({ face, leaving = false }: { face?: any; leaving?: b
     const id = setTimeout(() => setLine((l) => l + 1), line === 0 ? 1600 : 2300);
     return () => clearTimeout(id);
   }, [line]);
+
+  // A slow heartbeat you can feel, in time with the face's pulse: lub (soft), dub (light), rest.
+  useEffect(() => {
+    const beat = () => {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft).catch(() => {});
+      setTimeout(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {}), 170);
+    };
+    beat();
+    const id = setInterval(beat, BEAT_MS);
+    return () => clearInterval(id);
+  }, []);
 
   // The veil as a whole: in, and out to the result.
   const out = useSharedValue(0);
@@ -127,7 +140,17 @@ function Recede({ face, still }: { face: any; still: boolean }) {
   useEffect(() => {
     v.value = withTiming(1, { duration: still ? 0 : 5200, easing: Easing.out(Easing.cubic) });
   }, [v, still]);
-  const st = useAnimatedStyle(() => ({ opacity: 0.9 - 0.62 * v.value, transform: [{ scale: 1 - 0.18 * v.value }] }));
+  // The pulse: a quick swell on each heartbeat, easing back.
+  const beat = useSharedValue(0);
+  useEffect(() => {
+    if (still) return;
+    beat.value = withRepeat(
+      withSequence(withTiming(1, { duration: 140, easing: Easing.out(Easing.quad) }), withTiming(0.4, { duration: 120 }), withTiming(0.85, { duration: 120 }), withTiming(0, { duration: BEAT_MS - 380, easing: Easing.out(Easing.cubic) })),
+      -1,
+      false,
+    );
+  }, [beat, still]);
+  const st = useAnimatedStyle(() => ({ opacity: 0.9 - 0.62 * v.value + 0.12 * beat.value, transform: [{ scale: 1 - 0.18 * v.value + 0.05 * beat.value }] }));
   return (
     <Animated.View style={[{ width: 132, height: 132, borderRadius: 66, overflow: 'hidden' }, st]}>
       <Image source={face} style={{ width: '100%', height: '100%' }} contentFit="cover" />

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Stack, SplashScreen, usePathname } from 'expo-router';
+import { Stack, SplashScreen, usePathname, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useFonts } from 'expo-font';
@@ -12,12 +12,36 @@ import { initSounds, setSoundsEnabled } from '@/lib/sound';
 import { useStore } from '@/state/store';
 import { initAnalytics, screen } from '@/lib/analytics';
 import { initPurchases } from '@/lib/purchases';
-import { syncMe } from '@/lib/api';
+import { syncMe, reportClientError } from '@/lib/api';
 import { getToken, refreshAccount } from '@/lib/session';
 import { syncSummary } from '@/lib/summary';
-import { AppState } from 'react-native';
+import { AppState, View, Pressable, Text as RNText } from 'react-native';
 
 SplashScreen.preventAutoHideAsync();
+
+/**
+ * If any screen throws while rendering, show a way out instead of a blank screen, and tell the server what broke
+ * (message and the top of the stack only) so it can be fixed.
+ */
+export function ErrorBoundary({ error, retry }: { error: Error; retry: () => Promise<void> }) {
+  const t = useTheme();
+  const path = usePathname();
+  useEffect(() => {
+    reportClientError(error, path);
+  }, [error, path]);
+  return (
+    <View style={{ flex: 1, backgroundColor: t.bg, padding: 28, justifyContent: 'center', gap: 14 }}>
+      <RNText style={{ fontFamily: 'InstrumentSerif_400Regular', fontSize: 38, lineHeight: 42, color: t.ink }}>Something slipped.</RNText>
+      <RNText style={{ fontSize: 15, lineHeight: 21, color: t.ink2 }}>That screen hit an error. Your progress is safe, and we’ve been told what happened.</RNText>
+      <Pressable onPress={() => retry()} style={{ marginTop: 10, height: 52, borderRadius: 26, backgroundColor: t.accent, alignItems: 'center', justifyContent: 'center' }}>
+        <RNText style={{ fontSize: 16, color: t.onAccent }}>Try again</RNText>
+      </Pressable>
+      <Pressable onPress={() => router.replace('/(tabs)')} style={{ height: 52, borderRadius: 26, borderWidth: 1, borderColor: t.line, alignItems: 'center', justifyContent: 'center' }}>
+        <RNText style={{ fontSize: 16, color: t.ink }}>Back to Today</RNText>
+      </Pressable>
+    </View>
+  );
+}
 
 export default function RootLayout() {
   const t = useTheme();
