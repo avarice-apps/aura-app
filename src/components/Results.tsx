@@ -8,6 +8,7 @@ import { useTier } from '@/lib/plan';
 import { font, useTheme } from '@/theme';
 import type { Evaluation } from '@/lib/types';
 import { speak, stopSpeaking } from '@/lib/voice';
+import { useStore } from '@/state/store';
 import type { AudioSrc } from '@/lib/api';
 
 /** Play Poise's spoken read. */
@@ -125,21 +126,34 @@ export function ResultHero({ e, label = 'This answer read as' }: { e: Evaluation
 
 export function FeedbackCard({ e }: { e: Evaluation }) {
   const t = useTheme();
+  const toneNow = useStore((st) => st.tone);
+  const both = !!(e.voices?.straight?.verdict && e.voices?.unfiltered?.verdict);
+  const [voice, setVoice] = useState<'straight' | 'unfiltered'>(toneNow === 'unfiltered' ? 'unfiltered' : 'straight');
+  const verdict = both ? e.voices![voice]!.verdict : e.verdict;
   return (
     <Card style={{ paddingVertical: 4 }}>
-      {e.verdict ? (
-        <View style={{ paddingVertical: 14 }}>
-          <Serif size={21} italic>{e.verdict}</Serif>
+      {verdict ? (
+        <View style={{ paddingVertical: 14, gap: 10 }}>
+          <Serif size={21} italic>{verdict}</Serif>
+          {both ? (
+            <View style={{ flexDirection: 'row', alignSelf: 'flex-start', borderRadius: 999, borderWidth: 1, borderColor: t.line, padding: 2 }}>
+              {(['straight', 'unfiltered'] as const).map((v) => (
+                <Pressable key={v} onPress={() => setVoice(v)} hitSlop={4} style={{ height: 26, paddingHorizontal: 12, borderRadius: 999, justifyContent: 'center', backgroundColor: voice === v ? t.accent : 'transparent' }}>
+                  <RNText style={{ fontFamily: voice === v ? font.medium : font.regular, fontSize: 11.5, color: voice === v ? t.onAccent : t.ink2 }}>{v === 'straight' ? 'Straight' : 'Unfiltered'}</RNText>
+                </Pressable>
+              ))}
+            </View>
+          ) : null}
         </View>
       ) : null}
       {(e.strengths ?? []).length === 0 ? (
-        <View style={{ flexDirection: 'row', gap: 10, paddingVertical: 12, borderTopWidth: e.verdict ? 1 : 0, borderColor: t.cardAlt }}>
+        <View style={{ flexDirection: 'row', gap: 10, paddingVertical: 12, borderTopWidth: verdict ? 1 : 0, borderColor: t.cardAlt }}>
           <RNText style={{ fontFamily: font.mono, fontSize: 12, color: t.ink3, width: 14 }}>·</RNText>
           <Body small color={t.ink2} style={{ flex: 1 }}>Nothing here worked well enough to call a strength.</Body>
         </View>
       ) : null}
       {(e.strengths ?? []).map((s, i) => (
-        <View key={i} style={{ flexDirection: 'row', gap: 10, paddingVertical: 12, borderTopWidth: i || e.verdict ? 1 : 0, borderColor: t.cardAlt }}>
+        <View key={i} style={{ flexDirection: 'row', gap: 10, paddingVertical: 12, borderTopWidth: i || verdict ? 1 : 0, borderColor: t.cardAlt }}>
           <RNText style={{ fontFamily: font.mono, fontSize: 12, color: t.accent, width: 14 }}>+</RNText>
           <Body small style={{ flex: 1 }}>{s.text}</Body>
         </View>
@@ -217,24 +231,81 @@ export function Insufficient({ e }: { e: Evaluation }) {
 
 export function AxesCard({ e }: { e: Evaluation }) {
   const t = useTheme();
-  const rows: [string, number][] = [
-    ...(typeof e.axes.landed === 'number' ? ([['How it landed', e.axes.landed]] as [string, number][]) : []),
-    ['Voice', e.axes.voice],
-    ['Command', e.axes.command],
-    ['Composure', e.axes.composure],
-    ['Social awareness', e.axes.awareness],
+  const st = e.axes_status ?? {};
+  const rows: [string, keyof Evaluation['axes'], number | null | undefined][] = [
+    ...(e.axes.landed !== undefined ? ([['How it landed', 'landed', e.axes.landed]] as [string, keyof Evaluation['axes'], number | null][]) : []),
+    ['Voice', 'voice', e.axes.voice],
+    ['Command', 'command', e.axes.command],
+    ['Composure', 'composure', e.axes.composure],
+    ['Reading the room', 'awareness', e.axes.awareness],
   ];
+  const why = (k: keyof Evaluation['axes']) => (st[k] === 'insufficient_evidence' ? 'too short to tell' : 'not measured');
+  const anyMissing = rows.some(([, , v]) => typeof v !== 'number');
   return (
     <Card style={{ paddingVertical: 6 }}>
-      {rows.map(([k, v], i) => (
-        <Row key={k} style={{ paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderColor: t.cardAlt }}>
-          <Body small style={{ width: 120 }}>{k}</Body>
-          <Bar value={v} accent={k === 'Social awareness'} />
-          <RNText style={{ fontFamily: font.mono, fontSize: 12, color: t.ink, width: 28, textAlign: 'right' }}>{v}</RNText>
+      {rows.map(([label, k, v], i) => (
+        <Row key={label} style={{ paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderColor: t.cardAlt }}>
+          <Body small style={{ width: 128 }} numberOfLines={1}>{label}</Body>
+          {typeof v === 'number' ? (
+            <>
+              <Bar value={v} accent={k === 'awareness'} />
+              <RNText style={{ fontFamily: font.mono, fontSize: 12, color: t.ink, width: 28, textAlign: 'right' }}>{v}</RNText>
+            </>
+          ) : (
+            <RNText style={{ flex: 1, textAlign: 'right', fontFamily: font.mono, fontSize: 11, color: t.ink3 }}>{why(k)}</RNText>
+          )}
         </Row>
       ))}
-      <Muted small style={{ paddingBottom: 8 }}>Voice, command and composure are measured from the audio. Social awareness is Poise’s interpretation: {e.awareness.evidence}</Muted>
+      <Muted small style={{ paddingBottom: 8 }}>
+        {anyMissing ? 'Anything Poise couldn’t measure is left out of the score, not guessed. ' : ''}
+        Voice and composure come from the recording. Reading the room is Poise’s interpretation{e.awareness?.evidence ? `: ${e.awareness.evidence}` : '.'}
+      </Muted>
     </Card>
+  );
+}
+
+/** What the read rests on, and what Poise couldn't tell. */
+export function Grounds({ e }: { e: Evaluation }) {
+  const t = useTheme();
+  const ev = (e.evidence ?? []).slice(0, 3);
+  const un = (e.uncertainties ?? []).slice(0, 2);
+  if (!ev.length && !un.length) return null;
+  return (
+    <Card style={{ gap: 10 }}>
+      {ev.length ? <Label>What this rests on</Label> : null}
+      {ev.map((x, i) => (
+        <View key={i} style={{ gap: 2 }}>
+          <Serif size={17} italic>“{x.quote}”</Serif>
+          <Muted small>Turn {x.turn} · {x.observation}</Muted>
+        </View>
+      ))}
+      {un.length ? (
+        <View style={{ gap: 4, paddingTop: ev.length ? 6 : 0, borderTopWidth: ev.length ? 1 : 0, borderColor: t.cardAlt }}>
+          <Label>What Poise couldn’t tell</Label>
+          {un.map((u, i) => <Body key={i} small color={t.ink2}>{u}</Body>)}
+        </View>
+      ) : null}
+    </Card>
+  );
+}
+
+/**
+ * Retry this moment: back to the instant before the one change, same scene, same person. One more go at the
+ * line that mattered instead of replaying the whole call.
+ */
+export function RetryMoment({ e, onRetry }: { e: Evaluation; onRetry: () => void }) {
+  const t = useTheme();
+  const tier = useTier();
+  if (e.insufficient || !e.change?.turn || !e.change.quote) return null;
+  return (
+    <Pressable onPress={onRetry} style={({ pressed }) => ({ borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.accent, padding: 16, gap: 8, opacity: pressed ? 0.8 : 1 })}>
+      <Row style={{ justifyContent: 'space-between' }}>
+        <Label color={t.accent}>Retry this moment · turn {e.change.turn}</Label>
+        {tier === 'free' ? <Icon d={ICON.lock} size={14} color={t.accent} /> : <Icon d={ICON.play} size={13} color={t.accent} fill={t.accent} />}
+      </Row>
+      <Serif size={18} italic numberOfLines={3}>“{e.change.quote}”</Serif>
+      <Muted small>Back to just before you said it. Same person, same mood. Say it the new way.</Muted>
+    </Pressable>
   );
 }
 
@@ -249,8 +320,15 @@ export function CompareCard({ a, b }: { a: Evaluation; b: Evaluation }) {
     ['Ended on a full stop', a.counts.ended_clean ? 'Yes' : 'No', b.counts.ended_clean ? 'Yes' : 'No'],
     [`${a.character ?? 'Their'} interest`, String(a.trace?.at(-1)?.interest ?? '–'), String(b.trace?.at(-1)?.interest ?? '–')],
   ];
-  const firstUser = (e: Evaluation) => e.turns.find((x) => x.role === 'user')?.text ?? '';
-  const firstReply = (e: Evaluation) => e.turns.filter((x) => x.role === 'char')[1]?.text ?? '';
+  // The exchange to put side by side: the first one in a full retry; the retried moment in a moment retry.
+  const pair = (e: Evaluation, k?: number) => {
+    const users = e.turns.map((x, i) => [x, i] as const).filter(([x]) => x.role === 'user' && !x.context);
+    const hit = k ? users[k - 1] : users[0];
+    if (!hit) return { said: '', reply: '' };
+    const reply = e.turns.slice(hit[1] + 1).find((x) => x.role === 'char')?.text ?? '';
+    return { said: hit[0].text, reply };
+  };
+  const view = (e: Evaluation, i: number) => (b.moment ? (i ? pair(e) : pair(e, b.moment.turn)) : pair(e));
   return (
     <Stack gap={12}>
       <Row style={{ alignItems: 'baseline' }} gap={12}>
@@ -263,10 +341,10 @@ export function CompareCard({ a, b }: { a: Evaluation; b: Evaluation }) {
       <Row gap={8} style={{ alignItems: 'stretch' }}>
         {[a, b].map((e, i) => (
           <Card key={i} style={{ flex: 1, padding: 12, borderColor: i ? t.accent : t.line, borderWidth: i ? 1.5 : 1 }}>
-            <Label color={i ? t.ink : t.ink3}>Take {i + 1}</Label>
-            <Body small style={{ marginTop: 6 }} color={i ? t.ink : t.ink2}>“{firstUser(e)}”</Body>
+            <Label color={i ? t.ink : t.ink3}>{b.moment ? (i ? 'This time' : 'Before') : `Take ${i + 1}`}</Label>
+            <Body small style={{ marginTop: 6 }} color={i ? t.ink : t.ink2}>“{view(e, i).said}”</Body>
             <View style={{ borderTopWidth: 1, borderColor: t.cardAlt, marginTop: 8, paddingTop: 6 }}>
-              <Muted small>{e.character ?? 'They'}: “{firstReply(e)}”</Muted>
+              <Muted small>{e.character ?? 'They'}: “{view(e, i).reply}”</Muted>
             </View>
           </Card>
         ))}
@@ -293,7 +371,7 @@ export function FullRead({ e, showAlternatives = true }: { e: Evaluation; showAl
   const t = useTheme();
   const tier = useTier();
   const [open, setOpen] = useState(false);
-  const has = e.signal || (e.trace && e.trace.length > 1) || e.turning_point;
+  const has = e.signal || (e.trace && e.trace.length > 1) || e.turning_point || e.axes || e.evidence?.length;
   if (!has) return null;
   if (tier === 'free') return <LockedRead e={e} />;
   return (
@@ -312,6 +390,7 @@ export function FullRead({ e, showAlternatives = true }: { e: Evaluation; showAl
           <TurningPoint e={e} />
           {showAlternatives ? <Alternatives e={e} /> : null}
           {e.axes ? <AxesCard e={e} /> : null}
+          <Grounds e={e} />
         </Animated.View>
       )}
     </View>

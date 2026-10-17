@@ -13,6 +13,9 @@ import { useStore } from '@/state/store';
 import { initAnalytics, screen } from '@/lib/analytics';
 import { initPurchases } from '@/lib/purchases';
 import { syncMe } from '@/lib/api';
+import { getToken, refreshAccount } from '@/lib/session';
+import { syncSummary } from '@/lib/summary';
+import { AppState } from 'react-native';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -29,12 +32,29 @@ export default function RootLayout() {
   useEffect(() => {
     initSounds();
   }, []);
+  const accountId = useStore((s) => s.account?.id);
   useEffect(() => {
     if (!hydrated || !subjectId) return;
     initAnalytics(subjectId);
-    initPurchases(subjectId);
-    syncMe();
+    // The account first (a guest one is made quietly the first time), then purchases under the account's id.
+    (async () => {
+      await getToken();
+      const a = await refreshAccount();
+      initPurchases(a?.id ?? useStore.getState().account?.id ?? subjectId);
+      syncMe();
+      syncSummary();
+    })();
   }, [hydrated, subjectId]);
+  useEffect(() => {
+    if (hydrated && accountId) initPurchases(accountId); // signed in to a saved account: RevenueCat follows
+  }, [hydrated, accountId]);
+  useEffect(() => {
+    // Back from the background: allowances and plan may have changed (a purchase, a new week).
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st === 'active' && hydrated) refreshAccount().catch(() => {});
+    });
+    return () => sub.remove();
+  }, [hydrated]);
   useEffect(() => {
     screen(path);
   }, [path]);
@@ -59,7 +79,11 @@ export default function RootLayout() {
         <Stack.Screen name="receipt" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="scan" options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="aura-scan" options={{ animation: 'slide_from_bottom' }} />
-        <Stack.Screen name="you" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="account" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="occasion" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="memory" options={{ animation: 'slide_from_right' }} />
+        <Stack.Screen name="table" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
+        <Stack.Screen name="moment" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="missions" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="room/[cat]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="floor/index" options={{ animation: 'slide_from_right' }} />

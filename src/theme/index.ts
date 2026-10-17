@@ -1,5 +1,6 @@
 // Aura themes. Light (white + Hermes blue, default) and Nocturne (dark, optional).
 // Every screen reads colours from useTheme(); nothing hard-codes a hex.
+import React, { createContext, useContext } from 'react';
 import { useColorScheme } from 'react-native';
 import { useStore } from '@/state/store';
 
@@ -21,6 +22,7 @@ export type Theme = {
   accentSoft: string;
   onAccent: string;
   markInk: string; // Mark rays on bg
+  em: string; // the one emphasised word in a serif headline (italic): Kleos blue by day, lavender at night
 };
 
 /** Aura Light: the approved onboarding look on white. Hermes blue wherever the designs used black. The default. */
@@ -42,27 +44,32 @@ export const gallery: Theme = {
   accentSoft: '#EDEEFF',
   onAccent: '#FFFFFF',
   markInk: '#1608F2',
+  em: '#1608F2',
 };
 
-/** Night print: deep cobalt-black, for late use. */
+/**
+ * Night: the maître d' palette from the site. Ink-black with a violet cast, ivory type, lavender for the quiet
+ * words, electric blue only where you tap. Calls always use it.
+ */
 export const nocturne: Theme = {
   name: 'nocturne',
   dark: true,
-  bg: '#070820',
-  card: '#10122E',
-  cardAlt: '#191C40',
-  line: '#22264F',
-  lineStrong: '#343872',
-  ink: '#ECEBFF',
-  ink2: '#B4B6E0',
-  ink3: '#8C8FC4',
-  inverse: '#1515E0',
-  onInverse: '#F1F1EC',
-  onInverse2: '#BFC1FF',
-  accent: '#8F94FF',
-  accentSoft: '#1C1F55',
-  onAccent: '#070820',
-  markInk: '#8F94FF',
+  bg: '#0D0C19',
+  card: '#16152A',
+  cardAlt: '#1F1E37',
+  line: '#29284A',
+  lineStrong: '#3A3966',
+  ink: '#F1EBDD',
+  ink2: '#B9B5DA',
+  ink3: '#8C88D8',
+  inverse: '#1608F2',
+  onInverse: '#F1EBDD',
+  onInverse2: '#C9C4F0',
+  accent: '#6A5CFF',
+  accentSoft: '#1C1A4D',
+  onAccent: '#FFFFFF',
+  markInk: '#8C88D8',
+  em: '#C9C4F0',
 };
 
 export const font = {
@@ -81,9 +88,17 @@ export const font = {
 export const space = { xs: 4, s: 8, m: 12, l: 16, xl: 20, xxl: 28, gutter: 20 } as const;
 export const radius = { card: 22, cardSm: 16, pill: 999, button: 28 } as const;
 
+/** A screen can force a theme for itself and everything inside it (calls are always at night). */
+const Forced = createContext<Theme | null>(null);
+export function ForceTheme({ name, children }: { name: 'gallery' | 'nocturne'; children: React.ReactNode }) {
+  return React.createElement(Forced.Provider, { value: name === 'nocturne' ? nocturne : gallery }, children);
+}
+
 export function useTheme(): Theme {
+  const forced = useContext(Forced);
   const pref = useStore((s) => s.theme);
   const sys = useColorScheme();
+  if (forced) return forced;
   if (pref === 'nocturne') return nocturne;
   if (pref === 'system') return sys === 'dark' ? nocturne : gallery;
   return gallery;

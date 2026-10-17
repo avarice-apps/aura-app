@@ -29,6 +29,7 @@ MODE_CARDS = {
     "ledger": ["H02", "H07"],
     "looks": ["H08"],
     "unfiltered": ["H06"],
+    "draft": ["H09", "H10"],
 }
 
 _STOP = set("a an the and or but if to of in on at for with you your i me my we our they them their it its is are was were be been do does did not no yes this that what when how why who just so very can will would could should about from into than then there here as by".split())

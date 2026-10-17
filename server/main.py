@@ -21,7 +21,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, Response, HTMLResponse, FileResponse, StreamingResponse, RedirectResponse
 from fastapi import Request
 
-from pipeline import audio, face, rubric, poise, tts, converse, live, vision, duel, legal, referrals, clips, accounts, table
+from pipeline import audio, face, rubric, poise, tts, converse, live, vision, duel, legal, referrals, clips, accounts, table, drafts
 from training import store as train_store, learned
 
 app = FastAPI(title="Kleos", version="0.2")
@@ -63,7 +63,7 @@ async def _denied(request: Request, exc: accounts.Denied):
 # Every expensive endpoint costs real money (models, voice). Cap requests per caller so nobody can use the server
 # as a free AI proxy. Allowances per plan are enforced per account (pipeline/accounts.py); this is the outer fence.
 # ElevenLabs' /llm calls are exempt (authenticated with the agent secret and bounded by the live session).
-_EXPENSIVE = ("/read", "/fit", "/wardrobe", "/style", "/pressure", "/silence", "/scan", "/live/", "/session/", "/situations/", "/lesson", "/ledger", "/portrait", "/duel", "/moment", "/profile", "/clip/", "/redeem", "/challenge", "/auth/", "/table", "/waitlist")
+_EXPENSIVE = ("/read", "/fit", "/wardrobe", "/style", "/pressure", "/silence", "/scan", "/live/", "/session/", "/situations/", "/lesson", "/ledger", "/poise/", "/portrait", "/duel", "/moment", "/profile", "/clip/", "/redeem", "/challenge", "/auth/", "/table", "/waitlist")
 _LIMITS = ((120, 600), (1000, 86400))  # per caller: 120 per 10 minutes, 1000 per day
 _AUTH_LIMITS = ((20, 600), (100, 86400))  # sign-in attempts per network
 _hits: dict[str, list[float]] = {}
@@ -997,6 +997,56 @@ async def _ledger(text: str, context: str, tone: str, user: str, audio_file):
     out = await converse.ledger(story, context, tone, user_d)
     out["story"] = story
     return out
+
+
+# ---------------------------------------------------------------- before I send this
+
+EXTRACTS_PER_DAY = int(os.environ.get("KLEOS_EXTRACTS_PER_DAY", "25"))
+
+
+@app.post("/poise/draft")
+async def draft_review(request: Request):
+    """A draft message (or the conversation it answers), read before it's sent. Nothing is stored."""
+    acc = _acct(request)
+    b = await _body(request)
+    draft_txt, convo = str(b.get("draft") or ""), b.get("convo") or []
+    if not draft_txt.strip() and not drafts.clean_convo(convo):
+        raise HTTPException(422, "Paste the message, or add the conversation it answers.")
+    accounts.spend(acc, "poise")
+    try:
+        return await drafts.review(
+            draft=draft_txt, convo=convo, to=str(b.get("to") or ""), intent=str(b.get("intent") or ""),
+            outcome=str(b.get("outcome") or ""), tone="unfiltered" if b.get("tone") == "unfiltered" else "real",
+            user=b.get("user") if isinstance(b.get("user"), dict) else {},
+        )
+    except ValueError as e:
+        accounts.refund(acc, "poise")
+        raise HTTPException(422, str(e))
+    except Exception as e:
+        accounts.refund(acc, "poise")
+        print("draft review failed:", repr(e)[:200])
+        raise HTTPException(502, "Poise couldn't read that one. Try again.")
+
+
+@app.post("/poise/draft/extract")
+async def draft_extract(request: Request, image: UploadFile = File(...)):
+    """A screenshot of a conversation, turned into who-said-what. Read in memory, never saved."""
+    acc = _acct(request)
+    if accounts.used(acc["id"], "extract", accounts.day()) >= EXTRACTS_PER_DAY:
+        raise HTTPException(429, "That's a lot of screenshots today. Paste the text instead.")
+    raw = await image.read(12 * 1024 * 1024 + 1)
+    if len(raw) > 12 * 1024 * 1024:
+        raise HTTPException(413, "That image is too big.")
+    jpg = _as_jpeg(raw)
+    del raw
+    if not jpg:
+        raise HTTPException(422, "Couldn't open that screenshot. Try again.")
+    accounts.add_use(acc["id"], "extract", 1, accounts.day())
+    try:
+        return await drafts.extract(jpg)
+    except Exception as e:
+        print("extract failed:", repr(e)[:200])
+        raise HTTPException(502, "Couldn't read that screenshot. Paste the text instead.")
 
 
 def _as_jpeg(raw: bytes) -> bytes | None:

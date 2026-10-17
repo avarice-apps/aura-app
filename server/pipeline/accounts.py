@@ -495,7 +495,7 @@ MESSAGES = {
     "calls": "That was this week's free calls. Kleos+ keeps the line open.",
     "minutes": "You've used this week's live minutes. They come back on Monday.",
     "clips": "That's this week's clip ratings.",
-    "poise": "That's this week's Poise debriefs.",
+    "poise": "That's this week's reads from Poise.",
     "profiles": "That's this week's Profile Reads.",
     "fits": "That's this week's Fit checks.",
     "scans": "That's a lot of takes this week. Take a breather.",

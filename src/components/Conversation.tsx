@@ -1,11 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, ScrollView, Pressable, NativeModules, TurboModuleRegistry } from 'react-native';
-import Animated, { FadeInDown, FadeIn, useSharedValue, withTiming, withRepeat, Easing, cancelAnimation } from 'react-native-reanimated';
+import { View, Pressable, NativeModules, TurboModuleRegistry } from 'react-native';
+import { useSharedValue, withTiming, withRepeat, Easing, cancelAnimation } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useAudioRecorder, useAudioRecorderState, RecordingPresets } from 'expo-audio';
-import { Body, Muted, Icon, ICON, Tag } from '@/ui';
-import { Mark } from '@/components/Mark';
-import { Image } from 'expo-image';
+import { Icon, ICON } from '@/ui';
+import { CallStage } from '@/components/CallStage';
 import { faceFor } from '@/lib/faces';
 import { useTheme } from '@/theme';
 import { startSession, sendTurn, evaluateSession, syncMe, StartArgs } from '@/lib/api';
@@ -56,7 +55,7 @@ export function TurnConversation({ args, onDone, onError, label }: { args: Start
   const rec = useAudioRecorderState(recorder, 80);
   const energy = useSharedValue(0);
   const idle = useSharedValue(0);
-  const scroll = useRef<ScrollView>(null);
+  const who = useSharedValue(0); // 1 while they talk
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
   const sessionRef = useRef<string>('');
   const finishing = useRef(false);
@@ -106,13 +105,14 @@ export function TurnConversation({ args, onDone, onError, label }: { args: Start
 
   // idle breathing while the character speaks
   useEffect(() => {
+    who.value = phase === 'speaking' ? 1 : 0;
     if (phase === 'speaking' || phase === 'sending' || phase === 'evaluating' || phase === 'loading') {
       idle.value = withRepeat(withTiming(0.45, { duration: 1300, easing: Easing.inOut(Easing.sin) }), -1, true);
     } else {
       cancelAnimation(idle);
       idle.value = withTiming(0, { duration: 300 });
     }
-  }, [phase, idle]);
+  }, [phase, idle, who]);
 
   useEffect(() => {
     let alive = true;
@@ -229,79 +229,47 @@ export function TurnConversation({ args, onDone, onError, label }: { args: Start
     }
   }
 
-  useEffect(() => {
-    setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 60);
-  }, [msgs.length]);
-
   const shared = phase === 'recording' ? energy : idle;
   const level = phase === 'recording' && typeof rec.metering === 'number' ? Math.max(0, Math.min(1, (rec.metering + 55) / 45)) : 0;
+  const name = start?.character.name ?? '';
   const status =
-    phase === 'loading' ? 'Setting the scene' : phase === 'speaking' ? `${start?.character.name ?? ''} is talking` : phase === 'yourturn' ? err || 'Tap to talk' : phase === 'recording' ? (heard.current ? 'Listening… pause when you’re done' : meterSeen.current ? 'Your turn. Just talk' : 'Talk, then tap the square') : phase === 'sending' ? notice || `${start?.character.name ?? ''} is thinking…` : phase === 'evaluating' ? 'Poise is reading it back' : err;
+    phase === 'loading' ? 'Setting the scene' : phase === 'speaking' ? `${name} is talking` : phase === 'yourturn' ? err || 'Tap to talk' : phase === 'recording' ? (heard.current ? 'Listening… pause when you’re done' : meterSeen.current ? 'Your turn. Just talk' : 'Talk, then tap the square') : phase === 'sending' ? notice || `${name} is thinking…` : phase === 'evaluating' ? 'Poise is reading it back' : err;
+  const last = msgs[msgs.length - 1];
+  const live = phase === 'yourturn' || phase === 'recording';
 
   return (
-    <View style={{ flex: 1 }}>
-      {start && (
-        <Animated.View entering={FadeIn.duration(400)} style={{ marginHorizontal: 20, marginTop: 14, flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, backgroundColor: t.card, borderWidth: 1, borderColor: t.line }}>
-          <View style={{ width: 48, height: 48, borderRadius: 24, overflow: 'hidden', borderWidth: 2, borderColor: interest !== null && interest >= 55 ? t.accent : 'transparent' }}>
-            <Image source={faceFor(start.character)} style={{ width: 44, height: 44, borderRadius: 22 }} contentFit="cover" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Body strong>{start.character.name}</Body>
-            <Muted small numberOfLines={1}>{start.character.style}</Muted>
-          </View>
-          <Tag label={['', 'Easy', 'Real', 'Heat'][pressure]} />
-        </Animated.View>
-      )}
-
-      {start && (
-        <View style={{ marginHorizontal: 22, marginTop: 12, gap: 4 }}>
-          <Muted small>{label ? `${label} · ` : ''}{start.setting}</Muted>
-          <Body small strong color={t.accent}>{start.goal}</Body>
-        </View>
-      )}
-
-      <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 10, paddingBottom: 30 }} showsVerticalScrollIndicator={false}>
-        {msgs.map((m, i) => (
-          <Animated.View key={i} entering={FadeInDown.duration(320)} style={{ alignSelf: m.role === 'char' ? 'flex-start' : 'flex-end', maxWidth: '84%' }}>
-            <View style={{ backgroundColor: m.role === 'char' ? t.card : t.accent, borderWidth: m.role === 'char' ? 1 : 0, borderColor: t.line, borderRadius: 18, borderBottomLeftRadius: m.role === 'char' ? 6 : 18, borderBottomRightRadius: m.role === 'user' ? 6 : 18, paddingHorizontal: 14, paddingVertical: 11 }}>
-              <Body color={m.role === 'char' ? t.ink : t.onAccent}>{m.text}</Body>
-            </View>
-          </Animated.View>
-        ))}
-        {phase === 'sending' && (
-          <Animated.View entering={FadeIn} style={{ alignSelf: 'flex-start', backgroundColor: t.card, borderWidth: 1, borderColor: t.line, borderRadius: 18, paddingHorizontal: 16, paddingVertical: 12 }}>
-            <Muted small>{notice ? `${notice}…` : '•••'}</Muted>
-          </Animated.View>
-        )}
-      </ScrollView>
-
-      <View style={{ alignItems: 'center', paddingBottom: 18, gap: 10 }}>
-        <Muted small color={phase === 'error' ? t.accent : t.ink2}>{status}</Muted>
+    <CallStage
+      top={phase === 'recording' ? `YOUR TURN · ${left}s` : phase === 'loading' ? 'CALLING' : phase === 'evaluating' ? 'CALL ENDED' : label ? label.toUpperCase() : 'ON THE LINE'}
+      dot={phase === 'recording' && left <= 5 ? 'warn' : phase === 'recording' ? 'live' : 'idle'}
+      topRight={['', 'EASY', 'REAL', 'HEAT'][pressure]}
+      face={start ? faceFor(start.character, { seed: start.session_id, stranger: !!start.masked }) : null}
+      energy={shared}
+      who={who}
+      idle={phase === 'loading' || phase === 'evaluating' || phase === 'sending'}
+      interest={interest}
+      name={name}
+      subline={start?.character.style}
+      bars={shared}
+      barsDim={!live && phase !== 'speaking'}
+      caption={last ? { label: last.role === 'char' ? name || 'They' : 'You', text: last.role === 'char' ? `“${last.text}”` : last.text, mine: last.role === 'user', key: msgs.length } : start ? { label: 'The scene', text: start.setting, mine: true, key: 0 } : null}
+      placeholder="Someone’s picking up"
+      status={status}
+      statusError={phase === 'error'}
+    >
+      <View style={{ alignItems: 'center', gap: 8 }}>
         <Pressable
           accessibilityLabel={phase === 'recording' ? 'Finish answer' : 'Start answering'}
-          disabled={!(phase === 'yourturn' || phase === 'recording')}
+          disabled={!live}
           onPress={() => (phase === 'recording' ? finish() : listen())}
-          style={{ width: 170, height: 170, alignItems: 'center', justifyContent: 'center' }}
+          style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: live ? t.accent : t.lineStrong, alignItems: 'center', justifyContent: 'center' }}
         >
-          <View style={{ position: 'absolute' }}>
-            <Mark index={phase === 'recording' ? 60 : 40} axes={{ voice: 55, presence: 55, command: 55, composure: 55, read: 55 }} size={170} energy={shared} color={t.markInk} animateIn={false} opacity={phase === 'yourturn' || phase === 'recording' ? 0.75 : 0.35} />
-          </View>
-          <View style={{ width: 76, height: 76, borderRadius: 38, backgroundColor: phase === 'yourturn' || phase === 'recording' ? t.accent : t.lineStrong, alignItems: 'center', justifyContent: 'center' }}>
-            {phase === 'recording' ? <View style={{ width: 22, height: 22, borderRadius: 4, backgroundColor: t.onAccent }} /> : <Icon d={ICON.mic} size={26} color={t.onAccent} />}
-          </View>
+          {phase === 'recording' ? <View style={{ width: 22, height: 22, borderRadius: 4, backgroundColor: t.onAccent }} /> : <Icon d={ICON.mic} size={26} color={t.onAccent} />}
         </Pressable>
-        {phase === 'recording' ? (
-          <View style={{ alignItems: 'center', gap: 6 }}>
-            <View style={{ width: 120, height: 4, borderRadius: 2, backgroundColor: t.cardAlt, overflow: 'hidden' }}>
-              <View style={{ width: `${Math.round(level * 100)}%`, height: 4, borderRadius: 2, backgroundColor: t.accent }} />
-            </View>
-            <Muted small>{left}s</Muted>
-          </View>
-        ) : (
-          <View style={{ height: 27 }} />
-        )}
+        <View style={{ width: 120, height: 3, borderRadius: 2, backgroundColor: t.cardAlt, overflow: 'hidden', opacity: phase === 'recording' ? 1 : 0 }}>
+          <View style={{ width: `${Math.round(level * 100)}%`, height: 3, borderRadius: 2, backgroundColor: t.ink }} />
+        </View>
       </View>
-    </View>
+    </CallStage>
   );
 }
 

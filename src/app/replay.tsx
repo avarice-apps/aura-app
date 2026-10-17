@@ -5,12 +5,14 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Screen, Title, Body, Label, Button, Row, Stack, IconButton, Icon, ICON, Card } from '@/ui';
 import { ReactiveStatue } from '@/components/ReactiveStatue';
 import { Conversation } from '@/components/Conversation';
+import { NightCall } from '@/components/NightCall';
 import { AfterRead } from '@/components/AfterRead';
-import { ResultHero, FeedbackCard, HearPoise, Appear, FullRead, Insufficient } from '@/components/Results';
+import { ResultHero, FeedbackCard, HearPoise, Appear, FullRead, Insufficient, RetryMoment } from '@/components/Results';
+import { retryMoment } from '@/lib/moment';
 import { useTheme } from '@/theme';
 import { useStore } from '@/state/store';
 import { generateLesson } from '@/lib/api';
-import type { Evaluation, Lesson } from '@/lib/types';
+import type { Evaluation, Lesson, Receipt } from '@/lib/types';
 import { play } from '@/lib/sound';
 import { gate, requireTier } from '@/lib/plan';
 
@@ -20,9 +22,14 @@ type Ev = Evaluation & { scriptAudio?: any };
 /** Replay a real moment from a receipt as a live roleplay, with the change applied. */
 export default function Replay() {
   const t = useTheme();
-  const { i } = useLocalSearchParams<{ i: string }>();
+  const { i, note } = useLocalSearchParams<{ i?: string; note?: string }>();
   const s = useStore();
-  const r = s.receipts[Number(i ?? 0)];
+  // A receipt from the chat, or a note Poise left after a call (same shape: a scene and the change to try).
+  const r = useMemo<Receipt | undefined>(() => {
+    if (note === undefined) return s.receipts[Number(i ?? 0)];
+    const c = s.callNotes[Number(note)];
+    return c ? { title: 'From our call', lines: [], total: 0, headline: '', next_time: c.next || c.note, drill: '', receipt_no: '', story: '', scene: c.scene ?? undefined } : undefined;
+  }, [i, note, s.receipts, s.callNotes]);
   const sceneLesson = useMemo<Lesson | null>(() => (r?.scene?.opener ? { character: r.scene.character, setting: r.scene.setting, opener: r.scene.opener, goal: r.scene.goal, twist: null, hint: r.next_time, focus: 'rooms' } : null), [r]);
   const [generated, setGenerated] = useState<Lesson | null>(null);
   const lesson = sceneLesson ?? generated;
@@ -52,8 +59,7 @@ export default function Replay() {
 
   if (step === 'talk' && lesson) {
     return (
-      <Screen edges={['top', 'bottom']}>
-        {header}
+      <NightCall label={`Replay · ${r.title}`} onClose={() => router.back()}>
         <Conversation
           metered
           label="Replay"
@@ -66,7 +72,7 @@ export default function Replay() {
             setStep('result');
           }}
         />
-      </Screen>
+      </NightCall>
     );
   }
 
@@ -96,6 +102,7 @@ export default function Replay() {
             <Appear><ResultHero e={ev} /></Appear>
             <Appear delay={120}><FeedbackCard e={ev} /></Appear>
             <Appear delay={240}><HearPoise src={ev.scriptAudio ?? ev.script_audio} /></Appear>
+            <Appear delay={300}><RetryMoment e={ev} onRetry={() => retryMoment(sid, ev, r.title)} /></Appear>
             <Appear delay={360}><FullRead e={ev} /></Appear>
             <Appear delay={480}><AfterRead sessionId={sid} e={ev} /></Appear>
           </Stack>

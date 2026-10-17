@@ -153,12 +153,14 @@
   <div class="pic" role="img" aria-label="A portrait after Sargent in Kleos blue"><a href="index.html">Kleos</a></div>
   <div class="box">
     <h1>Members</h1>
-    <p>Your app, on a bigger screen: every read, every replay, your patterns, your pieces. Use the email you signed up with in the app.</p>
+    <p>Your app, on a bigger screen: your Index, your reads, your plan and your number on the register. Use the email you saved in the app (You › Account).</p>
     <form id="ef" novalidate>
       <label class="sr" for="ee">Email</label>
       <input id="ee" type="email" placeholder="Your email" autocomplete="email">
-      <button class="btn fill" type="submit">Email me a sign-in link</button>
-      <div class="msg" id="em" role="status"></div>
+      <label class="sr" for="ec">Six-digit code</label>
+      <input id="ec" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Six-digit code" hidden>
+      <button class="btn fill" id="eb" type="submit">Email me a code</button>
+      <div class="msg" id="em" role="status" aria-live="polite"></div>
     </form>
     <div class="or">or</div>
     <button class="btn" id="demo" type="button">Look around as a sample member</button>
@@ -187,7 +189,7 @@
 (() => {
 const $ = s => document.querySelector(s);
 const S = K.store;
-const VIEWS = [
+const VIEWS_ALL = [
   ['g','From the app',''],
   ['overview','Overview',''], ['replays','Replays',''], ['patterns','Patterns',''],
   ['g','Only here',''],
@@ -357,19 +359,80 @@ V.dispatch = () => `<div class="ph1 noprint"><div><h1>Dispatch</h1><div class="d
    <h3>This week’s Side Quests</h3><p>Monday, order for the table. Wednesday, hold eye contact through a whole toast. Friday, send something back politely.</p>
    <p class="muted" style="margin-top:22px;font-size:13px">Kleos · Saint-Tropez · Paris · Madrid · London · New York</p></article>`;
 
+// ---------- a real member (signed in with an emailed code; the session is an httpOnly cookie) ----------
+let REAL = null;
+const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]);
+const api = (path, body, extra={}) => fetch(path, { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: body ? { 'Content-Type':'application/json', ...extra } : extra, body: body ? JSON.stringify(body) : undefined });
+async function loadAccount() {
+  try {
+    const r = await api('/account');
+    if (!r.ok) return null;
+    const a = await r.json();
+    return a && a.saved ? a : null;
+  } catch (_) { return null; }
+}
+const REAL_VIEWS = [['g','From the app',''], ['overview','Overview',''], ['replays','Reads',''], ['account','Account','']];
+const when = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-GB', { day:'numeric', month:'short' }); };
+const R = {};
+R.overview = () => {
+  const a = REAL, sm = a.summary || {}, h = new Date().getHours();
+  const hello = h<12?'Good morning':h<18?'Good afternoon':'Good evening';
+  const name = esc(a.name || (a.email||'').split('@')[0] || 'there');
+  const left = a.plan==='free' ? `${a.left?.calls ?? 0} free call${a.left?.calls===1?'':'s'}` : (a.live_min_left!=null ? `${a.live_min_left} live minutes` : 'Open');
+  const recent = (sm.recent || []).filter(r => r && r.title);
+  return `<div class="ph1"><div><h1>${hello}, ${name}.</h1><div class="d">${new Date().toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})} · ${TIERNAME[a.plan]||'Free'}${a.waitlist_no?` · ${fmtNo(a.waitlist_no)}`:''}</div></div></div>
+  ${a.summary ? '' : `<section class="pn"><div class="hd"><h2>Nothing synced yet</h2></div><p class="muted" style="margin:0">Open Kleos on your phone once while you’re signed in, and your Index and reads appear here.</p></section><div class="gap"></div>`}
+  <div class="g2">
+    <section class="pn" aria-labelledby="h-ix"><div class="hd"><h2 id="h-ix">Aura Index</h2><span>From the app</span></div>
+      <div class="ix"><div><div class="lbl">Now</div><div class="big">${sm.index ?? '—'}</div><div class="delta">${sm.archetype ? 'Reads as '+esc(sm.archetype) : ''}</div></div><div></div></div>
+      <div class="stats"><div><span>Calls read</span><b>${Number(sm.sessions)||0}</b></div><div><span>Laurels</span><b>${Number(sm.laurels)||0}</b></div><div><span>Streak</span><b>${Number(sm.streak)||0}</b><em>days</em></div><div><span>Left this week</span><b style="font-size:20px">${esc(left)}</b></div></div>
+    </section>
+    <section class="pn want" aria-labelledby="h-w"><div class="hd"><h2 id="h-w">Next</h2></div>
+      <a href="#account"><div class="t">Your plan</div><div class="h">${TIERNAME[a.plan]||'Free'}</div><div class="n">${a.plan==='free'?'Kleos+ opens every scene and Rehearse.':'Thanks for being here.'}</div></a>
+      ${a.waitlist_no?`<a href="#account"><div class="t">The register</div><div class="h">${fmtNo(a.waitlist_no)}</div><div class="n">Your number from the waitlist. It stays yours.</div></a>`:''}
+    </section>
+  </div>
+  <div class="gap"></div>
+  <section class="pn" aria-labelledby="h-rr"><div class="hd"><h2 id="h-rr">Recent reads</h2><a href="#replays">All</a></div>
+    ${recent.length ? `<table class="t"><thead><tr><th>Read</th><th>When</th><th style="text-align:right">Score</th></tr></thead><tbody>${recent.slice(0,6).map(r=>`<tr><td>${esc(r.title)}</td><td class="muted">${when(r.at)}</td><td class="num">${r.rating ?? '—'}</td></tr>`).join('')}</tbody></table>` : '<p class="muted" style="margin:0">Your reads show up here after your first call.</p>'}
+  </section>`;
+};
+R.replays = () => {
+  const recent = ((REAL.summary||{}).recent || []).filter(r => r && r.title);
+  return `<div class="ph1"><div><h1>Reads</h1><div class="d">The latest from the app. Full replays, with the moment it turned, live in the app for now.</div></div></div>
+  <section class="pn">${recent.length ? `<table class="t"><thead><tr><th>Read</th><th>When</th><th style="text-align:right">Score</th></tr></thead><tbody>${recent.map(r=>`<tr><td>${esc(r.title)}</td><td class="muted">${when(r.at)}</td><td class="num">${r.rating ?? '—'}</td></tr>`).join('')}</tbody></table>` : '<p class="muted" style="margin:0">Nothing yet.</p>'}</section>`;
+};
+R.account = () => {
+  const a = REAL;
+  const until = a.plan_until ? new Date(a.plan_until*1000).toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}) : '';
+  return `<div class="ph1"><div><h1>Account</h1><div class="d">Saved ${a.email?'with '+esc(a.email):'with Apple'}${a.email&&a.apple?', also linked to Apple':''}.</div></div></div>
+  <section class="pn"><table class="t"><tbody>
+    <tr><td>Plan</td><td class="num">${TIERNAME[a.plan]||'Free'}${until?` · renews or ends ${until}`:''}</td></tr>
+    <tr><td>The register</td><td class="num">${a.waitlist_no?fmtNo(a.waitlist_no):'Not on the waitlist'}</td></tr>
+    <tr><td>Subscription</td><td class="num">Managed on your iPhone: Settings › Apple ID › Subscriptions</td></tr>
+  </tbody></table>
+  <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap"><button class="bt" id="rout">Sign out here</button><button class="bt" id="rdel">Delete my account</button></div>
+  <p class="muted" style="margin:14px 0 0;font-size:13px">Deleting removes the account and everything our server keeps for it. A subscription isn’t cancelled by this; cancel it on your iPhone.</p></section>`;
+};
+
 // ---------- router ----------
-const ROUTES = VIEWS.filter(v=>v[0]!=='g').map(v=>v[0]);
+const routes = () => (REAL ? REAL_VIEWS : VIEWS_ALL).filter(v=>v[0]!=='g').map(v=>v[0]);
 function menu(cur) {
+  const VIEWS = REAL ? REAL_VIEWS : VIEWS_ALL;
+  $('#seg').parentElement.querySelectorAll('.tiny, #seg').forEach(el => el.style.display = REAL ? 'none' : '');
   $('#menu').innerHTML = VIEWS.map(([k,l,s])=> k==='g' ? `<span class="grp">${l}</span>` : `<a href="#${k}" ${k===cur?'aria-current="page"':''}><span>${l}</span>${s?`<small>${s}</small>`:(NEED[k]&&!can(NEED[k])?`<small>${TIERNAME[NEED[k]]}</small>`:'')}</a>`).join('');
   $('#mnav').innerHTML = VIEWS.filter(v=>v[0]!=='g').map(([k,l])=>`<a href="#${k}" ${k===cur?'aria-current="page"':''}>${l}</a>`).join('');
   const cur2 = $('#mnav [aria-current]'); if (cur2) cur2.scrollIntoView({ inline:'center', block:'nearest' });
   document.querySelectorAll('#seg button').forEach(b=>b.setAttribute('aria-pressed', b.dataset.t===tier)); $('#seg').style.setProperty('--i', rank(tier));
-  $('#mtr').textContent = `${TIERNAME[tier]} · ${fmtNo(D.no)}`; $('#mtr2').textContent = `${TIERNAME[tier]} · ${fmtNo(D.no)}`;
+  const no = REAL ? REAL.waitlist_no : D.no;
+  const label = `${TIERNAME[tier]}${no ? ' · ' + fmtNo(no) : ''}`;
+  $('#mtr').textContent = label; $('#mtr2').textContent = label;
+  $('#mnm').textContent = REAL ? (REAL.name || (REAL.email||'').split('@')[0] || 'Member') : D.name;
 }
 function render(focus) {
-  let r = location.hash.slice(1); if (!ROUTES.includes(r)) r = 'overview';
-  menu(r); $('#main').innerHTML = V[r](); wire(r); if (focus) { $('#main').focus({ preventScroll:true }); scrollTo(0,0); }
-  document.title = 'Kleos · ' + (VIEWS.find(v=>v[0]===r)||[])[1];
+  let r = location.hash.slice(1); if (!routes().includes(r)) r = 'overview';
+  menu(r); $('#main').innerHTML = (REAL ? R : V)[r](); wire(r); if (focus) { $('#main').focus({ preventScroll:true }); scrollTo(0,0); }
+  document.title = 'Kleos · ' + ((REAL ? REAL_VIEWS : VIEWS_ALL).find(v=>v[0]===r)||[])[1];
 }
 function wire(r) {
   document.querySelectorAll('tr.click[data-r]').forEach(tr=>tr.onclick=()=>{ selRead=+tr.dataset.r; cmpSel.clear(); location.hash='replays'; });
@@ -383,17 +446,62 @@ function wire(r) {
   document.querySelectorAll('[data-repair]').forEach(b=>b.onclick=()=>K.toast('We’ll email a prepaid label for '+b.dataset.repair));
   document.querySelectorAll('[data-toast]').forEach(b=>b.onclick=()=>K.toast(b.dataset.toast));
   const pr=$('#print'); if (pr) pr.onclick=()=>print();
+  const ro=$('#rout'); if (ro) ro.onclick=signOut;
+  const rd=$('#rdel'); if (rd) rd.onclick=async()=>{
+    if (!confirm('Delete your Kleos account? This removes the account and everything our server keeps for it. It can’t be undone.')) return;
+    const res = await api('/account/delete', {});
+    if (res.ok) { K.toast('Your account is deleted.'); signOut(true); } else K.toast('Couldn’t delete it. Try again, or delete it in the app.');
+  };
 }
 function enter() { $('#ent').style.display='none'; $('#app').classList.add('on'); render(true); if (!matchMedia('(prefers-reduced-motion: reduce)').matches) $('#main').animate([{ opacity:0, transform:'translateY(8px)' }, { opacity:1, transform:'none' }], { duration:420, easing:'cubic-bezier(0.23, 1, 0.32, 1)' }); }
-document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>{ tier=b.dataset.t; S.set('kleos.tier',tier); render(); });
+document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>{ if (REAL) return; tier=b.dataset.t; S.set('kleos.tier',tier); render(); });
 addEventListener('hashchange', ()=>{ if ($('#app').classList.contains('on')) render(true); });
-$('#demo').onclick = () => { S.set('kleos.member','sample'); enter(); };
-$('#out').onclick = () => { S.set('kleos.member',null); $('#app').classList.remove('on'); $('#ent').style.display=''; try{history.replaceState(null,'',location.pathname);}catch(_){} };
-$('#ef').onsubmit = e => { e.preventDefault(); const v=$('#ee').value.trim(); const m=$('#em');
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v)) { m.textContent='That doesn’t look like an email.'; return; }
-  m.textContent='Sign-in links open with the app’s release. Until then, look around as a sample member.'; };
-if (S.get('kleos.member',null)) enter();
-else if (location.hash && ROUTES.includes(location.hash.slice(1))) { /* deep link: stay on entrance */ }
+$('#demo').onclick = () => { REAL=null; S.set('kleos.member','sample'); enter(); };
+async function signOut(skipServer) {
+  if (REAL && skipServer !== true) { try { await api('/auth/logout', {}); } catch (_) {} }
+  REAL = null; S.set('kleos.member',null); tier = S.get('kleos.tier','black');
+  $('#app').classList.remove('on'); $('#ent').style.display='';
+  resetEntrance();
+  try{history.replaceState(null,'',location.pathname);}catch(_){}
+}
+$('#out').onclick = () => signOut();
+let pendingEmail = '';
+function resetEntrance() { pendingEmail=''; $('#ec').hidden=true; $('#ec').value=''; $('#ee').hidden=false; $('#eb').textContent='Email me a code'; $('#em').textContent=''; }
+$('#ef').onsubmit = async e => {
+  e.preventDefault(); const m=$('#em'); const b=$('#eb');
+  if (!pendingEmail) {
+    const v=$('#ee').value.trim().toLowerCase();
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(v)) { m.textContent='That doesn’t look like an email.'; return; }
+    b.disabled=true; m.textContent='Sending…';
+    try {
+      const r = await api('/auth/email/start', { email: v });
+      const j = await r.json().catch(()=>({}));
+      if (!r.ok) { m.textContent = j.detail || 'Couldn’t send a code. Try again in a minute.'; return; }
+      pendingEmail=v; $('#ee').hidden=true; $('#ec').hidden=false; $('#ec').focus(); b.textContent='Sign in';
+      m.textContent=`We sent a six-digit code to ${v}. It works for 15 minutes.`;
+    } catch (_) { m.textContent='Couldn’t reach Kleos. Try again.'; }
+    finally { b.disabled=false; }
+    return;
+  }
+  const code=$('#ec').value.replace(/\D/g,'');
+  if (code.length!==6) { m.textContent='The code is six digits.'; return; }
+  b.disabled=true; m.textContent='Checking…';
+  try {
+    const r = await api('/auth/email/verify', { email: pendingEmail, code }, { 'x-kleos-web':'1' });
+    const j = await r.json().catch(()=>({}));
+    if (!r.ok) { m.textContent = j.detail || 'That code didn’t work.'; $('#ec').value=''; return; }
+    const a = await loadAccount();
+    if (!a) { m.textContent='Signed in, but there’s nothing here yet. Save your account in the app with this email.'; return; }
+    REAL=a; tier=a.plan||'free'; S.set('kleos.member',null); enter();
+  } catch (_) { m.textContent='Couldn’t reach Kleos. Try again.'; }
+  finally { b.disabled=false; }
+};
+$('#ec').oninput = () => { const c=$('#ec').value.replace(/\D/g,'').slice(0,6); $('#ec').value=c; if (c.length===6) $('#ef').requestSubmit(); };
+(async () => {
+  const a = await loadAccount();
+  if (a) { REAL=a; tier=a.plan||'free'; enter(); return; }
+  if (S.get('kleos.member',null)) enter();
+})();
 })();
 </script>
 </body>

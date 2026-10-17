@@ -1,6 +1,6 @@
 # Content merge, v0.2.0
 
-Built by `scripts/build_content.py`. 62 playable scenes, 74 guidance cards, 8 style briefs.
+Built by `scripts/build_content.py`. 62 playable scenes, 76 guidance cards, 8 style briefs.
 
 | Source | Result | Why |
 |---|---|---|

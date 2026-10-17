@@ -46,7 +46,7 @@ export function AfterRead({ sessionId, e, challenge }: { sessionId?: string; e: 
       s.set({ challenges: [{ code: c.code, title: challenge.title, createdAt: new Date().toISOString(), mine: true }, ...(s.challenges ?? [])].slice(0, 20) });
       track('share', { what: 'challenge' });
       const link = s.invite?.code ? ` ${inviteLink(s.invite.code)}` : '';
-      await Share.share({ message: `I got ${e.rating} on “${challenge.title}” in Kleos. Think you can beat it? Enter code ${c.code} in the Farm tab.${link}` });
+      await Share.share({ message: `I got ${e.rating} on “${challenge.title}” in Kleos. Think you can beat it? Enter code ${c.code} in Play.${link}` });
     } catch (x: any) {
       setNote(x?.message ?? 'Couldn’t create the challenge.');
     } finally {

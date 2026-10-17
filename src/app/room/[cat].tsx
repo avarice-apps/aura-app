@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Screen, Title, Muted, Label, IconButton, Icon, ICON, Chevron } from '@/ui';
 import { font, useTheme } from '@/theme';
 import { useStore } from '@/state/store';
-import { questsFor, PARTNER, QUEST_CATEGORY } from '@/lib/quests';
+import { questsFor, QUEST_CATEGORY, withWhom } from '@/lib/quests';
 import { play } from '@/lib/sound';
 
 /** A room: every scene in one setting. */
@@ -29,7 +29,7 @@ export default function Room() {
               <Pressable key={q.id} onPress={() => { play('select'); router.push({ pathname: '/quest/[id]', params: { id: q.id } }); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 15, borderTopWidth: i ? 1 : 0, borderColor: t.cardAlt }}>
                 <View style={{ flex: 1, gap: 2 }}>
                   <RNText style={{ fontFamily: font.medium, fontSize: 15, color: done ? t.ink3 : t.ink }}>{q.title}</RNText>
-                  <RNText style={{ fontFamily: font.regular, fontSize: 12, color: t.ink2 }}>With {PARTNER[q.partner] ?? q.partner}{q.spicy ? ' · 18+' : ''}</RNText>
+                  <RNText style={{ fontFamily: font.regular, fontSize: 12, color: t.ink2 }}>With {withWhom(q, s.dates)}{q.spicy ? ' · 18+' : ''}</RNText>
                 </View>
                 {done ? <Icon d={ICON.check} size={15} color={t.accent} stroke={2.4} /> : <Chevron />}
               </Pressable>

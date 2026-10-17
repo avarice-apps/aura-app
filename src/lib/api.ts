@@ -1,10 +1,26 @@
 import { API_URL, OFFLINE } from './config';
-import type { BuiltFit, Duel, Evaluation, FitRead, Lesson, Moment, ProfileRead, Receipt, ScanResult, SessionStart, StyleProfile, StyleRead, Swatch, TurnResult, WardrobeItem } from './types';
-import { useStore, type Goal } from '@/state/store';
+import type { BuiltFit, DraftRead, Duel, Evaluation, FitRead, Lesson, Moment, ProfileRead, Receipt, ScanResult, SessionStart, ShotMessage, StyleProfile, StyleRead, Swatch, TurnResult, WardrobeItem } from './types';
+import { useStore, type Goal, type Account } from '@/state/store';
 import { File, Directory, Paths } from 'expo-file-system';
 import { QUESTS } from './quests';
+import { router } from 'expo-router';
+import { authHeaders, dropToken, adopt, refreshAccount } from './session';
 
 const tone = () => useStore.getState().tone ?? 'real';
+
+/** What the player told us about themselves: how characters refer to them, and who they date. */
+export function userPrefs() {
+  const s = useStore.getState();
+  return { pronoun: s.pronoun ?? 'they', dates: s.dates ?? null, name: s.name || '' };
+}
+
+/** The upcoming occasion, in one line, for Poise and the scene builder. */
+export function occasionLine(): string | undefined {
+  const o = useStore.getState().occasion;
+  if (!o?.what) return undefined;
+  const when = o.when === 'tonight' ? 'tonight' : o.when === 'tomorrow' ? 'tomorrow' : o.when === 'week' ? 'this week' : '';
+  return [o.what + (when ? ` (${when})` : ''), o.who, o.impression && `wants to come across ${o.impression.toLowerCase()}`, o.target && `wants to get this right: ${o.target}`].filter(Boolean).join('; ');
+}
 
 /** A small summary of his last calls, so characters test his real weak spots and Poise remembers. */
 function profile() {
@@ -13,7 +29,8 @@ function profile() {
       .map((r) => r.evaluation)
       .filter((e) => e && !e.insufficient && typeof e.rating === 'number' && e.axes)
       .slice(0, 8);
-    if (!evs.length) return undefined;
+    const occasion = occasionLine();
+    if (!evs.length) return occasion ? { calls: 0, avg_rating: 50, occasion } : undefined;
     const avg = Math.round(evs.reduce((n, e) => n + e.rating, 0) / evs.length);
     const keys = ['voice', 'command', 'composure', 'awareness', 'landed'] as const;
     const mean = (k: (typeof keys)[number]) => {
@@ -21,6 +38,7 @@ function profile() {
       return v.length ? v.reduce((a, b) => a + b, 0) / v.length : 100;
     };
     const weakest = keys.reduce((w, k) => (mean(k) < mean(w) ? k : w), keys[0]);
+    // axes the read couldn't measure come back as null; mean() skips them
     const counts: Record<string, number> = {};
     evs.forEach((e) => e.archetype && (counts[e.archetype] = (counts[e.archetype] ?? 0) + 1));
     const archetype = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0] ?? '';
@@ -32,7 +50,7 @@ function profile() {
         .slice(0, 12)
         .map(([name, m]) => [name, { note: m.note, days: Math.max(0, Math.floor((now - Date.parse(m.at)) / 86400000)) }]),
     );
-    return { calls: evs.length, avg_rating: avg, weakest, recent_changes, archetype, met };
+    return { calls: evs.length, avg_rating: avg, weakest, recent_changes, archetype, met, occasion };
   } catch {
     return undefined;
   }
@@ -130,9 +148,54 @@ const DEMO_EVAL_2: Evaluation = {
 
 // ------------------------------------------------------------------ helpers
 
+/** Out of allowance, or a feature the plan doesn't include. The paywall opens with the right headline. */
+export class PlanError extends Error {
+  reason: string;
+  constructor(message: string, reason: string) {
+    super(message);
+    this.name = 'PlanError';
+    this.reason = reason;
+  }
+}
+
+const PAYWALL_REASON: Record<string, string> = { minutes: 'minutes', calls: 'calls', daily: 'calls', clips: 'clips', poise: 'poise', profiles: 'profiles', fits: 'fits', wardrobe: 'wardrobe', portrait: 'black', rehearse: 'rehearse', retry: 'retry' };
+
+function onPlanError(body: any): PlanError {
+  const reason = String(body?.reason ?? 'plan');
+  try {
+    router.push({ pathname: '/paywall', params: { reason: PAYWALL_REASON[reason] ?? 'plan' } });
+  } catch {}
+  refreshAccount().catch(() => {});
+  return new PlanError(body?.detail ?? 'That’s part of a plan.', reason);
+}
+
+/** Any call to our server: auth header, one quiet retry with a fresh guest if the token is gone, paywall on 402. */
+async function call(path: string, init: RequestInit = {}, retried = false): Promise<Response> {
+  const headers = { ...(init.headers as Record<string, string> | undefined), ...(await authHeaders()) };
+  const res = await fetch(`${API_URL}${path}`, { ...init, headers });
+  if (res.status === 401 && !retried) {
+    await dropToken();
+    return call(path, init, true);
+  }
+  return res;
+}
+
+async function failure(res: Response): Promise<Error> {
+  const body = await res.json().catch(() => ({}));
+  if (res.status === 402) return onPlanError(body);
+  if (res.status === 429) return new Error(body?.detail ?? 'Slow down a little. Try again in a few minutes.');
+  return new Error(body?.detail ?? `Request failed (${res.status})`);
+}
+
 async function postJSON<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.detail ?? `Request failed (${res.status})`);
+  const res = await call(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  if (!res.ok) throw await failure(res);
+  return res.json();
+}
+
+async function getJSON<T>(path: string): Promise<T> {
+  const res = await call(path);
+  if (!res.ok) throw await failure(res);
   return res.json();
 }
 
@@ -141,21 +204,27 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
  * and it rejects React Native file parts ({ uri, name, type }) with "Unsupported FormDataPart implementation".
  * RN's XHR streams those file parts natively on iOS and Android.
  */
-function postForm<T>(path: string, form: FormData, timeoutMs = 120000): Promise<T> {
+async function postForm<T>(path: string, form: FormData, timeoutMs = 120000, retried = false): Promise<T> {
+  const headers = await authHeaders();
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `${API_URL}${path}`);
+    Object.entries(headers).forEach(([k, v]) => xhr.setRequestHeader(k, v));
     xhr.timeout = timeoutMs;
     xhr.responseType = 'text';
-    xhr.onload = () => {
+    xhr.onload = async () => {
       let body: any = {};
       try {
         body = JSON.parse(xhr.responseText || '{}');
       } catch {}
       if (xhr.status >= 200 && xhr.status < 300) resolve(body as T);
+      else if (xhr.status === 401 && !retried) {
+        await dropToken();
+        postForm<T>(path, form, timeoutMs, true).then(resolve, reject);
+      } else if (xhr.status === 402) reject(onPlanError(body));
       else reject(new Error(body?.detail ?? `Request failed (${xhr.status})`));
     };
-    xhr.onerror = () => reject(new Error('Network error. Is the server running?'));
+    xhr.onerror = () => reject(new Error('Network error. Check your connection and try again.'));
     xhr.ontimeout = () => reject(new Error('The server took too long. Try again.'));
     xhr.send(form);
   });
@@ -168,7 +237,7 @@ function fileField(uri: string, name: string, type: string) {
 
 // ------------------------------------------------------------------ conversations
 
-export type StartArgs = { goal?: Goal; room_id?: string; lesson?: Lesson; floor_id?: string; daily_id?: string; pressure?: number; attempt_of?: string; max_turns?: number; poise?: boolean };
+export type StartArgs = { goal?: Goal; room_id?: string; lesson?: Lesson; floor_id?: string; daily_id?: string; pressure?: number; attempt_of?: string; max_turns?: number; poise?: boolean; resume?: { session: string; turn: number } };
 
 export async function startSession(a: StartArgs): Promise<SessionStart & { openerAudio: AudioSrc }> {
   if (OFFLINE) {
@@ -180,7 +249,7 @@ export async function startSession(a: StartArgs): Promise<SessionStart & { opene
     const lessonScene = a.lesson ? { setting: a.lesson.setting, opener: a.lesson.opener, goal: a.lesson.goal } : q ? { setting: q.setting, opener: q.opener, goal: q.goal } : null;
     return { session_id: `demo_${Date.now()}`, character: sc.character, setting: lessonScene?.setting ?? sc.setting, goal: lessonScene?.goal ?? sc.goal, opener: lessonScene?.opener ?? sc.opener, max_turns: 2, pressure: a.pressure ?? 1, openerAudio: lessonScene ? undefined : DEMO_AUDIO[`open_${g}` as keyof typeof DEMO_AUDIO] };
   }
-  const r = await postJSON<SessionStart>('/session/start', { ...a, tone: tone(), profile: a.goal ? undefined : profile(), subject: useStore.getState().subjectId });
+  const r = await postJSON<SessionStart>('/session/start', { ...a, tone: tone(), profile: a.goal ? undefined : profile(), user: userPrefs() });
   return { ...r, openerAudio: r.opener_audio };
 }
 
@@ -224,7 +293,7 @@ export async function generateLesson(a: { unit: string; unit_id?: string; object
     await sleep(600);
     return { character: 'dev', setting: 'At a coworking desk on a Thursday afternoon.', opener: "Hey, quick favour: can you cover my Friday 4pm client call? I'd totally owe you.", twist: 'He says it’s only thirty minutes and asks if you’re really that busy.', goal: a.objective, hint: 'Lead with your answer, give at most one reason, then pause.' };
   }
-  return postJSON<Lesson>('/lesson', { ...a, tone: tone() });
+  return postJSON<Lesson>('/lesson', { ...a, tone: tone(), user: userPrefs() });
 }
 
 // ------------------------------------------------------------------ receipts
@@ -254,10 +323,33 @@ export async function makeReceipt(a: { text?: string; audioUri?: string; context
   }
   const form = new FormData();
   if (a.text) form.append('text', a.text);
-  if (a.context) form.append('context', a.context);
+  // Something coming up is context for every chat with Poise, not just the occasion screens.
+  const coming = occasionLine();
+  const ctx = [a.context, coming ? `Coming up for them: ${coming}` : ''].filter(Boolean).join('\n');
+  if (ctx) form.append('context', ctx);
   form.append('tone', tone());
+  form.append('user', JSON.stringify(userPrefs()));
   if (a.audioUri) form.append('audio', fileField(a.audioUri, 'story.m4a', 'audio/m4a'));
   return postForm<Receipt>('/ledger', form);
+}
+
+// ------------------------------------------------------------------ before I send this
+
+export type DraftAsk = { draft: string; convo?: ShotMessage[]; to?: string; intent?: string; outcome?: string };
+
+export async function draftReview(a: DraftAsk): Promise<DraftRead> {
+  if (OFFLINE) {
+    await sleep(900);
+    return { mode: a.draft ? 'review' : 'reply', assumptions: [], reads: 'Clear, and easy to answer. It asks one thing.', keep: 'The question at the end.', change: null, send_as_is: true, observations: [], preserve: [], alternatives: [{ label: 'As written', text: a.draft || 'sounds good, see you then' }, { label: 'Lighter', text: (a.draft || 'sounds good').replace(/\?$/, '') + '?' }], next: 'Send it.' };
+  }
+  return postJSON<DraftRead>('/poise/draft', { ...a, tone: tone(), user: userPrefs() });
+}
+
+/** A screenshot of a conversation, read into who said what. The image is not kept anywhere. */
+export async function readShot(uri: string): Promise<{ messages: ShotMessage[]; confirm: boolean; note?: string | null; app?: string | null }> {
+  const form = new FormData();
+  form.append('image', fileField(uri, 'shot.jpg', 'image/jpeg'));
+  return postForm('/poise/draft/extract', form, 60000);
 }
 
 // ------------------------------------------------------------------ scan
@@ -312,22 +404,28 @@ export async function recordSituationAnswer(id: string, choice: number) {
 
 // ------------------------------------------------------------------ training consent
 
-/** "Delete everything": this install's duels and training clips on the server. */
-export async function deleteServerData(subjectId: string): Promise<void> {
+/** "Delete everything": this account's duels, invites and training clips on the server. */
+export async function deleteServerData(): Promise<void> {
   if (OFFLINE) return;
-  await postJSON('/privacy/delete', { subject_id: subjectId });
+  await postJSON('/privacy/delete', {});
 }
 
-export async function withdrawTraining(subjectId: string): Promise<number> {
+export async function withdrawTraining(): Promise<number> {
   if (OFFLINE) return 0;
   try {
-    const form = new FormData();
-    form.append('subject_id', subjectId);
-    const r = await postForm<{ removed: number }>('/train/withdraw', form);
+    const r = await postJSON<{ removed: number }>('/train/withdraw', {});
     return r.removed;
   } catch {
     return 0;
   }
+}
+
+/** The training opt-in, recorded on the server (clips are only ever kept for accounts that opted in). */
+export async function setTrainingConsent(on: boolean): Promise<void> {
+  if (OFFLINE) return;
+  try {
+    await postJSON('/train/consent', { on });
+  } catch {}
 }
 
 // ------------------------------------------------------------------ live (full-duplex) conversations
@@ -335,18 +433,18 @@ export async function withdrawTraining(subjectId: string): Promise<number> {
 export type LiveStart = SessionStart & { agent_id: string; conversation_token: string; overrides: any; speakers?: { name: string; role: string }[] };
 
 export async function liveStart(a: StartArgs): Promise<LiveStart> {
-  return postJSON<LiveStart>('/live/start', { ...a, tone: tone(), profile: a.goal ? undefined : profile(), subject: useStore.getState().subjectId });
+  return postJSON<LiveStart>('/live/start', { ...a, tone: tone(), profile: a.goal ? undefined : profile(), user: userPrefs() });
 }
 
 export async function liveState(sessionId: string): Promise<{ done: boolean; leaving?: boolean; turns: number; interest: number | null; trust: number | null }> {
-  const r = await fetch(`${API_URL}/live/${sessionId}/state`);
+  const r = await call(`/live/${sessionId}/state`);
   if (!r.ok) throw new Error('state');
   return r.json();
 }
 
 /** A call where the mic delivered nothing: what the native audio engine reported, for the server log. */
 export function reportMic(sessionId: string, diag: Record<string, unknown>) {
-  fetch(`${API_URL}/live/${sessionId}/mic`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(diag) }).catch(() => {});
+  call(`/live/${sessionId}/mic`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(diag) }).catch(() => {});
 }
 
 export async function liveFinish(sessionId: string, conversationId: string): Promise<Evaluation & { scriptAudio: AudioSrc }> {
@@ -356,7 +454,7 @@ export async function liveFinish(sessionId: string, conversationId: string): Pro
   const until = Date.now() + 180000;
   while (e.pending && Date.now() < until) {
     await sleep(1000);
-    const r = await fetch(`${API_URL}/live/${sessionId}/result`);
+    const r = await call(`/live/${sessionId}/result`);
     if (!r.ok) throw new Error((await r.json().catch(() => ({})))?.detail ?? 'Poise could not read that one.');
     e = await r.json();
   }
@@ -490,7 +588,6 @@ export async function duelCreate(a: { videoUri: string; topicId: string; name?: 
   const form = new FormData();
   form.append('video', fileField(a.videoUri, 'take.mov', 'video/quicktime'));
   form.append('topic_id', a.topicId);
-  form.append('subject_id', useStore.getState().subjectId);
   if (a.name) form.append('name', a.name);
   form.append('tone', tone());
   return postForm<Duel>('/duel', form, 180000);
@@ -507,7 +604,6 @@ export async function duelAnswer(a: { code: string; videoUri: string; name?: str
   const form = new FormData();
   form.append('video', fileField(a.videoUri, 'take.mov', 'video/quicktime'));
   if (a.name) form.append('name', a.name);
-  form.append('subject_id', useStore.getState().subjectId);
   return postForm<Duel>(`/duel/${encodeURIComponent(a.code.trim().toUpperCase())}/answer`, form, 180000);
 }
 
@@ -530,7 +626,7 @@ export async function syncMe(): Promise<Me | null> {
   if (OFFLINE) return null;
   const st = useStore.getState();
   try {
-    const r = await fetch(`${API_URL}/me?subject=${encodeURIComponent(st.subjectId)}`);
+    const r = await call('/me');
     if (!r.ok) return null;
     const me: Me = await r.json();
     st.set({ credits: { granted: me.credits, used: Math.min(st.credits?.used ?? 0, me.credits) }, invite: { code: me.code, usedCode: me.used_code ?? undefined, friends: me.friends } });
@@ -541,7 +637,7 @@ export async function syncMe(): Promise<Me | null> {
 }
 
 export async function redeemCode(code: string): Promise<string> {
-  const r = await postJSON<{ message: string }>('/redeem', { subject: useStore.getState().subjectId, code });
+  const r = await postJSON<{ message: string }>('/redeem', { code });
   syncMe();
   return r.message;
 }
@@ -595,7 +691,7 @@ export type Challenge = { code: string; kind: 'daily' | 'floor'; ref_id: string;
 
 export async function createChallenge(a: { kind: 'daily' | 'floor'; ref_id: string; title: string; rating: number; verdict: string }): Promise<Challenge> {
   const st = useStore.getState();
-  return postJSON<Challenge>('/challenge', { ...a, subject: st.subjectId, name: st.name || 'Someone' });
+  return postJSON<Challenge>('/challenge', { ...a, name: st.name || 'Someone' });
 }
 
 export async function getChallenge(code: string): Promise<Challenge> {
@@ -606,5 +702,70 @@ export async function getChallenge(code: string): Promise<Challenge> {
 
 export async function answerChallenge(code: string, rating: number, verdict: string): Promise<Challenge> {
   const st = useStore.getState();
-  return postJSON<Challenge>(`/challenge/${code}/answer`, { subject: st.subjectId, name: st.name || 'Your friend', rating, verdict });
+  return postJSON<Challenge>(`/challenge/${code}/answer`, { name: st.name || 'Your friend', rating, verdict });
+}
+
+
+// ------------------------------------------------------------------ account
+
+export type SignedIn = { token?: string; account: Account; switched: boolean };
+
+export async function emailStart(email: string): Promise<{ sent: boolean; dev_code?: string }> {
+  return postJSON('/auth/email/start', { email });
+}
+
+/** Verify the emailed code. Saves this account under that email, or switches to the account that already has it. */
+export async function emailVerify(email: string, code: string): Promise<SignedIn> {
+  const r = await postJSON<SignedIn>('/auth/email/verify', { email, code });
+  if (r.token) await adopt(r.token, r.account);
+  return r;
+}
+
+export async function appleSignIn(identityToken: string, name?: string): Promise<SignedIn> {
+  const r = await postJSON<SignedIn>('/auth/apple', { identity_token: identityToken, name: name ?? '' });
+  if (r.token) await adopt(r.token, r.account);
+  return r;
+}
+
+export async function updateAccountName(name: string): Promise<void> {
+  if (OFFLINE) return;
+  try {
+    await postJSON('/account', { name });
+  } catch {}
+}
+
+/** Delete the account on the server. A subscription is cancelled in Apple's settings, not here. */
+export async function deleteAccount(): Promise<void> {
+  if (OFFLINE) return;
+  await postJSON('/account/delete', {});
+}
+
+/** Phone test builds without RevenueCat: the server unlocks a plan only while its dev switch is on. */
+export async function devPlan(plan: 'free' | 'plus' | 'black'): Promise<void> {
+  if (OFFLINE) return;
+  try {
+    await postJSON('/account/plan/dev', { plan });
+  } catch {}
+}
+
+/** A small summary of progress, so the Members page on joinkleos.com can show it. */
+export async function saveSummary(body: Record<string, unknown>): Promise<void> {
+  if (OFFLINE) return;
+  try {
+    await postJSON('/account/summary', body);
+  } catch {}
+}
+
+export async function getAccount(): Promise<Account> {
+  return getJSON<Account>('/account');
+}
+
+// ------------------------------------------------------------------ The Table
+
+export type TablePlayer = { name: string; mission: string; outcome: 'clean' | 'obvious' | 'caught' | 'missed'; guessed: boolean };
+export type TableVerdict = { players: (TablePlayer & { points: number; line: string })[]; winner: string; crown: string; toast: string };
+
+export async function tableVerdict(players: TablePlayer[]): Promise<TableVerdict> {
+  if (OFFLINE) throw new Error('offline');
+  return postJSON<TableVerdict>('/table/verdict', { players, tone: tone() });
 }

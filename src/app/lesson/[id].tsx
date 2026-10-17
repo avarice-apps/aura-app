@@ -4,8 +4,10 @@ import { router, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeIn, FadeInDown, ZoomIn } from 'react-native-reanimated';
 import { Screen, Title, Body, Muted, Label, Button, Row, Stack, Statue, Halo, Pill, IconButton, Icon, ICON, Num } from '@/ui';
 import { Conversation } from '@/components/Conversation';
+import { NightCall } from '@/components/NightCall';
 import { AfterRead } from '@/components/AfterRead';
-import { ResultHero, FeedbackCard, HearPoise, CompareCard, Appear, FullRead, Insufficient } from '@/components/Results';
+import { ResultHero, FeedbackCard, HearPoise, CompareCard, Appear, FullRead, Insufficient, RetryMoment } from '@/components/Results';
+import { retryMoment, momentRetryFor } from '@/lib/moment';
 import { SituationCard, pickSituation } from '@/components/SituationCard';
 import { useTheme } from '@/theme';
 import { useStore } from '@/state/store';
@@ -65,7 +67,7 @@ export default function LessonScreen() {
     let lvl = laurelFor(prev, best, sameDay);
     if (checkpoint && best < 65) lvl = Math.min(lvl, 1) as 1;
     s.award(def.id, lvl, 0);
-    s.addSession({ id: sid, kind: checkpoint ? 'checkpoint' : 'lesson', title: lesson?.setting ?? def.title, createdAt: new Date().toISOString(), evaluation: a!, retry: b ?? undefined, lessonId: def.id });
+    s.addSession({ id: sid, kind: checkpoint ? 'checkpoint' : 'lesson', title: lesson?.setting ?? def.title, createdAt: new Date().toISOString(), evaluation: a!, retry: b ?? momentRetryFor(sid), lessonId: def.id });
     s.touchDay();
     setAwarded(lvl);
     play(lvl > prev ? 'cleared' : 'reveal');
@@ -84,8 +86,7 @@ export default function LessonScreen() {
 
   if (step === 'talk' && lesson) {
     return (
-      <Screen edges={['top', 'bottom']}>
-        {header}
+      <NightCall label={`${unit.title} · ${def.title}`} onClose={() => router.back()}>
         <Conversation
           metered
           label={def.title}
@@ -96,13 +97,12 @@ export default function LessonScreen() {
             setStep('result');
           }}
         />
-      </Screen>
+      </NightCall>
     );
   }
   if (step === 'retry') {
     return (
-      <Screen edges={['top', 'bottom']}>
-        {header}
+      <NightCall label={'Take two'} onClose={() => router.back()}>
         <Conversation
           metered
           label="Take two"
@@ -112,7 +112,7 @@ export default function LessonScreen() {
             setStep('compare');
           }}
         />
-      </Screen>
+      </NightCall>
     );
   }
 
@@ -150,6 +150,7 @@ export default function LessonScreen() {
             <Appear><ResultHero e={a} /></Appear>
             <Appear delay={120}><FeedbackCard e={a} /></Appear>
             <Appear delay={240}><HearPoise src={a.scriptAudio ?? a.script_audio} /></Appear>
+            <Appear delay={300}><RetryMoment e={a} onRetry={() => retryMoment(sid, a, def.title)} /></Appear>
             <Appear delay={360}><FullRead e={a} /></Appear>
             <Appear delay={480}><AfterRead sessionId={sid} e={a} /></Appear>
           </Stack>

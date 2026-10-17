@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, ScrollView, Pressable, Text as RNText } from 'react-native';
-import Animated, { FadeIn, FadeInDown, useSharedValue, withTiming, withRepeat, Easing, cancelAnimation } from 'react-native-reanimated';
+import Animated, { FadeInDown, useSharedValue, withTiming, withRepeat, Easing, cancelAnimation } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { ConversationProvider, useConversation } from '@elevenlabs/react-native';
@@ -8,7 +8,7 @@ import { CameraView, useCameraPermissions } from 'expo-camera';
 import { Image } from 'expo-image';
 import { File } from 'expo-file-system';
 import { Body, Muted, Icon, ICON, Serif } from '@/ui';
-import { CallFace, VoiceBars } from '@/components/CallFace';
+import { CallStage } from '@/components/CallStage';
 import { faceFor } from '@/lib/faces';
 import { font, useTheme } from '@/theme';
 import { liveStart, liveFinish, liveState, uploadFrames, reportMic, StartArgs, LiveStart } from '@/lib/api';
@@ -392,70 +392,49 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
 
   const last = msgs[msgs.length - 1];
   const idleNow = phase === 'connecting' || phase === 'evaluating';
-  const face = faceFor(start?.character ?? (isPoise ? 'poise' : null));
+  const seed = start?.session_id;
+  const face = faceFor(start?.character ?? (isPoise ? 'poise' : null), { seed, stranger: !!start?.masked });
+  const faceOf = (w: string) => (w === name ? face : faceFor(w, { seed }));
   const round = (bg: string, border?: string) => ({ width: 58, height: 58, borderRadius: 29, backgroundColor: bg, borderWidth: border ? 1 : 0, borderColor: border, alignItems: 'center' as const, justifyContent: 'center' as const });
+  const lowTime = phase === 'live' && !!timeLimit && shown <= 10;
+
+  const caption = last
+    ? { label: last.mine ? 'You' : last.who, text: last.mine ? last.text : `“${last.text}”`, mine: last.mine, key: msgs.length }
+    : start
+      ? { label: label || 'The scene', text: start.setting, mine: true, key: 0 }
+      : null;
 
   return (
     <View style={{ flex: 1 }}>
-      {/* where you are */}
-      <View style={{ alignItems: 'center', paddingHorizontal: 32, paddingTop: 6, gap: 4, minHeight: 44 }}>
-        {start ? <Muted small align="center" numberOfLines={2}>{label ? `${label} · ` : ''}{start.setting}</Muted> : null}
-        <RNText style={{ fontFamily: font.mono, fontSize: 12, letterSpacing: 1.2, color: phase === 'live' && timeLimit && shown <= 10 ? t.accent : t.ink2 }}>
-          {phase === 'live' ? clock : phase === 'connecting' ? 'CALLING' : phase === 'evaluating' ? 'CALL ENDED' : ''}
-        </RNText>
-      </View>
-
-      {/* who you're talking to */}
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 }}>
-        <View style={{ marginTop: -18, marginBottom: -26 }}>
-          <CallFace source={face} size={196} energy={energy} who={who} interest={isPoise ? null : interest} leaving={leaving} idle={idleNow} />
-        </View>
-        <Serif size={34} align="center" style={{ marginTop: 4 }}>{name || (isPoise ? 'Poise' : ' ')}</Serif>
-        {start ? <Muted small align="center" numberOfLines={1}>{start.character.style}</Muted> : null}
-        {present.length ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}>
-            <View style={{ flexDirection: 'row' }}>
-              {present.slice(0, 3).map((p, i) => (
-                <View key={p} style={{ width: 28, height: 28, borderRadius: 14, overflow: 'hidden', marginLeft: i ? -8 : 0, borderWidth: 2, borderColor: t.bg }}>
-                  <Image source={faceFor(p)} style={{ width: 24, height: 24 }} />
-                </View>
-              ))}
-            </View>
-            <Muted small>{`with ${present.join(', ')}`}</Muted>
-          </View>
-        ) : null}
-        <View style={{ marginTop: 18 }}>
-          <VoiceBars energy={phase === 'live' ? energy : idle} who={who} dim={phase !== 'live'} color={t.ink} />
-        </View>
-        {/* the last thing said, as a caption */}
-        <View style={{ minHeight: 96, marginTop: 14, alignSelf: 'stretch', alignItems: 'center' }}>
-          {last ? (
-            <Animated.View key={msgs.length} entering={FadeIn.duration(260)} style={{ maxWidth: 330, alignItems: 'center', gap: 4 }}>
-              <RNText style={{ fontFamily: font.medium, fontSize: 11, letterSpacing: 0.8, color: last.mine ? t.ink3 : t.accent }}>{(last.mine ? 'You' : last.who).toUpperCase()}</RNText>
-              <Body align="center" color={last.mine ? t.ink2 : t.ink} numberOfLines={4}>{last.mine ? last.text : `“${last.text}”`}</Body>
-            </Animated.View>
-          ) : null}
-        </View>
-      </View>
-
-      {cameraOn && camPerm?.granted && (phase === 'live' || phase === 'connecting') ? (
-        <View style={{ position: 'absolute', right: 20, top: 60, width: 78, height: 104, borderRadius: 14, overflow: 'hidden', zIndex: 5, borderWidth: 1, borderColor: t.line, backgroundColor: t.card }}>
-          <CameraView ref={cam} style={{ flex: 1 }} facing="front" mirror animateShutter={false} />
-        </View>
-      ) : null}
-
-      {/* status and controls */}
-      <View style={{ alignItems: 'center', paddingBottom: 16, gap: 14 }}>
-        <Muted small align="center" color={phase === 'error' ? t.accent : t.ink2} style={{ paddingHorizontal: 32 }}>{status}</Muted>
+      <CallStage
+        top={phase === 'live' ? `LIVE · ${clock}` : phase === 'connecting' ? 'CALLING' : phase === 'evaluating' ? 'CALL ENDED' : ''}
+        dot={lowTime ? 'warn' : phase === 'live' ? 'live' : 'idle'}
+        topRight={start?.resumed ? 'FROM THE MOMENT' : undefined}
+        face={face}
+        energy={energy}
+        who={who}
+        idle={idleNow}
+        interest={isPoise ? null : interest}
+        leaving={leaving}
+        name={name || (isPoise ? 'Poise' : '')}
+        subline={start ? (isPoise ? 'Your coach · on the line' : start.character.style) : undefined}
+        present={present.map((p) => ({ name: p, face: faceOf(p) }))}
+        bars={phase === 'live' ? energy : idle}
+        barsDim={phase !== 'live'}
+        caption={caption}
+        placeholder={isPoise ? 'Calling Poise' : 'Someone’s picking up'}
+        status={status}
+        statusError={phase === 'error'}
+      >
         {phase === 'live' ? (
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'center', gap: 34 }}>
             <View style={{ alignItems: 'center', gap: 6, width: 64 }}>
               {!isPoise ? (
                 <Pressable onPress={toggleCamera} hitSlop={8} accessibilityLabel={cameraOn ? 'Turn camera off' : 'Turn camera on'} style={round(cameraOn ? t.accentSoft : t.card, cameraOn ? t.accent : t.line)}>
-                  <Icon d={ICON.scan} size={20} color={cameraOn ? t.accent : t.ink} />
+                  <Icon d={ICON.scan} size={20} color={cameraOn ? t.ink : t.ink2} />
                 </Pressable>
               ) : <View style={{ width: 58, height: 58 }} />}
-              {!isPoise ? <Muted small>{cameraOn ? 'Eyes on' : 'Eyes'}</Muted> : null}
+              {!isPoise ? <RNText style={{ fontFamily: font.regular, fontSize: 12, color: t.ink3 }}>{cameraOn ? 'Eyes on' : 'Eyes'}</RNText> : null}
             </View>
             <View style={{ alignItems: 'center', gap: 6 }}>
               <Pressable onPress={finish} hitSlop={10} accessibilityLabel={isPoise ? 'End call' : turns > 0 ? 'End call and get my read' : 'Hang up'} style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: '#E5484D', alignItems: 'center', justifyContent: 'center' }}>
@@ -463,13 +442,13 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
                   <Icon d={ICON.phone} size={28} color="#FFFFFF" fill="#FFFFFF" />
                 </View>
               </Pressable>
-              <Muted small>{isPoise ? 'End' : turns > 0 ? 'End and read' : 'Hang up'}</Muted>
+              <RNText style={{ fontFamily: font.regular, fontSize: 12, color: t.ink3 }}>{isPoise ? 'End' : turns > 0 ? 'End and read' : 'Hang up'}</RNText>
             </View>
             <View style={{ alignItems: 'center', gap: 6, width: 64 }}>
               <Pressable onPress={() => setShowTx(true)} hitSlop={8} accessibilityLabel="Show transcript" style={round(t.card, t.line)}>
-                <Icon d={ICON.chat} size={20} color={t.ink} />
+                <Icon d={ICON.chat} size={20} color={t.ink2} />
               </Pressable>
-              <Muted small>Words</Muted>
+              <RNText style={{ fontFamily: font.regular, fontSize: 12, color: t.ink3 }}>Words</RNText>
             </View>
           </View>
         ) : phase === 'error' ? (
@@ -486,7 +465,13 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
         ) : (
           <View style={{ height: 94 }} />
         )}
-      </View>
+      </CallStage>
+
+      {cameraOn && camPerm?.granted && (phase === 'live' || phase === 'connecting') ? (
+        <View style={{ position: 'absolute', right: 20, top: 40, width: 78, height: 104, borderRadius: 14, overflow: 'hidden', zIndex: 5, borderWidth: 1, borderColor: t.line, backgroundColor: t.card }}>
+          <CameraView ref={cam} style={{ flex: 1 }} facing="front" mirror animateShutter={false} />
+        </View>
+      ) : null}
 
       {/* the whole conversation, on demand */}
       {showTx ? (
@@ -504,8 +489,8 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
                 <View key={i} style={{ alignSelf: m.mine ? 'flex-end' : 'flex-start', maxWidth: '84%', gap: 3 }}>
                   {showName ? (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginLeft: 2 }}>
-                      <Image source={faceFor(m.who === name ? start?.character ?? m.who : m.who)} style={{ width: 18, height: 18, borderRadius: 9 }} />
-                      <RNText style={{ fontFamily: font.medium, fontSize: 11, letterSpacing: 0.4, color: m.who === name ? t.accent : t.ink2 }}>{m.who.toUpperCase()}</RNText>
+                      <Image source={faceOf(m.who)} style={{ width: 18, height: 18, borderRadius: 9 }} />
+                      <RNText style={{ fontFamily: font.mono, fontSize: 10.5, letterSpacing: 1.2, color: t.ink3 }}>{m.who.toUpperCase()}</RNText>
                     </View>
                   ) : null}
                   <View style={{ backgroundColor: m.mine ? t.accent : t.card, borderWidth: m.mine ? 0 : 1, borderColor: t.line, borderRadius: 18, borderBottomLeftRadius: m.mine ? 18 : 6, borderBottomRightRadius: m.mine ? 6 : 18, paddingHorizontal: 14, paddingVertical: 11 }}>

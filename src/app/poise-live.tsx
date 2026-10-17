@@ -1,21 +1,30 @@
 import React from 'react';
-import { View } from 'react-native';
 import { router } from 'expo-router';
-import { Screen, IconButton, Icon, ICON, Label, Row } from '@/ui';
 import { Conversation } from '@/components/Conversation';
+import { NightCall } from '@/components/NightCall';
+import { useStore } from '@/state/store';
 
-/** A voice call with Poise. Any topic about how you come across: a date Friday, what to wear, a text to send. No score. */
+/**
+ * A voice call with Poise: just talk, no score. A date Friday, what to wear, a text to send.
+ * When it ends, Poise leaves a short note in the chat (what you agreed, the next step, a scene to practise).
+ */
 export default function PoiseLive() {
   return (
-    <Screen edges={['top', 'bottom']}>
-      <Row style={{ justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 8 }}>
-        <IconButton label="Close" onPress={() => router.back()}>
-          <Icon d={ICON.close} size={16} />
-        </IconButton>
-        <Label>Talk to Poise</Label>
-        <View style={{ width: 40 }} />
-      </Row>
-      <Conversation metered args={{ poise: true }} onDone={() => router.back()} onLeave={() => router.back()} />
-    </Screen>
+    <NightCall label="Call with Poise" onClose={() => router.back()}>
+      <Conversation
+        metered
+        args={{ poise: true }}
+        onDone={({ evaluation }) => {
+          const e: any = evaluation;
+          if (e?.note) {
+            const st = useStore.getState();
+            st.set({ callNotes: [...(st.callNotes ?? []), { kind: 'call' as const, note: String(e.note), next: e.next ?? null, scene: e.scene ?? null, createdAt: new Date().toISOString() }].slice(-40) });
+          }
+          if (router.canGoBack()) router.back();
+          else router.replace('/(tabs)/poise');
+        }}
+        onLeave={() => router.back()}
+      />
+    </NightCall>
   );
 }

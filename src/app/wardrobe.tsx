@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, ScrollView, Pressable, TextInput, Alert, Linking, StyleSheet, ActivityIndicator, useWindowDimensions, Text as RNText } from 'react-native';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
@@ -15,6 +15,7 @@ import type { BuiltFit, StyleProfile, StyleRead, Swatch, WardrobeItem } from '@/
 import { useTier } from '@/lib/plan';
 import { play } from '@/lib/sound';
 import { track } from '@/lib/analytics';
+import { occasionFresh } from '@/lib/occasion';
 
 /*
  * The style section. Printed like a heritage catalogue: Kleos blue on ivory, the same in light and dark mode.
@@ -35,7 +36,9 @@ const COLOURS: Swatch[] = [
 const LIFE = ['Office', 'Campus', 'Gym', 'Nights out', 'Dates', 'Dinners', 'Travel', 'Creative work', 'Weekends outdoors', 'Events'];
 const FEELING = ['Not enough of it', 'Plenty, but nothing goes together', 'I like it, I want it sharper', 'I don’t know what suits me', 'I don’t like what I put together'];
 const PRESENCE = ['Quiet authority', 'Effortless', 'Sharp', 'Warm and easy', 'Magnetic', 'Mysterious'];
-const OCCASIONS = ['Date night', 'Work', 'Interview', 'Night out', 'Wedding guest', 'Dinner with her parents', 'Weekend', 'Travel day'];
+const OCCASIONS = ['Date night', 'Work', 'Interview', 'Night out', 'Wedding guest', 'Meeting the parents', 'Weekend', 'Travel day'];
+/** Today's occasion speaks in impressions; the wardrobe in presences. */
+const IMPRESSION_TO_PRESENCE: Record<string, string> = { Relaxed: 'Effortless', Sharp: 'Sharp', Warm: 'Warm and easy', Magnetic: 'Magnetic', 'Quietly confident': 'Quiet authority', Funny: 'Warm and easy' };
 const CATEGORY_LABEL: Record<WardrobeItem['category'], string> = { outer: 'Outerwear', top: 'Tops', bottom: 'Bottoms', full: 'One-piece', shoes: 'Shoes', accessory: 'Accessories' };
 
 export default function Wardrobe() {
@@ -319,9 +322,11 @@ const wardrobeDir = () => {
 function WardrobeHome({ profile, onRetune }: { profile: StyleProfile; onRetune: () => void }) {
   const st = useStore();
   const items = useMemo(() => st.wardrobe ?? [], [st.wardrobe]);
+  const { from } = useLocalSearchParams<{ from?: string }>();
+  const coming = from === 'occasion' && occasionFresh(st.occasion) ? st.occasion : undefined;
   const [occasion, setOccasion] = useState('');
-  const [custom, setCustom] = useState('');
-  const [presence, setPresence] = useState(profile.presence || PRESENCE[0]);
+  const [custom, setCustom] = useState(coming ? [coming.what, coming.who].filter(Boolean).join('. ').slice(0, 120) : '');
+  const [presence, setPresence] = useState((coming?.impression && IMPRESSION_TO_PRESENCE[coming.impression]) || profile.presence || PRESENCE[0]);
   const [fits, setFits] = useState<BuiltFit[] | null>(null);
   const [building, setBuilding] = useState(false);
   const [adding, setAdding] = useState('');

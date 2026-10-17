@@ -5,18 +5,23 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Screen, Title, Body, Muted, Label, Button, Row, Stack, Pill, IconButton, Icon, ICON, Tag, Card } from '@/ui';
 import { ReactiveStatue } from '@/components/ReactiveStatue';
 import { Conversation } from '@/components/Conversation';
-import { ResultHero, FeedbackCard, HearPoise, CompareCard, Appear, FullRead, Insufficient } from '@/components/Results';
+import { NightCall } from '@/components/NightCall';
+import { ResultHero, FeedbackCard, HearPoise, CompareCard, Appear, FullRead, Insufficient, RetryMoment } from '@/components/Results';
+import { retryMoment, momentRetryFor } from '@/lib/moment';
 import { useTheme } from '@/theme';
 import { useStore } from '@/state/store';
-import { QUESTS, PARTNER, QUEST_CATEGORY } from '@/lib/quests';
+import { QUESTS, QUEST_CATEGORY, withWhom } from '@/lib/quests';
 import type { Evaluation } from '@/lib/types';
 import { play } from '@/lib/sound';
 import { gate, requireTier } from '@/lib/plan';
 
+/** A fallback session id (only used offline, where calls have none). */
+const stamp = () => `local_${Date.now()}`;
+
 type Step = 'brief' | 'talk' | 'result' | 'retry' | 'compare';
 type Ev = Evaluation & { scriptAudio?: any };
 const PRESSURE = ['', 'Easy', 'Real', 'Heat'];
-const STATUE: Record<string, 'head' | 'athlete' | 'bust' | 'antinoos'> = { dating: 'antinoos', approach: 'athlete', money: 'bust', service: 'head', conflict: 'bust', friends: 'athlete', status: 'head' };
+const STATUE: Record<string, 'head' | 'athlete' | 'bust' | 'antinoos' | 'bustDark'> = { dating: 'antinoos', night: 'bustDark', approach: 'athlete', work: 'bust', money: 'bust', service: 'head', conflict: 'bust', friends: 'athlete', status: 'head' };
 
 /** Side Quest: a real-life situation, played live. Brief → talk → read → run it back → compare. */
 export default function QuestScreen() {
@@ -32,7 +37,7 @@ export default function QuestScreen() {
   if (!q) return null;
 
   function save(first: Ev, second?: Ev) {
-    s.addSession({ id: sid || String(Date.now()), kind: 'room', title: q!.title, createdAt: new Date().toISOString(), evaluation: first, retry: second });
+    s.addSession({ id: sid || stamp(), kind: 'room', title: q!.title, createdAt: new Date().toISOString(), evaluation: first, retry: second ?? momentRetryFor(sid) });
     s.touchDay();
     s.set({ questsDone: Array.from(new Set([...(s.questsDone ?? []), q!.id])) });
   }
@@ -49,8 +54,7 @@ export default function QuestScreen() {
 
   if (step === 'talk' || step === 'retry') {
     return (
-      <Screen edges={['top', 'bottom']}>
-        {header}
+      <NightCall label={`Side quest · ${QUEST_CATEGORY[q.category] ?? q.category}`} onClose={() => router.back()}>
         <Conversation
           metered
           label={step === 'retry' ? 'Run it back' : q.title}
@@ -66,7 +70,7 @@ export default function QuestScreen() {
             }
           }}
         />
-      </Screen>
+      </NightCall>
     );
   }
 
@@ -81,7 +85,7 @@ export default function QuestScreen() {
             </Animated.View>
             <Animated.View entering={FadeInDown.duration(500).delay(120)} style={{ gap: 8 }}>
               <Row gap={8}>
-                <Tag label={`With ${PARTNER[q.partner] ?? q.partner}`} tone="accent" />
+                <Tag label={`With ${withWhom(q, s.dates)}`} tone="accent" />
                 {q.spicy ? <Tag label="18+" /> : null}
               </Row>
               <Title size={28}>{q.title}</Title>
@@ -108,6 +112,7 @@ export default function QuestScreen() {
             <Appear><ResultHero e={a} /></Appear>
             <Appear delay={120}><FeedbackCard e={a} /></Appear>
             <Appear delay={240}><HearPoise src={a.scriptAudio ?? a.script_audio} /></Appear>
+            <Appear delay={300}><RetryMoment e={a} onRetry={() => retryMoment(sid, a, q.title)} /></Appear>
             <Appear delay={360}><FullRead e={a} /></Appear>
           </Stack>
         ))}
@@ -126,8 +131,8 @@ export default function QuestScreen() {
         {step === 'result' && a?.insufficient && <Button label="Go again. That one didn't count" onPress={() => { setA(null); setStep('talk'); }} />}
         {step === 'result' && a && !a.insufficient && (
           <>
-            <Button label="Run it back with that change" sound="select" onPress={() => requireTier('plus', 'retry') && gate('calls') && setStep('retry')} />
-            <Button label="Done" variant="secondary" onPress={() => { save(a); play('cleared'); router.back(); }} />
+            <Button label="Done" onPress={() => { save(a); play('cleared'); router.back(); }} />
+            <Button label="Run the whole scene back" variant="secondary" sound="select" onPress={() => requireTier('plus', 'retry') && gate('calls') && setStep('retry')} />
           </>
         )}
         {step === 'compare' && a && b && <Button label="Done" sound="select" onPress={() => { save(a, b.insufficient ? undefined : b); router.back(); }} />}

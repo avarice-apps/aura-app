@@ -7,6 +7,7 @@ import { Screen, Title, Muted, Body, Button, Segments, Stack, Row, Card, Icon, I
 import { useTheme } from '@/theme';
 import { useStore } from '@/state/store';
 import { play } from '@/lib/sound';
+import { setTrainingConsent } from '@/lib/api';
 
 /** Onboarding · 18+ and privacy, in one calm screen right before the mic is used. */
 export default function Consent() {
@@ -29,7 +30,7 @@ export default function Consent() {
           </Row>
           <Row style={{ alignItems: 'flex-start' }}>
             <Icon d={ICON.check} size={16} color={t.ink2} />
-            <Body small style={{ flex: 1 }}>Delete everything any time, in one tap, from You.</Body>
+            <Body small style={{ flex: 1 }}>Delete everything any time from You, in two taps.</Body>
           </Row>
         </Card>
         <Pressable
@@ -60,6 +61,7 @@ export default function Consent() {
           sound="select"
           onPress={() => {
             set({ ageConfirmed: true, biometricConsent: true, trainingConsent: train });
+            if (train) setTrainingConsent(true).catch(() => {});
             router.push('/onboarding/live');
           }}
         />

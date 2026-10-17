@@ -6,11 +6,13 @@ import * as Haptics from 'expo-haptics';
 import { Screen, Segments } from '@/ui';
 import { Conversation } from '@/components/Conversation';
 import { useStore } from '@/state/store';
-import { font, useTheme } from '@/theme';
+import { font, ForceTheme } from '@/theme';
+import { StatusBar } from 'expo-status-bar';
 import { play } from '@/lib/sound';
 
 const LIMIT = 75; // seconds. One take, like real life.
 const WHITE = '#FFFFFF';
+const KLEOS_BLUE = '#1608F2';
 const SOFT = 'rgba(255,255,255,0.72)';
 
 /**
@@ -18,7 +20,6 @@ const SOFT = 'rgba(255,255,255,0.72)';
  * runs against a clock, and cuts hard. While Poise reads it, the user sees why Kleos exists.
  */
 export default function Live() {
-  const t = useTheme();
   const goal = useStore((s) => s.goal);
   const set = useStore((s) => s.set);
   const addSession = useStore((s) => s.addSession);
@@ -75,6 +76,8 @@ export default function Live() {
   };
 
   return (
+    <ForceTheme name="nocturne">
+    <StatusBar style="light" />
     <Screen edges={['top', 'bottom']}>
       <View style={{ paddingHorizontal: 20, paddingTop: 12 }}>
         <Segments total={5} done={4} />
@@ -105,7 +108,7 @@ export default function Live() {
       )}
 
       {stage === 'intro' && (
-        <Animated.View exiting={FadeOut.duration(180)} style={[StyleSheet.absoluteFill, { backgroundColor: t.accent, justifyContent: 'center', paddingHorizontal: 28 }]}>
+        <Animated.View exiting={FadeOut.duration(180)} style={[StyleSheet.absoluteFill, { backgroundColor: KLEOS_BLUE, justifyContent: 'center', paddingHorizontal: 28 }]}>
           <Animated.View entering={FadeIn.duration(300)}>
             <RNText style={{ fontFamily: font.mono, fontSize: 12, letterSpacing: 2, color: SOFT }}>ONE TAKE · {LIMIT} SECONDS</RNText>
           </Animated.View>
@@ -119,7 +122,7 @@ export default function Live() {
       )}
 
       {stage === 'cut' && (
-        <Animated.View entering={FadeIn.duration(120)} style={[StyleSheet.absoluteFill, { backgroundColor: t.accent, paddingHorizontal: 28, paddingTop: 120, paddingBottom: 48, justifyContent: 'space-between' }]}>
+        <Animated.View entering={FadeIn.duration(120)} style={[StyleSheet.absoluteFill, { backgroundColor: KLEOS_BLUE, paddingHorizontal: 28, paddingTop: 120, paddingBottom: 48, justifyContent: 'space-between' }]}>
           <View style={{ gap: 26 }}>
             <Animated.View entering={FadeIn.duration(700).delay(350)}>
               <RNText style={{ fontFamily: font.serif, fontSize: 38, lineHeight: 44, color: WHITE }}>{micDead ? 'We couldn’t hear you.' : noCall ? 'The line didn’t connect.' : 'In reality, you aren’t often given second chances.'}</RNText>
@@ -134,15 +137,15 @@ export default function Live() {
             <Animated.View entering={FadeIn.duration(500).delay(400)} style={{ alignItems: 'center', gap: 12 }}>
               {micDead ? (
                 <Pressable onPress={again} style={{ height: 54, alignSelf: 'stretch', borderRadius: 27, backgroundColor: WHITE, alignItems: 'center', justifyContent: 'center' }}>
-                  <RNText style={{ fontFamily: font.medium, fontSize: 16, color: t.accent }}>Take it again</RNText>
+                  <RNText style={{ fontFamily: font.medium, fontSize: 16, color: KLEOS_BLUE }}>Take it again</RNText>
                 </Pressable>
               ) : failed ? (
                 <Pressable onPress={toPaywall} style={{ height: 54, alignSelf: 'stretch', borderRadius: 27, backgroundColor: WHITE, alignItems: 'center', justifyContent: 'center' }}>
-                  <RNText style={{ fontFamily: font.medium, fontSize: 16, color: t.accent }}>Continue</RNText>
+                  <RNText style={{ fontFamily: font.medium, fontSize: 16, color: KLEOS_BLUE }}>Continue</RNText>
                 </Pressable>
               ) : ready ? (
                 <Pressable onPress={() => router.replace('/onboarding/result')} style={{ height: 54, alignSelf: 'stretch', borderRadius: 27, backgroundColor: WHITE, alignItems: 'center', justifyContent: 'center' }}>
-                  <RNText style={{ fontFamily: font.medium, fontSize: 16, color: t.accent }}>See how it went</RNText>
+                  <RNText style={{ fontFamily: font.medium, fontSize: 16, color: KLEOS_BLUE }}>See how it went</RNText>
                 </Pressable>
               ) : (
                 <View style={{ height: 54, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -155,5 +158,6 @@ export default function Live() {
         </Animated.View>
       )}
     </Screen>
+    </ForceTheme>
   );
 }

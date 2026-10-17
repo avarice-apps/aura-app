@@ -5,8 +5,10 @@ import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Screen, Title, Body, Muted, Label, Button, Row, Stack, Pill, IconButton, Icon, ICON, Tag, Card } from '@/ui';
 import { ReactiveStatue } from '@/components/ReactiveStatue';
 import { Conversation } from '@/components/Conversation';
+import { NightCall } from '@/components/NightCall';
 import { AfterRead } from '@/components/AfterRead';
-import { ResultHero, FeedbackCard, HearPoise, Appear, FullRead, Insufficient } from '@/components/Results';
+import { ResultHero, FeedbackCard, HearPoise, Appear, FullRead, Insufficient, RetryMoment } from '@/components/Results';
+import { retryMoment } from '@/lib/moment';
 import { useTheme } from '@/theme';
 import { useStore } from '@/state/store';
 import { FLOORS } from '@/lib/floors';
@@ -46,8 +48,7 @@ export default function FloorScreen() {
 
   if (step === 'talk') {
     return (
-      <Screen edges={['top', 'bottom']}>
-        {header}
+      <NightCall label={'Open Floor'} onClose={() => router.back()}>
         <Conversation
           metered
           key={key}
@@ -64,7 +65,7 @@ export default function FloorScreen() {
             setStep('result');
           }}
         />
-      </Screen>
+      </NightCall>
     );
   }
 
@@ -107,6 +108,7 @@ export default function FloorScreen() {
             <Appear><ResultHero e={ev} label="That call read as" /></Appear>
             <Appear delay={120}><FeedbackCard e={ev} /></Appear>
             <Appear delay={240}><HearPoise src={ev.scriptAudio ?? ev.script_audio} /></Appear>
+            <Appear delay={300}><RetryMoment e={ev} onRetry={() => retryMoment(sid, ev, f.title)} /></Appear>
             <Appear delay={360}><FullRead e={ev} /></Appear>
             <Appear delay={480}><AfterRead sessionId={sid} e={ev} challenge={{ kind: 'floor', ref_id: f.id, title: f.title }} /></Appear>
           </Stack>

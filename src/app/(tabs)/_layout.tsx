@@ -9,30 +9,34 @@ import { play } from '@/lib/sound';
 
 const TABS = [
   { name: 'index', label: 'Today', icon: ICON.home },
-  { name: 'live', label: 'Live', icon: ICON.live },
-  { name: 'farm', label: 'Farm', icon: ICON.spark },
+  { name: 'play', label: 'Play', icon: ICON.live },
   { name: 'poise', label: 'Poise', icon: ICON.poise },
-  { name: 'progress', label: 'Progress', icon: ICON.trend },
+  { name: 'you', label: 'You', icon: ICON.user },
 ] as const;
+const HIDDEN = ['live', 'farm', 'progress'] as const;
 
 export default function TabsLayout() {
   const t = useTheme();
   return (
-    <Tabs screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: t.bg } }} tabBar={({ state, navigation }) => <Bar index={state.index} go={(n) => navigation.navigate(n)} />}>
+    <Tabs screenOptions={{ headerShown: false, sceneStyle: { backgroundColor: t.bg } }} tabBar={({ state, navigation }) => <Bar active={state.routes[state.index]?.name} go={(n) => navigation.navigate(n)} />}>
       {TABS.map((x) => (
         <Tabs.Screen key={x.name} name={x.name} options={{ title: x.label }} />
+      ))}
+      {/* old tab routes, kept so links into them still land (each redirects) */}
+      {HIDDEN.map((n) => (
+        <Tabs.Screen key={n} name={n} options={{ href: null }} />
       ))}
     </Tabs>
   );
 }
 
-function Bar({ index, go }: { index: number; go: (name: string) => void }) {
+function Bar({ active, go }: { active?: string; go: (name: string) => void }) {
   const t = useTheme();
   const insets = useSafeAreaInsets();
   return (
     <View style={{ flexDirection: 'row', backgroundColor: t.bg, borderTopWidth: 1, borderColor: t.line, paddingTop: 10, paddingBottom: Math.max(insets.bottom, 12) }}>
-      {TABS.map((x, i) => {
-        const on = i === index;
+      {TABS.map((x) => {
+        const on = x.name === active;
         return (
           <Pressable
             key={x.name}

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
-import { View } from 'react-native';
+import { View, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { Canvas, Circle, Path, Skia, BlurMask, Group } from '@shopify/react-native-skia';
 import Animated, { SharedValue, useDerivedValue, useSharedValue, withTiming, withRepeat, Easing, useAnimatedStyle, cancelAnimation } from 'react-native-reanimated';
@@ -12,7 +12,40 @@ import { useTheme } from '@/theme';
  * - The arc around the face is their interest in you, 0-100, moving as the call goes.
  * - When they decide to leave, the face fades.
  */
-export function CallFace({
+type FaceProps = {
+  source: any;
+  size?: number;
+  energy: SharedValue<number>;
+  who: SharedValue<number>;
+  interest: number | null;
+  leaving?: boolean;
+  idle?: boolean;
+};
+
+/** Skia draws the glow on phones. The web build (previews only) gets a CSS glow instead. */
+export function CallFace(props: FaceProps) {
+  return Platform.OS === 'web' ? <WebFace {...props} /> : <SkiaFace {...props} />;
+}
+
+function WebFace({ source, size = 208, energy, who, leaving }: FaceProps) {
+  const t = useTheme();
+  const box = Math.round(size * 1.62);
+  const glow = useAnimatedStyle(() => {
+    const e = who.value > 0.5 ? energy.value : 0;
+    return { opacity: 0.35 + e * 0.5, transform: [{ scale: 1 + e * 0.12 }] };
+  });
+  return (
+    <View style={{ width: box, height: box, alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.View style={[{ position: 'absolute', width: size + 40, height: size + 40, borderRadius: (size + 40) / 2, backgroundColor: t.accent, filter: [{ blur: size * 0.12 }] } as any, glow]} />
+      <View style={{ position: 'absolute', width: size + 24, height: size + 24, borderRadius: (size + 24) / 2, borderWidth: 2, borderColor: t.dark ? 'rgba(241,235,221,0.14)' : 'rgba(18,18,24,0.08)' }} />
+      <View style={{ width: size, height: size, borderRadius: size / 2, overflow: 'hidden', backgroundColor: '#07061A', opacity: leaving ? 0.42 : 1 }}>
+        <Image source={source} style={{ width: size, height: size }} contentFit="cover" />
+      </View>
+    </View>
+  );
+}
+
+function SkiaFace({
   source,
   size = 208,
   energy,

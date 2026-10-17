@@ -18,7 +18,7 @@
         "UIBackgroundModes": [
           "audio"
         ],
-        "NSPhotoLibraryUsageDescription": "Kleos opens your photo library only when you choose a clip to rate or screenshots of your profile to read.",
+        "NSPhotoLibraryUsageDescription": "Kleos opens your photo library only when you choose a clip to rate, a fit to check, or a screenshot for Poise to read. Nothing is saved.",
         "NSPhotoLibraryAddUsageDescription": "Kleos saves your result cards to Photos only when you choose Save Image."
       },
       "buildNumber": "1",
@@ -49,7 +49,8 @@
             ]
           }
         ]
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "com.avarice.kleos",
@@ -92,11 +93,12 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Kleos opens your photo library only when you choose a clip to rate or screenshots of your profile to read.",
+          "photosPermission": "Kleos opens your photo library only when you choose a clip to rate, a fit to check, or a screenshot for Poise to read. Nothing is saved.",
           "cameraPermission": "Kleos uses the camera while you record a take (Aura Farm, Debate Duels) so Poise can read your eye contact and posture. Videos are deleted after they are read.",
           "microphonePermission": "Kleos uses the microphone for live conversations and recorded takes, so the other person can reply and Poise can measure your pace, fillers and tone."
         }
-      ]
+      ],
+      "expo-apple-authentication"
     ],
     "experiments": {
       "typedRoutes": true

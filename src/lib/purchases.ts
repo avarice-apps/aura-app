@@ -3,6 +3,8 @@ import { useStore } from '@/state/store';
 import { RC_IOS_KEY, TEST_UNLOCK } from './config';
 import { track, setPlanProperty } from './analytics';
 import type { Tier } from './plan';
+import { refreshAccount } from './session';
+import { devPlan } from './api';
 
 /**
  * RevenueCat. Entitlements: "plus" and "black". Products (App Store Connect, one subscription group "Kleos"):
@@ -32,20 +34,35 @@ export const FALLBACK: Product[] = [
 
 export const purchasesLive = () => Boolean(Purchases && RC_IOS_KEY && Platform.OS === 'ios');
 
+let userId = '';
+
 function apply(info: any) {
   const a = info?.entitlements?.active ?? {};
   const plan: Tier = a.black ? 'black' : a.plus ? 'plus' : 'free';
+  const before = useStore.getState().plan;
   useStore.getState().set({ plan });
   setPlanProperty(plan);
+  // The server enforces plans; when the phone sees a change, ask it to check RevenueCat now instead of waiting
+  // for the webhook.
+  if (plan !== before) refreshAccount(true).catch(() => {});
 }
 
+/** RevenueCat's app user id is the Kleos account id, so a purchase belongs to the account, not the phone. */
 export async function initPurchases(appUserId: string) {
-  if (!purchasesLive() || ready) return;
+  if (!purchasesLive() || !appUserId) return;
   try {
-    Purchases.configure({ apiKey: RC_IOS_KEY, appUserID: appUserId });
-    ready = true;
-    Purchases.addCustomerInfoUpdateListener(apply);
-    apply(await Purchases.getCustomerInfo());
+    if (!ready) {
+      Purchases.configure({ apiKey: RC_IOS_KEY, appUserID: appUserId });
+      ready = true;
+      userId = appUserId;
+      Purchases.addCustomerInfoUpdateListener(apply);
+      apply(await Purchases.getCustomerInfo());
+    } else if (appUserId !== userId) {
+      // Signed in to a saved account on this phone: move RevenueCat to it.
+      userId = appUserId;
+      const r = await Purchases.logIn(appUserId);
+      apply(r?.customerInfo);
+    }
   } catch (e) {
     console.warn('RevenueCat init failed', e);
   }
@@ -90,8 +107,12 @@ export async function buy(p: Product): Promise<boolean> {
   track('purchase_started', { product: p.id });
   if (!ready || !p.pkg) {
     if (__DEV__ || TEST_UNLOCK) {
-      // Development and phone-test builds without RevenueCat: unlock locally so every screen can be tested.
+      // Development and phone-test builds without RevenueCat: unlock locally so every screen can be tested,
+      // and ask the server to match (it only does while its dev switch is on).
       useStore.getState().set({ plan: p.tier });
+      await devPlan(p.tier);
+      await refreshAccount().catch(() => null);
+      if (useStore.getState().account && useStore.getState().plan !== p.tier) useStore.getState().set({ plan: p.tier });
       track('purchase_dev_unlock', { product: p.id });
       return true;
     }
@@ -100,6 +121,7 @@ export async function buy(p: Product): Promise<boolean> {
   try {
     const r = await Purchases.purchasePackage(p.pkg);
     apply(r.customerInfo);
+    await refreshAccount(true).catch(() => null);
     track('purchase_completed', { product: p.id });
     return true;
   } catch (e: any) {
@@ -115,5 +137,6 @@ export async function restore(): Promise<Tier> {
   if (!ready) return useStore.getState().plan;
   const info = await Purchases.restorePurchases();
   apply(info);
+  await refreshAccount(true).catch(() => null);
   return useStore.getState().plan;
 }

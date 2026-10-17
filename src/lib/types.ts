@@ -9,6 +9,13 @@ export type SessionStart = {
   opener_audio?: string;
   max_turns: number;
   pressure: number;
+  /** A one-off stranger (not a cast member): gets a face from the stranger pool. */
+  masked?: boolean;
+  /** Retry-this-moment: the call picks up just before the moment. */
+  resumed?: boolean;
+  /** Seconds this call may run (the plan's allowance); the scene wraps up near it. */
+  allow_s?: number | null;
+  speakers?: { name: string; role: string }[];
 };
 
 export type TurnResult = {
@@ -24,9 +31,28 @@ export type TurnResult = {
 
 export type Counts = { fillers: number; hedges: number; apologies: number; ended_clean: boolean; talk_s: number; wpm: number };
 
+/** How Poise said it: the same findings, two registers. */
+export type Voice = { verdict?: string; archetype_line?: string; script?: string };
+/** Whether an axis was actually measured. Unmeasured axes are null and left out of the rating. */
+export type AxisStatus = 'assessed' | 'not_measured' | 'insufficient_evidence';
+export type Axes = { voice: number | null; command: number | null; composure: number | null; awareness: number | null; landed?: number | null };
+
 export type Evaluation = {
   rating: number;
-  axes: { voice: number; command: number; composure: number; awareness: number; landed?: number };
+  axes: Axes;
+  axes_status?: Partial<Record<keyof Axes, AxisStatus>>;
+  /** Both voices; the top-level verdict/script are the one chosen for the player's tone. */
+  voices?: { straight?: Voice; unfiltered?: Voice };
+  /** Quotes the read rests on. */
+  evidence?: { turn: number; quote: string; observation: string }[];
+  /** What Poise couldn't tell from this call. */
+  uncertainties?: string[];
+  /** Guidance cards used for this read (ids), and the rubric version. */
+  guidance?: string[];
+  rubric_version?: string;
+  /** Set when this was a retry of one moment. */
+  moment?: { turn: number; said_before?: string };
+  memory?: string;
   /** One blunt sentence: how it actually went. */
   verdict?: string;
   effort?: 'real' | 'half' | 'trolling';
@@ -46,12 +72,12 @@ export type Evaluation = {
   /** Server could not rate fairly (too little speech). Nothing counts against the user. */
   insufficient?: boolean;
   reason?: string;
-  awareness: { score: number; evidence: string };
+  awareness: { score: number | null; status?: AxisStatus; evidence: string };
   compare: string | null;
   script: string;
   script_audio?: string;
   counts: Counts;
-  turns: { role: 'char' | 'user'; text: string }[];
+  turns: { role: 'char' | 'user'; text: string; context?: boolean }[];
   trace?: { turn: number; interest: number; trust: number; thought: string | null }[];
   character?: string;
   delta?: number;
@@ -194,3 +220,25 @@ export type Duel = {
     caption: string;
   } | null;
 };
+
+/** Before I send this: Poise's read of a draft (or of the conversation it answers). Never scored. */
+export type ShotMessage = { speaker: 'me' | 'them' | 'unclear'; name?: string | null; text: string; unclear?: string[] };
+export type DraftRead = {
+  mode: 'review' | 'reply';
+  intent?: string | null;
+  assumptions: string[];
+  reads: string;
+  keep?: string | null;
+  change?: string | null;
+  send_as_is: boolean;
+  observations: { span: string; note: string }[];
+  preserve: string[];
+  alternatives: { label: string; text: string }[];
+  uncertainty?: string | null;
+  clarify?: string | null;
+  next?: string | null;
+  note?: string;
+  voices?: { straight?: { reads?: string; keep?: string | null; change?: string | null }; unfiltered?: { reads?: string; keep?: string | null; change?: string | null } };
+  version?: string;
+};
+export type DraftEntry = { id: string; createdAt: string; draft: string; convo?: ShotMessage[]; to?: string; intent?: string; outcome?: string; read: DraftRead };

@@ -7,6 +7,44 @@ export type Goal = 'dates' | 'work' | 'rooms' | 'ground';
 export type ThemePref = 'gallery' | 'nocturne' | 'system';
 export type Mode = 'voice' | 'camera';
 export type Tone = 'real' | 'unfiltered';
+export type Pronoun = 'he' | 'she' | 'they';
+export type Dates = 'women' | 'men' | 'everyone';
+
+/** The account as the server reports it (see lib/session). */
+export type Account = {
+  id: string;
+  name: string;
+  email: string | null;
+  apple: boolean;
+  saved: boolean;
+  waitlist_no: number | null;
+  plan: 'free' | 'plus' | 'black';
+  plan_until: number | null;
+  week: string;
+  left: { calls: number | null; clips: number | null; poise: number | null; profiles: number | null; fits: number | null };
+  credits: number;
+  daily_done: boolean;
+  live_min_left: number | null;
+  live_min_week: number | null;
+  subject: string;
+  summary?: unknown;
+};
+
+/** Something coming up. One at a time; it ties the look and the practice together. */
+export type Occasion = {
+  what: string; // "Dinner with her friends"
+  kind?: string; // preset key: dinner, date, interview, party, drinks, presentation, parents, night
+  when?: 'tonight' | 'tomorrow' | 'week' | 'later';
+  who?: string; // "I know two people"
+  impression?: string; // how they want to come across
+  target?: string; // the one thing to get right
+  createdAt: string;
+  lookId?: string; // the outfit they chose for it (Wardrobe)
+  practised?: number; // scenes played for it
+};
+
+/** A note Poise left in the chat after a voice call. */
+export type CallNote = { kind: 'call'; note: string; next?: string | null; scene?: { character: string; setting: string; opener: string; goal: string } | null; createdAt: string };
 
 export type SessionRecord = {
   id: string;
@@ -33,6 +71,13 @@ type State = {
   name: string;
   goal: Goal;
   mode: Mode;
+  pronoun?: Pronoun; // how characters refer to you
+  dates?: Dates; // who sits across from you in dating scenes
+  account?: Account;
+  occasion?: Occasion;
+  callNotes: CallNote[];
+  /** Before I send this: recent draft reads. Kept on this phone only, and only for 30 days. */
+  drafts: import('@/lib/types').DraftEntry[];
   // onboarding scratch
   ob: { quickCorrect?: number; first?: Evaluation; firstSession?: string; second?: Evaluation };
   // progress
@@ -71,6 +116,8 @@ type State = {
   met: Record<string, { note: string; at: string }>;
   cameraOn: boolean;
   lastSpent?: { kind: string; bonus: boolean };
+  /** Local usage counts at the moment the server last reported the account (see plan.remaining). */
+  lastSync?: { calls: number; clips: number; poise: number; profiles: number; fits: number };
   challenges: { code: string; title: string; createdAt: string; mine: boolean }[];
   // actions
   set: (p: Partial<State>) => void;
@@ -98,6 +145,12 @@ const initial = {
   name: '',
   goal: 'work' as Goal,
   mode: 'voice' as Mode,
+  pronoun: undefined as Pronoun | undefined,
+  dates: undefined as Dates | undefined,
+  account: undefined as Account | undefined,
+  occasion: undefined as Occasion | undefined,
+  callNotes: [] as CallNote[],
+  drafts: [] as import('@/lib/types').DraftEntry[],
   ob: {},
   sessions: [] as SessionRecord[],
   receipts: [] as Receipt[],
@@ -162,7 +215,7 @@ export const useStore = create<State>()(
         return true;
       },
       // Wipes history but keeps what isn't the user's content: their subscription, this week's usage and the install id.
-      reset: () => set({ ...initial, plan: get().plan, usage: get().usage, subjectId: get().subjectId, credits: get().credits, invite: get().invite }),
+      reset: () => set({ ...initial, plan: get().plan, usage: get().usage, subjectId: get().subjectId, credits: get().credits, invite: get().invite, account: get().account }),
     }),
     { name: 'aura-v2', storage: createJSONStorage(() => AsyncStorage) }
   )

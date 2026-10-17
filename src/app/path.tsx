@@ -25,7 +25,7 @@ export default function PathScreen() {
         <View style={{ paddingTop: 12, gap: 6 }}>
           <Label color={t.accent}>Program · {done}/{total}</Label>
           <Title size={30}>The Presence Path</Title>
-          <Muted small>Five units. Every lesson is a new live conversation, built around what you keep getting wrong.</Muted>
+          <Muted small>Five units. Every lesson is a new live conversation, built around your tells.</Muted>
         </View>
         {UNITS.map((u, ui) => {
           const unitDone = u.lessons.filter((l) => laurels[l.id]).length;
