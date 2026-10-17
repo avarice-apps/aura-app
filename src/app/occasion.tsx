@@ -8,6 +8,7 @@ import { useStore, type Occasion } from '@/state/store';
 import { Display, Kicker, Pill, Chip } from '@/components/Kit';
 import { OCCASIONS, IMPRESSIONS, occasionFresh } from '@/lib/occasion';
 import { play } from '@/lib/sound';
+import { syncDirectContext } from '@/lib/direct';
 
 const WHEN: { k: NonNullable<Occasion['when']>; label: string }[] = [
   { k: 'tonight', label: 'Tonight' },
@@ -56,6 +57,7 @@ export default function OccasionSheet() {
         practised: prev?.practised,
       },
     });
+    syncDirectContext();
     router.back();
   }
 

@@ -217,6 +217,7 @@ export default function PoiseTab() {
     if (k === 'call') return call();
     setMenu(false);
     if (k === 'tribunal') return router.push('/tribunal');
+    if (k === 'direct') return router.push('/direct');
     router.push('/occasion');
   }
 
@@ -367,6 +368,7 @@ export default function PoiseTab() {
               { k: 'shot', label: 'Add a screenshot', icon: ICON.upload },
               { k: 'occ', label: occ ? 'Change what’s coming up' : 'Something coming up', icon: ICON.clock },
               { k: 'tribunal', label: 'Settle something with someone', icon: ICON.duel },
+              { k: 'direct', label: 'Text Poise from Messages', icon: ICON.chat },
               ...(live ? [{ k: 'call', label: 'Call Poise', icon: WAVE_ICON }] : []),
             ].map((x, i) => (
               <Pressable key={x.k} onPress={() => { play('tap'); menuPick(x.k); }} style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 13, borderTopWidth: i ? 1 : 0, borderColor: t.line, opacity: pressed ? 0.6 : 1 })}>

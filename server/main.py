@@ -21,7 +21,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, Response, HTMLResponse, FileResponse, StreamingResponse, RedirectResponse
 from fastapi import Request
 
-from pipeline import audio, face, rubric, poise, tts, converse, live, vision, duel, legal, referrals, clips, accounts, table, drafts, tribunal
+from pipeline import audio, face, rubric, poise, tts, converse, live, vision, duel, legal, referrals, clips, accounts, table, drafts, tribunal, direct
 from training import store as train_store, learned
 
 app = FastAPI(title="Kleos", version="0.2")
@@ -63,7 +63,7 @@ async def _denied(request: Request, exc: accounts.Denied):
 # Every expensive endpoint costs real money (models, voice). Cap requests per caller so nobody can use the server
 # as a free AI proxy. Allowances per plan are enforced per account (pipeline/accounts.py); this is the outer fence.
 # ElevenLabs' /llm calls are exempt (authenticated with the agent secret and bounded by the live session).
-_EXPENSIVE = ("/read", "/fit", "/wardrobe", "/style", "/pressure", "/silence", "/scan", "/live/", "/session/", "/situations/", "/lesson", "/ledger", "/poise/", "/tribunal", "/portrait", "/duel", "/moment", "/profile", "/clip/", "/redeem", "/challenge", "/auth/", "/table", "/waitlist")
+_EXPENSIVE = ("/read", "/fit", "/wardrobe", "/style", "/pressure", "/silence", "/scan", "/live/", "/session/", "/situations/", "/lesson", "/ledger", "/poise/", "/tribunal", "/direct/link", "/portrait", "/duel", "/moment", "/profile", "/clip/", "/redeem", "/challenge", "/auth/", "/table", "/waitlist")
 _LIMITS = ((120, 600), (1000, 86400))  # per caller: 120 per 10 minutes, 1000 per day
 _AUTH_LIMITS = ((20, 600), (100, 86400))  # sign-in attempts per network
 _hits: dict[str, list[float]] = {}
@@ -316,10 +316,11 @@ async def account_delete(request: Request):
             fn(subj)
         except Exception:
             pass
-    try:
-        tribunal.delete_for(acc["id"])
-    except Exception:
-        pass
+    for fn in (tribunal.delete_for, direct.delete_for):
+        try:
+            fn(acc["id"])
+        except Exception:
+            pass
     accounts.delete(acc)
     resp = JSONResponse({"deleted": True, "duels": n})
     resp.delete_cookie("kleos_session")
@@ -1083,6 +1084,78 @@ async def tribunal_rematch(code: str, request: Request):
     except Exception:
         accounts.refund(acc, "duels")
         raise
+
+
+# ---------------------------------------------------------------- Poise Direct (Black)
+
+@app.get("/direct/status")
+async def direct_status(request: Request):
+    return JSONResponse(direct.status(_acct(request)), headers={"Cache-Control": "no-store"})
+
+
+@app.post("/direct/link")
+async def direct_link(request: Request):
+    """A single-use code to text from the phone being linked. The text itself is the proof of ownership."""
+    acc = _acct(request)
+    if not direct.enabled():
+        raise HTTPException(404, "Poise Direct isn't open yet.")
+    accounts.require_tier(acc, "direct")
+    return direct.link_code(acc)
+
+
+@app.post("/direct/unlink")
+async def direct_unlink(request: Request):
+    acc = _acct(request)
+    direct.unlink(acc["id"])
+    return direct.status(acc)
+
+
+@app.post("/direct/context")
+async def direct_context(request: Request):
+    acc = _acct(request)
+    return direct.set_context(acc, await _body(request))
+
+
+@app.get("/direct/history")
+async def direct_history(request: Request):
+    return JSONResponse({"messages": direct.history(_acct(request))}, headers={"Cache-Control": "no-store"})
+
+
+@app.post("/direct/history/delete")
+async def direct_history_delete(request: Request):
+    acc = _acct(request)
+    direct.clear_history(acc["id"])
+    return {"deleted": True}
+
+
+async def _direct_reply(to: str, text: str) -> None:
+    await direct.send(to, text)
+
+
+@app.post("/direct/twilio", include_in_schema=False)
+async def direct_twilio(request: Request):
+    """Twilio SMS webhook. Signed with the account's auth token; anything unsigned is refused."""
+    if direct.channel() != "sms":
+        raise HTTPException(404)
+    form = dict((await request.form()).items())
+    url = os.environ.get("KLEOS_DIRECT_WEBHOOK_URL") or (PUBLIC_URL.rstrip("/") + "/direct/twilio")
+    if not direct.twilio_signature_ok(url, form, request.headers.get("x-twilio-signature", "")):
+        raise HTTPException(403)
+    msg = direct.parse_twilio(form)
+    if msg and direct.first_time(msg["event_id"]):
+        direct.handle(msg, _direct_reply)
+    return Response("<?xml version=\"1.0\" encoding=\"UTF-8\"?><Response></Response>", media_type="text/xml")
+
+
+@app.post("/direct/sendblue/{token}", include_in_schema=False)
+async def direct_sendblue(token: str, request: Request):
+    """Sendblue (iMessage) webhook. The secret is part of the URL you register with Sendblue."""
+    if direct.channel() != "imessage" or not direct.sendblue_path_ok(token):
+        raise HTTPException(404)
+    msg = direct.parse_sendblue(await _body(request))
+    if msg and direct.first_time(msg["event_id"]):
+        direct.handle(msg, _direct_reply)
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------- before I send this

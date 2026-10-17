@@ -52,7 +52,7 @@ DAILY_QUEST_S = 300  # the Daily Side Quest is free for everyone, once a day
 ONBOARDING_S = 90
 GRACE_S = 36 * 3600  # a renewal that hasn't been reported yet keeps the plan this long past its end
 
-FEATURE_TIER = {"wardrobe": "black", "portrait": "black", "rehearse": "plus", "retry": "plus", "full_read": "plus"}
+FEATURE_TIER = {"wardrobe": "black", "portrait": "black", "direct": "black", "rehearse": "plus", "retry": "plus", "full_read": "plus"}
 
 
 def week(t: float | None = None) -> str:
@@ -505,6 +505,7 @@ MESSAGES = {
     "daily": "You've played today's Daily Side Quest. A new one opens tomorrow.",
     "wardrobe": "The Wardrobe is part of Kleos Black.",
     "portrait": "Your Portrait is part of Kleos Black.",
+    "direct": "Poise Direct is part of Kleos Black.",
     "rehearse": "Rehearse is part of Kleos+.",
     "retry": "Running it back is part of Kleos+.",
 }

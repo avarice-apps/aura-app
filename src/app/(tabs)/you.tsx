@@ -238,6 +238,7 @@ export default function You() {
             <RowLink title="Your wardrobe" sub={`${(s.wardrobe ?? []).length ? `${(s.wardrobe ?? []).length} pieces · ` : ''}The look for anything coming up`} right={tier !== 'black' ? <Icon d={ICON.lock} size={15} color={t.ink3} /> : undefined} onPress={() => router.push('/wardrobe')} />
             <RowLink title="Your Portrait" sub="A deep read of every conversation you’ve had" right={tier !== 'black' ? <Icon d={ICON.lock} size={15} color={t.ink3} /> : undefined} onPress={() => router.push('/portrait')} />
             <RowLink title="What Poise remembers" sub={memories ? `${memories} ${memories === 1 ? 'person remembers' : 'people remember'} you · inspect or forget` : 'Your preferences and what people remember. Inspect or forget'} onPress={() => router.push('/memory')} />
+            <RowLink title="Poise Direct" sub="Text Poise from Messages" right={tier !== 'black' ? <Icon d={ICON.lock} size={15} color={t.ink3} /> : undefined} onPress={() => router.push('/direct')} />
             <Hair />
           </View>
         </View>

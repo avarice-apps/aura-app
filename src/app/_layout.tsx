@@ -85,6 +85,7 @@ export default function RootLayout() {
         <Stack.Screen name="table" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="moment" options={{ animation: 'slide_from_bottom', gestureEnabled: false }} />
         <Stack.Screen name="tribunal/index" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="direct" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="tribunal/[code]" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="missions" options={{ animation: 'slide_from_right' }} />
         <Stack.Screen name="room/[cat]" options={{ animation: 'slide_from_right' }} />

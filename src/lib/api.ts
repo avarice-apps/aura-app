@@ -158,7 +158,7 @@ export class PlanError extends Error {
   }
 }
 
-const PAYWALL_REASON: Record<string, string> = { minutes: 'minutes', calls: 'calls', daily: 'calls', clips: 'clips', poise: 'poise', profiles: 'profiles', fits: 'fits', wardrobe: 'wardrobe', portrait: 'black', rehearse: 'rehearse', retry: 'retry' };
+const PAYWALL_REASON: Record<string, string> = { minutes: 'minutes', calls: 'calls', daily: 'calls', clips: 'clips', poise: 'poise', profiles: 'profiles', fits: 'fits', wardrobe: 'wardrobe', portrait: 'black', rehearse: 'rehearse', retry: 'retry', direct: 'direct', duels: 'plan' };
 
 function onPlanError(body: any): PlanError {
   const reason = String(body?.reason ?? 'plan');
@@ -403,6 +403,34 @@ export async function tribunalSubmit(code: string, kind: 'opening' | 'rebuttal',
 }
 export async function tribunalAction(code: string, action: 'judge' | 'leave' | 'rematch' | 'report', body: Record<string, unknown> = {}): Promise<any> {
   return postJSON(`/tribunal/${encodeURIComponent(code)}/${action}`, body);
+}
+
+// ------------------------------------------------------------------ Poise Direct (Black)
+
+export type DirectStatus = { enabled: boolean; channel: 'sms' | 'imessage' | null; number: string | null; linked: boolean; linked_at: number | null; allow: { occasion: boolean; style: boolean }; black: boolean };
+
+export async function directStatus(): Promise<DirectStatus | null> {
+  if (OFFLINE) return null;
+  try {
+    return await getJSON<DirectStatus>('/direct/status');
+  } catch {
+    return null;
+  }
+}
+export async function directLink(): Promise<{ code: string; text: string; to: string; sms: string | null; expires_in: number }> {
+  return postJSON('/direct/link', {});
+}
+export async function directUnlink(): Promise<DirectStatus> {
+  return postJSON('/direct/unlink', {});
+}
+export async function directContext(body: { allow: { occasion: boolean; style: boolean }; occasion?: string; style?: string }): Promise<DirectStatus> {
+  return postJSON('/direct/context', body);
+}
+export async function directHistory(): Promise<{ role: 'user' | 'poise'; text: string; created: number }[]> {
+  return (await getJSON<{ messages: { role: 'user' | 'poise'; text: string; created: number }[] }>('/direct/history')).messages;
+}
+export async function directClearHistory(): Promise<void> {
+  await postJSON('/direct/history/delete', {});
 }
 
 // ------------------------------------------------------------------ scan
