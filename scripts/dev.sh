@@ -77,7 +77,7 @@ cd "$ROOT"
 if [ "${1:-}" = "build" ] || [ ! -d "$ROOT/ios" ]; then
   if [ "${1:-}" = "build" ]; then
     # Native config changed since the last build (app.json or new native packages): regenerate ios/ cleanly.
-    if [ -d "$ROOT/ios" ] && { [ "$ROOT/app.json" -nt "$ROOT/ios" ] || [ "$ROOT/package.json" -nt "$ROOT/ios" ]; }; then
+    if [ -d "$ROOT/ios" ] && { [ "$ROOT/app.json" -nt "$ROOT/ios" ] || [ "$ROOT/app.config.js" -nt "$ROOT/ios" ] || [ "$ROOT/package.json" -nt "$ROOT/ios" ]; }; then
       say "Native settings changed. Regenerating the iOS project"
       rm -rf "$ROOT/ios"
     fi

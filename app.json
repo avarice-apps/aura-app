@@ -49,8 +49,7 @@
             ]
           }
         ]
-      },
-      "usesAppleSignIn": true
+      }
     },
     "android": {
       "package": "com.avarice.kleos",

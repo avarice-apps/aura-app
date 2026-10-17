@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, ScrollView, TextInput, Pressable, Alert, Linking, Platform, KeyboardAvoidingView, ActivityIndicator, Text as RNText } from 'react-native';
 import { router } from 'expo-router';
 import * as AppleAuthentication from 'expo-apple-authentication';
+import Constants from 'expo-constants';
 import { Directory, Paths } from 'expo-file-system';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { Screen, Icon, ICON } from '@/ui';
@@ -35,7 +36,8 @@ export default function AccountScreen() {
 
   useEffect(() => {
     if (Platform.OS !== 'ios') return;
-    AppleAuthentication.isAvailableAsync().then(setApple).catch(() => setApple(false));
+    // Only builds signed with a paid Apple Developer account carry Sign in with Apple (see app.config.js).
+    if (Constants.expoConfig?.extra?.appleSignIn) AppleAuthentication.isAvailableAsync().then(setApple).catch(() => setApple(false));
     refreshAccount().catch(() => {});
   }, []);
 

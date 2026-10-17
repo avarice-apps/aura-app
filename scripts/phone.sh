@@ -25,7 +25,7 @@ if [ ! -d node_modules ] || [ package.json -nt node_modules ]; then
   npm install
   touch node_modules
 fi
-if [ -d ios ] && { [ app.json -nt ios ] || [ package.json -nt ios ]; }; then
+if [ -d ios ] && { [ app.json -nt ios ] || [ app.config.js -nt ios ] || [ package.json -nt ios ]; }; then
   say "Native settings changed. Regenerating the iOS project"
   rm -rf ios
 fi

@@ -17,7 +17,8 @@
         "EXPO_PUBLIC_API_URL": "https://REPLACE-with-your-server.up.railway.app",
         "EXPO_PUBLIC_RC_IOS_KEY": "appl_REPLACE",
         "EXPO_PUBLIC_POSTHOG_KEY": "phc_REPLACE",
-        "EXPO_PUBLIC_POSTHOG_HOST": "https://us.i.posthog.com"
+        "EXPO_PUBLIC_POSTHOG_HOST": "https://us.i.posthog.com",
+        "KLEOS_APPLE_SIGNIN": "1"
       }
     }
   },
