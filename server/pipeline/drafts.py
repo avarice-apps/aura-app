@@ -113,11 +113,14 @@ def missing_facts(required: list[dict], rewrite: str) -> list[str]:
     return gone
 
 
+CHANGE_RE = re.compile(r"\b(change|move|push|reschedule|instead|lower|raise|drop|bump|different)\b", re.I)
+
+
 def exempt(required: list[dict], request: str) -> list[dict]:
     """If the user asked to change something ("move it to Saturday", "ask for £350 instead"), the facts of that
     kind are theirs to change: the check stops guarding that kind."""
     asked = {f["kind"] for f in facts(request)}
-    if re.search(r"\b(change|move|push|reschedule|instead|lower|raise|drop|bump|different)\b", request or "", re.I):
+    if CHANGE_RE.search(request or ""):
         return [f for f in required if f["kind"] not in asked]
     return required
 
@@ -158,6 +161,11 @@ RELATIONS = {"partner", "date", "match", "friend", "family", "boss", "coworker",
 _STRAIGHT_BANNED = re.compile(r"\b(fuck\w*|shit\w*|damn|cooked|fumbl\w*|aura|rizz|mog\w*|lol|lmao|bro)\b", re.I)
 
 
+def _unquoted(s: str) -> str:
+    """Poise's own words, with anything it quoted from the conversation taken out."""
+    return re.sub(r"[\"“”][^\"“”]*[\"“”]|(?<![A-Za-z])['‘][^'‘’]*['’](?![A-Za-z])", " ", s or "")
+
+
 def _norm(s: str) -> str:
     s = (s or "").replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
     return re.sub(r"\s+", " ", s).strip().lower()
@@ -196,14 +204,16 @@ async def review(*, draft: str, convo=None, to: str = "", intent: str = "", outc
     mode = "review" if draft else "reply"
     to = to if to in RELATIONS else ""
     intent_txt = INTENTS.get(intent, "")
-    # Review: what the draft commits to (minus anything they asked to change). Reply: what they told us to say.
-    required = exempt(facts(draft), outcome) if mode == "review" else facts(outcome)
+    # Review: what the draft commits to, minus anything they asked to change, plus the change itself.
+    # Reply: what they told us to say.
+    change_asked = mode == "review" and bool(CHANGE_RE.search(outcome))
+    required = (exempt(facts(draft), outcome) + (facts(outcome) if change_asked else [])) if mode == "review" else facts(outcome)
     cards = guidance.retrieve(scene=None, cards=None, mode="draft", text=f"{draft} {outcome} {' '.join(m['text'] for m in convo[-4:])}", tone=tone)
     conv_txt = "\n".join(f"{'Me' if m['speaker'] == 'me' else 'Them' if m['speaker'] == 'them' else 'Unclear who'}: {m['text']}" for m in convo)
     msg = f"""Mode: {mode}
 Who it's to: {to or "not said"}
 What they want it to do: {intent_txt or "not said"}
-Anything else they told you: <context>{outcome or "nothing"}</context>
+Anything else they told you: <context>{outcome or "nothing"}</context>{chr(10) + "They asked for a change: make it in both alternatives (and only that change)." if change_asked else ""}
 {converse.player_line(converse.clean_user(user or {}))}
 
 <conversation>
@@ -234,7 +244,8 @@ Facts the alternatives must keep (checked in code): {json.dumps([f["text"] for f
                 return "each alternative needs text"
         if alts and _norm(alts[0]["text"]) == _norm(alts[1]["text"]):
             return "the two alternatives must be genuinely different"
-        if "!" in st.get("reads", "") + str(st.get("change") or "") or _STRAIGHT_BANNED.search(f"{st.get('reads','')} {st.get('keep') or ''} {st.get('change') or ''}"):
+        own = _unquoted(f"{st.get('reads', '')} {st.get('keep') or ''} {st.get('change') or ''}")  # their quoted words don't count
+        if "!" in own or _STRAIGHT_BANNED.search(own):
             return "the straight voice must not swear, use slang or exclamation marks"
         if not (o.get("unfiltered") or {}).get("reads"):
             return "missing unfiltered.reads"
