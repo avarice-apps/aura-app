@@ -253,7 +253,7 @@ export default function TribunalRoom() {
             <TextInput
               value={text}
               onChangeText={setText}
-              multiline
+              multiline returnKeyType="done" submitBehavior="blurAndSubmit"
               placeholder={kind === 'opening' ? 'Your claim, and why. One good reason beats three loose ones.' : `What does ${names[other]} get wrong?`}
               placeholderTextColor={t.ink3}
               style={{ minHeight: 84, maxHeight: 180, fontFamily: font.regular, fontSize: 15.5, lineHeight: 22, color: t.ink, textAlignVertical: 'top' }}

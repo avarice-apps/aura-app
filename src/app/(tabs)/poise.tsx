@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, ScrollView, TextInput, Pressable, KeyboardAvoidingView, Platform, Text as RNText, ActivityIndicator } from 'react-native';
+import { View, ScrollView, TextInput, Pressable, KeyboardAvoidingView, Keyboard, Platform, Text as RNText, ActivityIndicator } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInDown, FadeIn, FadeOut } from 'react-native-reanimated';
 import { useAudioRecorder, RecordingPresets } from 'expo-audio';
@@ -101,6 +101,7 @@ export default function PoiseTab() {
   }
 
   async function submitChat(audioUri?: string) {
+    Keyboard.dismiss(); // the reply needs the room the keyboard was taking
     if (busy) return;
     if (!spend('poise')) {
       router.push({ pathname: '/paywall', params: { reason: 'poise' } });
@@ -128,6 +129,7 @@ export default function PoiseTab() {
   }
 
   async function submitDraft() {
+    Keyboard.dismiss();
     if (busy) return;
     const draft = text.trim();
     if (!draft && !convo?.length) return;
@@ -252,7 +254,7 @@ export default function PoiseTab() {
           ) : null}
         </View>
 
-        <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        <ScrollView ref={scroll} style={{ flex: 1 }} contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 24 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive" onScrollBeginDrag={() => Keyboard.dismiss()} showsVerticalScrollIndicator={false}>
           {empty && (
             <Animated.View entering={FadeIn.duration(500)} style={{ gap: 14, paddingTop: 6 }}>
               <Display text="What’s " em="on your mind?" size={36} />
@@ -348,6 +350,8 @@ export default function PoiseTab() {
                 onChangeText={(v) => setOutcome(v.slice(0, 400))}
                 placeholder={convo?.length && !text.trim() ? 'What do you want to say? (optional)' : 'Anything Poise should know (optional)'}
                 placeholderTextColor={t.ink3}
+                returnKeyType="done"
+                submitBehavior="blurAndSubmit"
                 style={{ fontFamily: font.regular, fontSize: 14, color: t.ink, paddingVertical: 8, borderBottomWidth: 1, borderColor: t.line }}
               />
             </View>
@@ -396,6 +400,9 @@ export default function PoiseTab() {
                 onChangeText={setText}
                 onFocus={() => setMenu(false)}
                 multiline
+                returnKeyType="send"
+                submitBehavior="blurAndSubmit"
+                onSubmitEditing={() => { if (!busy && canSend) (drafting ? submitDraft() : submitChat()); }}
                 placeholder={drafting ? (convo?.length ? 'Your reply, or leave it empty for two options' : 'Paste the message you’re about to send') : 'What happened, or what do you want to know?'}
                 placeholderTextColor={t.ink3}
                 style={{ fontFamily: font.regular, fontSize: 15, lineHeight: 21, color: t.ink, paddingVertical: 13 }}

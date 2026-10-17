@@ -82,7 +82,7 @@ export default function NewTribunal() {
           <View style={{ marginTop: 22, gap: 20 }}>
             <View>
               <Kicker>What are you settling?</Kicker>
-              <TextInput value={topic} onChangeText={(v) => setTopic(v.slice(0, 160))} placeholder="Whoever cooks shouldn’t do the dishes" placeholderTextColor={t.ink3} multiline style={field} />
+              <TextInput value={topic} onChangeText={(v) => setTopic(v.slice(0, 160))} placeholder="Whoever cooks shouldn’t do the dishes" placeholderTextColor={t.ink3} multiline returnKeyType="done" submitBehavior="blurAndSubmit" style={field} />
               {!topic ? (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12, marginHorizontal: -22 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 22 }}>
                   {ideas.map((x) => <Chip key={x.topic} label={x.topic} onPress={() => setTopic(x.topic)} />)}

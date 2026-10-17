@@ -72,18 +72,18 @@
   .week p span.on { opacity:1; }
   @media (prefers-reduced-motion:reduce){ .week p span { opacity:1; } }
 
-  .menu { padding:clamp(80px,10vw,150px) var(--gut); background:var(--paper); color:var(--ink); display:grid; grid-template-columns:minmax(120px,220px) minmax(0,1fr); gap:clamp(24px,5vw,80px); }
-  .menu .k { font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink2); padding-top:14px; }
-  .menu h2 { margin:0 0 34px; font-family:var(--serif); font-weight:400; font-size:clamp(46px,6vw,96px); line-height:.92; letter-spacing:-.02em; }
-  .plan { max-width:860px; padding:22px 0; border-top:1px solid var(--ink); }
-  .plan:last-of-type { border-bottom:1px solid var(--ink); }
-  .plan .line { display:flex; align-items:baseline; gap:14px; }
-  .plan .line h3 { margin:0; font-family:var(--serif); font-weight:400; font-size:clamp(34px,3.4vw,48px); line-height:1; white-space:nowrap; }
-  .plan .line i { flex:1; border-bottom:1px dotted var(--ink2); transform:translateY(-8px); min-width:20px; }
-  .plan .line span { font-family:var(--mono); font-size:13px; letter-spacing:.04em; white-space:nowrap; }
-  .plan p { margin:10px 0 0; max-width:58ch; font-family:'EB Garamond', var(--serif); font-size:19px; line-height:1.4; color:var(--ink2); }
-  .menu .fine2 { margin-top:22px; font-size:13.5px; color:var(--ink2); max-width:60ch; }
-  @media (max-width:820px){ .menu { grid-template-columns:1fr; gap:6px; } .plan .line { flex-wrap:wrap; } .plan .line i { display:none; } .plan .line span { flex-basis:100%; } }
+  .tiers { padding:clamp(72px,9vw,140px) var(--gut); background:var(--paper); color:var(--ink); }
+  .tgrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border:1px solid var(--line); }
+  .tier { padding:clamp(24px,3vw,40px); display:flex; flex-direction:column; gap:14px; border-right:1px solid var(--line); }
+  .tier:last-child { border-right:0; }
+  .tier.plus { background:var(--blue); color:var(--ivory); }
+  .tier.black { background:var(--ink); color:var(--ivory); }
+  .tier h3 { margin:0; font-family:var(--serif); font-weight:400; font-size:48px; line-height:1; }
+  .tier .pr { font-size:15px; opacity:.85; }
+  .tier ul { margin:8px 0 0; padding:0; list-style:none; display:grid; gap:10px; font-size:15px; }
+  .tier li { padding-top:10px; border-top:1px solid currentColor; border-top-color:color-mix(in srgb, currentColor 18%, transparent); }
+  .tier .gift { margin-top:auto; font-size:13px; opacity:.8; }
+  @media (max-width:900px){ .tgrid { grid-template-columns:1fr; } .tier { border-right:0; border-bottom:1px solid var(--line); } }
 </style>
 </head>
 <body>
@@ -150,14 +150,12 @@
   <p><span><b>Mon</b>Thirty seconds to the camera, the same question as last Monday, and the numbers that moved.</span> <span><b>Tue</b>The landlord who won’t give the deposit back, played straight.</span> <span><b>Wed</b>Send back the wine. Really.</span> <span><b>Thu</b>Tomorrow’s interview, tonight, until the answer sounds like yours.</span> <span><b>Fri</b>Dinner for six, and everyone has a secret mission.</span> <span><b>Sun</b>The week read back to you, in one page.</span></p>
 </section>
 
-<section class="menu" id="tiers" aria-labelledby="h-t">
-  <div class="k">Membership</div>
-  <div>
-    <h2 id="h-t">Start for free, and keep going if it helps</h2>
-    <div class="plan"><div class="line"><h3>Free</h3><i></i><span>$0</span></div><p>The daily Side Quest, two calls a week with the verdict and score, the weekly Mirror, and duels with friends.</p></div>
-    <div class="plan"><div class="line"><h3>Kleos+</h3><i></i><span>$6.99 a week · $49.99 a year</span></div><p>Every call with the full read, run it back from any moment, and your Index and patterns over time.</p></div>
-    <div class="plan"><div class="line"><h3>Kleos Black</h3><i></i><span>$19.99 a month · $129.99 a year</span></div><p>Everything in Kleos+, plus rehearsing your real situation, the Wardrobe, the Portrait and first look at every drop.</p></div>
-    <p class="fine2">Black is free for a month with any piece from the collection.</p>
+<section class="tiers" id="tiers" aria-labelledby="h-t">
+  <h2 id="h-t">Three doors</h2>
+  <div class="tgrid">
+    <div class="tier"><h3>Free</h3><div class="pr">$0</div><ul><li>The daily Side Quest</li><li>Two live calls a week, with the verdict and score</li><li>The weekly Mirror</li><li>Duels with friends</li></ul></div>
+    <div class="tier plus"><h3>Kleos+</h3><div class="pr">$14.99 a month, or $89.99 a year</div><ul><li>Every call with the full read</li><li>Run it back and replay any moment</li><li>Patterns, cleared tells and the Index over time</li><li>Your full history and every replay on the web</li></ul></div>
+    <div class="tier black"><h3>Kleos Black</h3><div class="pr">$29.99 a month, or $179.99 a year</div><ul><li>Everything in Kleos+</li><li>Rehearse your real situation</li><li>The Wardrobe and the Portrait</li><li>First look at every drop</li></ul><span class="gift">Free for a month with any piece from the collection.</span></div>
   </div>
 </section>
 

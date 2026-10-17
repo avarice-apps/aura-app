@@ -115,7 +115,7 @@ export default function Rehearse() {
               <TextInput
                 value={text}
                 onChangeText={setText}
-                multiline
+                multiline returnKeyType="done" submitBehavior="blurAndSubmit"
                 editable={paid}
                 maxLength={600}
                 placeholder="Who is it with, where, and what are you worried will happen?"

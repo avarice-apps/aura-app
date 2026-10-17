@@ -93,7 +93,7 @@ export default function OccasionSheet() {
           <View style={{ marginTop: 22, gap: 22 }}>
             <View>
               <Kicker>In your words</Kicker>
-              <TextInput value={what} onChangeText={setWhat} placeholder="Dinner with her friends at a place I’ve never been" placeholderTextColor={t.ink3} multiline maxLength={140} style={field} />
+              <TextInput value={what} onChangeText={setWhat} placeholder="Dinner with her friends at a place I’ve never been" placeholderTextColor={t.ink3} multiline returnKeyType="done" submitBehavior="blurAndSubmit" maxLength={140} style={field} />
             </View>
 
             <View style={{ gap: 10 }}>
