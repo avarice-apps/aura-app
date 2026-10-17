@@ -262,3 +262,11 @@ def test_lab_report_bands_and_what_it_leaves_out():
     assert ms["pause"]["status"] == "high" and ms["uptalk"]["status"] == "high" and "eyes" not in ms  # no face, no eye measure
     assert ms["fillers"]["source"] == "research" and ms["fillers"]["ref"] in lab.REFS
     assert lab.measures({"word_count": 3, "duration_s": 2}, {}) == []  # too little to measure honestly
+
+
+def test_like_is_only_a_filler_when_it_does_no_work():
+    from pipeline.audio import Word, _find_phrases, FILLERS
+    ws = lambda s: [Word(w, i * 0.3, i * 0.3 + 0.2, 0.9) for i, w in enumerate(s.split())]
+    assert _find_phrases(ws("I'd like to work on something bigger"), FILLERS) == []
+    assert _find_phrases(ws("it looks like rain and you like it"), FILLERS) == []
+    assert [h["word"] for h in _find_phrases(ws("it was like so good, um, honestly"), FILLERS)] == ["like", "um"]

@@ -7,11 +7,13 @@ import { Display, Kicker, Hair } from '@/components/Kit';
 
 // Mirrors server/pipeline/lab.py REFS. Kept short and honest about what each one shows.
 const RESEARCH = [
-  { t: 'First impressions form fast, and they hold up', d: 'Strangers who watched under a minute of someone’s behaviour, with no sound, predicted how that person was rated after a full term (Ambady & Rosenthal’s “thin slices”).', url: 'https://www.scientificamerican.com/blog/psysociety/rest-in-peace-nalini-ambady/' },
-  { t: 'Delivery predicts how you’re rated', d: 'In an MIT study of 138 recorded mock interviews, measured features predicted how people were rated (correlation above 0.65). Speaking fluently, using fewer filler words and smiling more were among the strongest.', url: 'https://arxiv.org/abs/1504.03425' },
-  { t: 'What a charismatic voice does', d: 'Research on charismatic speakers links a wider pitch range, stronger emphasis and fewer stumbles to higher charisma ratings; very fast or very flat speech works against it.', url: 'https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2022.857647/full' },
-  { t: 'How often people say uh and um', d: 'In everyday English conversation, “uh” and “um” come up about once every 50 words for men and every 70 for women. Kleos’s band sits at that level.', url: 'https://marginalrevolution.com/marginalrevolution/2017/12/facts-uh-um.html' },
-  { t: 'Where people look', d: 'In conversation, listeners look at the speaker more than speakers look at listeners. On camera the lens is the listener, so holding it reads as eye contact.', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC5844880' },
+  { t: 'Half a minute is enough', d: 'Strangers shown silent clips of teachers, some only seconds long, rated them the way the teachers’ own students did after a full term. Ambady & Rosenthal, 1993.', url: 'https://doi.org/10.1037/0022-3514.64.3.431' },
+  { t: 'Tone carries weight', d: 'In ten-second clips of surgeons with the words filtered out, a more dominant tone went with a history of malpractice claims. Ambady et al., Surgery, 2002.', url: 'https://doi.org/10.1067/msy.2002.124733' },
+  { t: 'The first minutes set the score', d: 'Interviewers’ impressions from the opening rapport shaped how they scored the formal answers that followed. Swider, Barrick & Harris, 2016.', url: 'https://doi.org/10.1037/apl0000077' },
+  { t: 'Delivery predicts how you’re rated', d: 'Across 138 recorded mock interviews, measured features predicted human ratings (correlation above 0.65). Fluency, fewer fillers and smiling were among the strongest. Naim et al., 2015.', url: 'https://arxiv.org/abs/1504.03425' },
+  { t: 'What a charismatic voice does', d: 'A wider melodic range, more emphatic accents and fewer disfluencies go with higher charisma ratings. Reviewed in Skarnitzl & Hledíková, 2022.', url: 'https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2022.857647/full' },
+  { t: 'How often people say uh and um', d: 'In English conversation, about one word in fifty for men and one in seventy for women. Enfield, How We Talk, 2017.', url: 'https://marginalrevolution.com/marginalrevolution/2017/12/facts-uh-um.html' },
+  { t: 'Where people look', d: 'People look at their partner’s face about 71% of the time while speaking and 90% while listening. Rogers et al., Scientific Reports, 2018.', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC5844880' },
 ];
 
 function P({ children }: { children: React.ReactNode }) {
@@ -37,6 +39,9 @@ export default function Methods() {
         <Kicker>The method</Kicker>
         <Display text="How Kleos " em="measures." size={40} />
 
+        <H>Why it matters</H>
+        <P>People decide how you come across in the first moments, mostly from how you sound and hold yourself, and it changes how they treat you: in interviews, with patients, across a table. None of it is about looks. It’s pace, pauses, where your voice goes at the end of a sentence, whether your eyes stay with the person. Those are habits, and habits move with practice.</P>
+
         <H>Measured</H>
         <P>Your recording is turned into numbers by signal processing, not by an AI’s opinion. Every word gets a timestamp, which gives pace, pauses, filler words and how fast you start. Pitch and loudness are tracked through each sentence: how much your voice moves, whether endings rise like questions, whether they fade out. On camera, face and posture landmarks show where your eyes go, how often you look away, how still you hold, and when you smile.</P>
 
@@ -44,9 +49,9 @@ export default function Methods() {
         <P>One part is judgement: what you said. Did you answer, say something specific and your own, and finish the thought? Poise writes that read and the three tells, and must cite something measured or quoted for every claim. It’s labelled “judged” wherever it appears.</P>
 
         <H>Never</H>
-        <P>Kleos never rates your face, body, height, accent or the sound of your voice, only what you can train. It isn’t a medical or psychological test and doesn’t diagnose anything. Videos are measured and deleted; only the numbers and the read stay.</P>
+        <P>Kleos never rates your face, body, height, accent or the sound of your voice, only what you can train. It isn’t a medical or psychological test and doesn’t diagnose anything. Videos are measured and deleted; only the numbers and the read stay. The one exception is if you switch on “Help train Poise”: then takes are kept for up to 12 months so a paid panel can rate them, and switching it off removes them.</P>
 
-        <H>Where the ranges come from</H>
+        <H>The research</H>
         <P>Ranges marked ◆ follow published findings. The others are Kleos working ranges, tuned on practice takes and labelled as such until a validation study backs them.</P>
         <View style={{ marginTop: 14 }}>
           {RESEARCH.map((r, i) => (

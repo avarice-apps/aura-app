@@ -56,26 +56,34 @@
   .pill { align-self:center; border:1px solid rgba(241,235,221,.4); border-radius:999px; padding:12px 22px; font-size:14px; }
   @media (max-width:900px){ .how { grid-template-columns:1fr; } .phone { position:relative; top:0; max-width:340px; margin:0 auto; order:-1; } .step { min-height:auto; opacity:1; padding:28px 0; } }
 
-  .inside { padding:clamp(72px,9vw,140px) var(--gut); border-top:1px solid rgba(241,235,221,.12); }
-  .inside h2, .tiers h2 { margin:0 0 40px; font-family:var(--serif); font-weight:400; font-size:clamp(46px,6vw,96px); line-height:.92; letter-spacing:-.02em; }
-  .inside ul { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr 1fr; column-gap:clamp(32px,5vw,80px); }
-  .inside li { display:grid; grid-template-columns:minmax(140px,200px) 1fr; gap:20px; padding:18px 0; border-top:1px solid rgba(241,235,221,.14); }
-  .inside li b { font-family:var(--serif); font-weight:400; font-size:26px; line-height:1.05; }
-  .inside li span { color:var(--pale); }
-  @media (max-width:900px){ .inside ul { grid-template-columns:1fr; } .inside li { grid-template-columns:1fr; gap:4px; } }
+  .ev { padding:clamp(90px,12vw,180px) var(--gut); border-top:1px solid rgba(241,235,221,.12); display:grid; grid-template-columns:minmax(120px,220px) minmax(0,1fr); gap:clamp(24px,5vw,80px); }
+  .ev .k { font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--lav); padding-top:18px; }
+  .ev blockquote { margin:0; font-family:var(--serif); font-size:clamp(40px,5.2vw,86px); line-height:1; letter-spacing:-.02em; max-width:18ch; }
+  .ev blockquote em { color:var(--lav); }
+  .ev .under { margin-top:30px; display:flex; flex-wrap:wrap; gap:14px 28px; align-items:baseline; color:var(--pale); font-size:15px; }
+  .ev .under a { color:var(--ivory); text-decoration:none; border-bottom:1px solid currentColor; padding-bottom:2px; }
+  @media (max-width:820px){ .ev { grid-template-columns:1fr; gap:10px; } }
 
-  .tiers { padding:clamp(72px,9vw,140px) var(--gut); background:var(--paper); color:var(--ink); }
-  .tgrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); border:1px solid var(--line); }
-  .tier { padding:clamp(24px,3vw,40px); display:flex; flex-direction:column; gap:14px; border-right:1px solid var(--line); }
-  .tier:last-child { border-right:0; }
-  .tier.plus { background:var(--blue); color:var(--ivory); }
-  .tier.black { background:var(--ink); color:var(--ivory); }
-  .tier h3 { margin:0; font-family:var(--serif); font-weight:400; font-size:48px; line-height:1; }
-  .tier .pr { font-size:15px; opacity:.85; }
-  .tier ul { margin:8px 0 0; padding:0; list-style:none; display:grid; gap:10px; font-size:15px; }
-  .tier li { padding-top:10px; border-top:1px solid currentColor; border-top-color:color-mix(in srgb, currentColor 18%, transparent); }
-  .tier .gift { margin-top:auto; font-size:13px; opacity:.8; }
-  @media (max-width:900px){ .tgrid { grid-template-columns:1fr; } .tier { border-right:0; border-bottom:1px solid var(--line); } }
+  .week { padding:clamp(80px,10vw,150px) var(--gut); background:var(--blue); color:var(--ivory); }
+  .week .k { font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--pale); display:block; margin-bottom:28px; }
+  .week p { margin:0; font-family:var(--serif); font-size:clamp(34px,4.4vw,70px); line-height:1.08; letter-spacing:-.015em; max-width:26ch; }
+  .week p b { font-weight:400; font-family:var(--mono); font-size:.24em; letter-spacing:.14em; text-transform:uppercase; vertical-align:.95em; margin-right:.5em; color:var(--pale); }
+  .week p span { opacity:.55; transition:opacity 500ms ease; }
+  .week p span.on { opacity:1; }
+  @media (prefers-reduced-motion:reduce){ .week p span { opacity:1; } }
+
+  .menu { padding:clamp(80px,10vw,150px) var(--gut); background:var(--paper); color:var(--ink); display:grid; grid-template-columns:minmax(120px,220px) minmax(0,1fr); gap:clamp(24px,5vw,80px); }
+  .menu .k { font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink2); padding-top:14px; }
+  .menu h2 { margin:0 0 34px; font-family:var(--serif); font-weight:400; font-size:clamp(46px,6vw,96px); line-height:.92; letter-spacing:-.02em; }
+  .plan { max-width:860px; padding:22px 0; border-top:1px solid var(--ink); }
+  .plan:last-of-type { border-bottom:1px solid var(--ink); }
+  .plan .line { display:flex; align-items:baseline; gap:14px; }
+  .plan .line h3 { margin:0; font-family:var(--serif); font-weight:400; font-size:clamp(34px,3.4vw,48px); line-height:1; white-space:nowrap; }
+  .plan .line i { flex:1; border-bottom:1px dotted var(--ink2); transform:translateY(-8px); min-width:20px; }
+  .plan .line span { font-family:var(--mono); font-size:13px; letter-spacing:.04em; white-space:nowrap; }
+  .plan p { margin:10px 0 0; max-width:58ch; font-family:'EB Garamond', var(--serif); font-size:19px; line-height:1.4; color:var(--ink2); }
+  .menu .fine2 { margin-top:22px; font-size:13.5px; color:var(--ink2); max-width:60ch; }
+  @media (max-width:820px){ .menu { grid-template-columns:1fr; gap:6px; } .plan .line { flex-wrap:wrap; } .plan .line i { display:none; } .plan .line span { flex-basis:100%; } }
 </style>
 </head>
 <body>
@@ -129,33 +137,34 @@
   </div></div>
 </section>
 
-<section class="inside" aria-labelledby="h-in">
-  <h2 id="h-in">What’s inside</h2>
-  <ul>
-    <li><b>Open Floor</b><span>Talk about anything for a minute and get the read.</span></li>
-    <li><b>Side Quests</b><span>A small real-world dare every day, from holding eye contact to sending back the wine.</span></li>
-    <li><b>Rehearse</b><span>Describe tomorrow’s interview or date and play it tonight.</span></li>
-    <li><b>Duels</b><span>Argue a point against a friend. Poise judges.</span></li>
-    <li><b>Fit check</b><span>A mirror photo, and what to change before you leave the house.</span></li>
-    <li><b>Wardrobe</b><span>Scan what you own; get the outfit for any room.</span></li>
-    <li><b>The Portrait</b><span>A long read of every conversation you’ve had, and who it adds up to.</span></li>
-    <li><b>The Index</b><span>One number for how you come across, and how it’s moving.</span></li>
-  </ul>
+<section class="ev" aria-labelledby="h-ev">
+  <div class="k" id="h-ev">Why it matters</div>
+  <div>
+    <blockquote>Ten seconds of a surgeon’s voice, with the words filtered out, was enough for strangers to pick <em>who was more likely to have been sued.</em></blockquote>
+    <div class="under"><span>Ambady et al., <i>Surgery</i>, 2002. How you sound is read before what you say.</span><a href="method.html">How Kleos measures</a></div>
+  </div>
 </section>
 
-<section class="tiers" id="tiers" aria-labelledby="h-t">
-  <h2 id="h-t">Three doors</h2>
-  <div class="tgrid">
-    <div class="tier"><h3>Free</h3><div class="pr">$0</div><ul><li>The daily Side Quest</li><li>Two live calls a week, with the verdict and score</li><li>Duels with friends</li><li>Your last four weeks in the members’ area</li></ul></div>
-    <div class="tier plus"><h3>Kleos+</h3><div class="pr">$6.99 a week, or $49.99 a year</div><ul><li>Unlimited calls and the full read</li><li>Run it back and replay any moment</li><li>Patterns, cleared tells and the Index over time</li><li>Your full history and every replay on the web</li></ul></div>
-    <div class="tier black"><h3>Kleos Black</h3><div class="pr">$19.99 a month, or $129.99 a year</div><ul><li>Everything in Kleos+</li><li>Rehearse your real situation</li><li>The Wardrobe and the Portrait</li><li>First look at every drop</li></ul><span class="gift">Free for a month with any piece from the collection.</span></div>
+<section class="week" aria-label="A week with Poise">
+  <span class="k">A week with Poise</span>
+  <p><span><b>Mon</b>Thirty seconds to the camera, the same question as last Monday, and the numbers that moved.</span> <span><b>Tue</b>The landlord who won’t give the deposit back, played straight.</span> <span><b>Wed</b>Send back the wine. Really.</span> <span><b>Thu</b>Tomorrow’s interview, tonight, until the answer sounds like yours.</span> <span><b>Fri</b>Dinner for six, and everyone has a secret mission.</span> <span><b>Sun</b>The week read back to you, in one page.</span></p>
+</section>
+
+<section class="menu" id="tiers" aria-labelledby="h-t">
+  <div class="k">Membership</div>
+  <div>
+    <h2 id="h-t">Start free. Stay if it works.</h2>
+    <div class="plan"><div class="line"><h3>Free</h3><i></i><span>$0</span></div><p>The daily Side Quest, two calls a week with the verdict and score, the weekly Mirror, and duels with friends.</p></div>
+    <div class="plan"><div class="line"><h3>Kleos+</h3><i></i><span>$6.99 a week · $49.99 a year</span></div><p>Every call with the full read, run it back from any moment, and your Index and patterns over time.</p></div>
+    <div class="plan"><div class="line"><h3>Kleos Black</h3><i></i><span>$19.99 a month · $129.99 a year</span></div><p>Everything in Kleos+, plus rehearsing your real situation, the Wardrobe, the Portrait and first look at every drop.</p></div>
+    <p class="fine2">Black is free for a month with any piece from the collection.</p>
   </div>
 </section>
 
 <footer class="foot">
   <div class="big">Kleos</div>
   <div class="cols">
-    <div><a href="index.html">Home</a><a href="collection.html">Collection</a><a href="members.html">Members</a></div>
+    <div><a href="index.html">Home</a><a href="collection.html">Collection</a><a href="method.html">The method</a><a href="members.html">Members</a></div>
     <div>Saint-Tropez<br>Paris<br>Madrid<br>London<br>New York</div>
     <div><div style="margin-bottom:8px">What is heard of you?</div>
       <form id="foot-f" novalidate><label class="sr" for="foot-e">Email</label><input id="foot-e" type="email" placeholder="Leave your email" autocomplete="email"><button type="submit" aria-label="Join the register">Join</button></form>
@@ -169,6 +178,9 @@
   const steps=[...document.querySelectorAll('.step')], scr=[...document.querySelectorAll('.scr')];
   const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting){ const i=+e.target.dataset.s; steps.forEach((s,k)=>s.classList.toggle('on',k===i)); scr.forEach((s,k)=>s.classList.toggle('on',k===i)); } }),{ rootMargin:'-45% 0px -45% 0px' });
   steps.forEach(s=>io.observe(s));
+  const days=[...document.querySelectorAll('.week p span')];
+  const io2=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('on'); }),{ rootMargin:'0px 0px -35% 0px' });
+  days.forEach(d=>io2.observe(d));
 </script>
 </body>
 </html>

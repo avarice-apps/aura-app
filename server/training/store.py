@@ -20,11 +20,11 @@ RETENTION_DAYS = 365
 
 # What raters score. 1–7 Likert. Wording matters: these are perceptions, not diagnoses.
 DIMENSIONS = {
-    "confident": "How confident did he seem?",
-    "warm": "How warm or likeable did he seem?",
-    "nervous": "How nervous did he seem?",
-    "clear": "How clear and easy to follow was he?",
-    "trust": "How much would you trust what he said?",
+    "confident": "How confident did they seem?",
+    "warm": "How warm or likeable did they seem?",
+    "nervous": "How nervous did they seem?",
+    "clear": "How clear and easy to follow were they?",
+    "trust": "How much would you trust what they said?",
     "engage": "How much would you want to keep listening?",
 }
 

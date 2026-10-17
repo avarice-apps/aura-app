@@ -1,0 +1,463 @@
+{
+ "voice": "UgBBYS2sOqTuMpoF3BR0",
+ "cases": {
+  "base": {
+   "measures": {
+    "pace": {
+     "value": 202.0,
+     "status": "high"
+    },
+    "fillers": {
+     "value": 0.0,
+     "status": "in"
+    },
+    "hedges": {
+     "value": 1.887,
+     "status": "high"
+    },
+    "melody": {
+     "value": 4.63,
+     "status": "high"
+    },
+    "pause": {
+     "value": 1.02,
+     "status": "in"
+    },
+    "start": {
+     "value": 0.64,
+     "status": "in"
+    },
+    "uptalk": {
+     "value": 0.0,
+     "status": "in"
+    },
+    "fade": {
+     "value": 0.0,
+     "status": "in"
+    }
+   },
+   "raw": {
+    "wpm": 202.0,
+    "filler_count": 0,
+    "upward_endings": 0,
+    "sentence_count": 4,
+    "longest_pause_s": 1.02,
+    "pitch_variance": 4.63
+   }
+  },
+  "fast": {
+   "measures": {
+    "pace": {
+     "value": 250.0,
+     "status": "high"
+    },
+    "fillers": {
+     "value": 0.0,
+     "status": "in"
+    },
+    "hedges": {
+     "value": 1.887,
+     "status": "high"
+    },
+    "melody": {
+     "value": 4.71,
+     "status": "high"
+    },
+    "pause": {
+     "value": 0.0,
+     "status": "low"
+    },
+    "start": {
+     "value": 0.56,
+     "status": "in"
+    },
+    "uptalk": {
+     "value": 0.0,
+     "status": "in"
+    },
+    "fade": {
+     "value": 0.0,
+     "status": "in"
+    }
+   },
+   "raw": {
+    "wpm": 250.0,
+    "filler_count": 0,
+    "upward_endings": 0,
+    "sentence_count": 4,
+    "longest_pause_s": 0.0,
+    "pitch_variance": 4.71
+   }
+  },
+  "slow": {
+   "measures": {
+    "pace": {
+     "value": 143.6,
+     "status": "in"
+    },
+    "fillers": {
+     "value": 0.0,
+     "status": "in"
+    },
+    "hedges": {
+     "value": 1.887,
+     "status": "high"
+    },
+    "melody": {
+     "value": 4.86,
+     "status": "high"
+    },
+    "pause": {
+     "value": 1.35,
+     "status": "in"
+    },
+    "start": {
+     "value": 0.72,
+     "status": "in"
+    },
+    "uptalk": {
+     "value": 25.0,
+     "status": "in"
+    },
+    "fade": {
+     "value": 0.0,
+     "status": "in"
+    }
+   },
+   "raw": {
+    "wpm": 143.6,
+    "filler_count": 0,
+    "upward_endings": 1,
+    "sentence_count": 4,
+    "longest_pause_s": 1.35,
+    "pitch_variance": 4.86
+   }
+  },
+  "fillers": {
+   "measures": {
+    "pace": {
+     "value": 165.7,
+     "status": "in"
+    },
+    "fillers": {
+     "value": 9.836,
+     "status": "high"
+    },
+    "hedges": {
+     "value": 1.639,
+     "status": "high"
+    },
+    "melody": {
+     "value": 3.24,
+     "status": "in"
+    },
+    "pause": {
+     "value": 1.05,
+     "status": "in"
+    },
+    "start": {
+     "value": 0.72,
+     "status": "in"
+    },
+    "uptalk": {
+     "value": 25.0,
+     "status": "in"
+    },
+    "fade": {
+     "value": 0.0,
+     "status": "in"
+    }
+   },
+   "raw": {
+    "wpm": 165.7,
+    "filler_count": 6,
+    "upward_endings": 1,
+    "sentence_count": 4,
+    "longest_pause_s": 1.05,
+    "pitch_variance": 3.24
+   }
+  },
+  "rising": {
+   "measures": {
+    "pace": {
+     "value": 160.7,
+     "status": "in"
+    },
+    "fillers": {
+     "value": 0.0,
+     "status": "in"
+    },
+    "hedges": {
+     "value": 1.923,
+     "status": "high"
+    },
+    "melody": {
+     "value": 4.5,
+     "status": "high"
+    },
+    "pause": {
+     "value": 0.0,
+     "status": "low"
+    },
+    "start": {
+     "value": 0.8,
+     "status": "in"
+    },
+    "uptalk": {
+     "value": 66.667,
+     "status": "high"
+    },
+    "fade": {
+     "value": 0.0,
+     "status": "in"
+    }
+   },
+   "raw": {
+    "wpm": 160.7,
+    "filler_count": 0,
+    "upward_endings": 4,
+    "sentence_count": 6,
+    "longest_pause_s": 0.0,
+    "pitch_variance": 4.5
+   }
+  },
+  "pauses": {
+   "measures": {
+    "pace": {
+     "value": 103.7,
+     "status": "low"
+    },
+    "fillers": {
+     "value": 0.0,
+     "status": "in"
+    },
+    "hedges": {
+     "value": 0.0,
+     "status": "in"
+    },
+    "melody": {
+     "value": 4.46,
+     "status": "high"
+    },
+    "pause": {
+     "value": 2.56,
+     "status": "high"
+    },
+    "start": {
+     "value": 0.72,
+     "status": "in"
+    },
+    "uptalk": {
+     "value": 0.0,
+     "status": "in"
+    },
+    "fade": {
+     "value": 0.0,
+     "status": "in"
+    }
+   },
+   "raw": {
+    "wpm": 103.7,
+    "filler_count": 0,
+    "upward_endings": 0,
+    "sentence_count": 4,
+    "longest_pause_s": 2.56,
+    "pitch_variance": 4.46
+   }
+  },
+  "flat": {
+   "measures": {
+    "pace": {
+     "value": 193.8,
+     "status": "high"
+    },
+    "fillers": {
+     "value": 0.0,
+     "status": "in"
+    },
+    "hedges": {
+     "value": 1.887,
+     "status": "high"
+    },
+    "melody": {
+     "value": 4.61,
+     "status": "high"
+    },
+    "pause": {
+     "value": 0.0,
+     "status": "low"
+    },
+    "start": {
+     "value": 0.72,
+     "status": "in"
+    },
+    "uptalk": {
+     "value": 0.0,
+     "status": "in"
+    },
+    "fade": {
+     "value": 0.0,
+     "status": "in"
+    }
+   },
+   "raw": {
+    "wpm": 193.8,
+    "filler_count": 0,
+    "upward_endings": 0,
+    "sentence_count": 4,
+    "longest_pause_s": 0.0,
+    "pitch_variance": 4.61
+   }
+  },
+  "lively": {
+   "measures": {
+    "pace": {
+     "value": 191.5,
+     "status": "high"
+    },
+    "fillers": {
+     "value": 0.0,
+     "status": "in"
+    },
+    "hedges": {
+     "value": 1.887,
+     "status": "high"
+    },
+    "melody": {
+     "value": 4.93,
+     "status": "high"
+    },
+    "pause": {
+     "value": 0.0,
+     "status": "low"
+    },
+    "start": {
+     "value": 0.72,
+     "status": "in"
+    },
+    "uptalk": {
+     "value": 0.0,
+     "status": "in"
+    },
+    "fade": {
+     "value": 0.0,
+     "status": "in"
+    }
+   },
+   "raw": {
+    "wpm": 191.5,
+    "filler_count": 0,
+    "upward_endings": 0,
+    "sentence_count": 4,
+    "longest_pause_s": 0.0,
+    "pitch_variance": 4.93
+   }
+  },
+  "fading": {
+   "measures": {
+    "pace": {
+     "value": 202.0,
+     "status": "high"
+    },
+    "fillers": {
+     "value": 0.0,
+     "status": "in"
+    },
+    "hedges": {
+     "value": 1.887,
+     "status": "high"
+    },
+    "melody": {
+     "value": 4.62,
+     "status": "high"
+    },
+    "pause": {
+     "value": 1.02,
+     "status": "in"
+    },
+    "start": {
+     "value": 0.64,
+     "status": "in"
+    },
+    "uptalk": {
+     "value": 0.0,
+     "status": "in"
+    },
+    "fade": {
+     "value": 75.0,
+     "status": "high"
+    }
+   },
+   "raw": {
+    "fade_endings": 3
+   }
+  }
+ },
+ "checks": [
+  {
+   "a": "fast",
+   "b": "base",
+   "measure": "pace",
+   "a_value": 250.0,
+   "b_value": 202.0,
+   "expected": "higher",
+   "pass": true
+  },
+  {
+   "a": "slow",
+   "b": "base",
+   "measure": "pace",
+   "a_value": 143.6,
+   "b_value": 202.0,
+   "expected": "lower",
+   "pass": true
+  },
+  {
+   "a": "fillers",
+   "b": "base",
+   "measure": "fillers",
+   "a_value": 9.836,
+   "b_value": 0.0,
+   "expected": "higher",
+   "pass": true
+  },
+  {
+   "a": "rising",
+   "b": "base",
+   "measure": "uptalk",
+   "a_value": 66.667,
+   "b_value": 0.0,
+   "expected": "higher",
+   "pass": true
+  },
+  {
+   "a": "pauses",
+   "b": "base",
+   "measure": "pause",
+   "a_value": 2.56,
+   "b_value": 1.02,
+   "expected": "higher",
+   "pass": true
+  },
+  {
+   "a": "lively",
+   "b": "flat",
+   "measure": "melody",
+   "a_value": 4.93,
+   "b_value": 4.61,
+   "expected": "higher",
+   "pass": true
+  },
+  {
+   "a": "fading",
+   "b": "base",
+   "measure": "fade",
+   "a_value": 75.0,
+   "b_value": 0.0,
+   "expected": "higher",
+   "pass": true
+  }
+ ],
+ "passed": 7,
+ "total": 7
+}

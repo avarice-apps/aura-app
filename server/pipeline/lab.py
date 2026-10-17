@@ -9,11 +9,11 @@ A take that can't support a measure (too short, no face found) leaves it out rat
 from __future__ import annotations
 
 REFS = {
-    "fillers": {"title": "Uh and um in conversational English: about 1 in 50 words for men, 1 in 70 for women", "url": "https://marginalrevolution.com/marginalrevolution/2017/12/facts-uh-um.html"},
-    "interview": {"title": "Naim et al., Automated Analysis and Prediction of Job Interview Performance (fluency, fewer fillers and smiling predicted ratings)", "url": "https://arxiv.org/abs/1504.03425"},
-    "charisma": {"title": "Prosody of charisma: wider pitch range, stronger emphasis and fewer disfluencies (review in Frontiers in Psychology, 2022)", "url": "https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2022.857647/full"},
-    "gaze": {"title": "Argyle & Cook, Gaze and Mutual Gaze: in conversation, listeners look at the speaker more than speakers look at listeners", "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5844880"},
-    "thin": {"title": "Ambady & Rosenthal, thin slices: strangers' impressions from under a minute of behaviour predict later ratings", "url": "https://www.scientificamerican.com/blog/psysociety/rest-in-peace-nalini-ambady/"},
+    "fillers": {"title": "Enfield, How We Talk (2017): in English conversation, uh or um is about 1 in 50 words for men and 1 in 70 for women", "url": "https://marginalrevolution.com/marginalrevolution/2017/12/facts-uh-um.html"},
+    "interview": {"title": "Naim, Tanveer, Gildea & Hoque (2015), Automated Analysis and Prediction of Job Interview Performance: fluency, fewer fillers and smiling predicted ratings", "url": "https://arxiv.org/abs/1504.03425"},
+    "charisma": {"title": "Skarnitzl & Hledíková (2022), Frontiers in Psychology, reviewing charisma research: wider melodic range, more emphatic accents and fewer disfluencies go with higher ratings", "url": "https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2022.857647/full"},
+    "gaze": {"title": "Rogers, Speelman, Guidetti & Longmuir (2018), Scientific Reports: people look at a partner's face about 71% of the time while speaking and 90% while listening", "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC5844880"},
+    "thin": {"title": "Ambady & Rosenthal (1993), Half a Minute: impressions from silent clips under a minute predicted end-of-term ratings", "url": "https://doi.org/10.1037/0022-3514.64.3.431"},
 }
 
 

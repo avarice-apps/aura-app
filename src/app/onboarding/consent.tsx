@@ -23,6 +23,12 @@ export default function Consent() {
           <Title size={30}>Before you speak.</Title>
           <Muted>You’ll talk to a character for about thirty seconds. Voice only, no camera.</Muted>
         </Animated.View>
+        <Animated.View entering={FadeInDown.duration(500).delay(80)} style={{ marginTop: 18, borderLeftWidth: 2, borderColor: t.accent, paddingLeft: 12, gap: 6 }}>
+          <Body small>Why thirty seconds: strangers shown silent clips under a minute long rated teachers the way their students did after a full term. First impressions are fast, and they’re made of habits you can train.</Body>
+          <Pressable onPress={() => router.push('/mirror/methods')} hitSlop={8}>
+            <Muted small color={t.accent}>How Kleos measures →</Muted>
+          </Pressable>
+        </Animated.View>
         <Card style={{ marginTop: 20, gap: 12 }}>
           <Row style={{ alignItems: 'flex-start' }}>
             <Icon d={ICON.lock} size={16} color={t.ink2} />

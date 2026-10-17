@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Kleos · The method</title>
+<meta name="description" content="How Kleos measures the way you come across: what is measured, what is judged, what we never do, and the research behind it.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 fill=%27%231608F2%27/%3E%3Ctext x=%2732%27 y=%2747%27 font-family=%27Georgia,serif%27 font-size=%2742%27 text-anchor=%27middle%27 fill=%27%23F1EBDD%27%3EK%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=EB+Garamond:ital@0;1&family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="k.css">
+<style>
+  body { background:var(--paper); color:var(--ink); }
+  .top { padding:calc(var(--ann, 0px) + 120px) var(--gut) clamp(56px,7vw,110px); display:grid; grid-template-columns:minmax(0,1fr) minmax(260px,420px); gap:clamp(32px,6vw,96px); align-items:end; border-bottom:1px solid var(--line); }
+  .top h1 { margin:14px 0 0; font-family:var(--serif); font-weight:400; font-size:clamp(84px,13vw,220px); line-height:.82; letter-spacing:-.035em; }
+  .top h1 em { color:var(--blue); }
+  .top .lede { margin:0; font-family:'EB Garamond', var(--serif); font-size:clamp(22px,2vw,28px); line-height:1.25; }
+  .plate { aspect-ratio:4/5; background:url(img/p_rembrandt.webp) center 30%/cover no-repeat; filter:grayscale(1) contrast(1.05); mix-blend-mode:multiply; position:relative; }
+  .plate::after { content:'Fig. 1 · After Rembrandt. A face read in half a minute.'; position:absolute; left:0; right:0; top:calc(100% + 8px); font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--ink2); }
+  @media (max-width:820px){ .top { grid-template-columns:1fr; } .plate { max-width:340px; } }
+
+  .part { display:grid; grid-template-columns:minmax(120px,220px) minmax(0,1fr); gap:clamp(24px,5vw,80px); padding:clamp(56px,7vw,110px) var(--gut); border-bottom:1px solid var(--line); }
+  .part > .k { font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--ink2); padding-top:14px; }
+  .part h2 { margin:0 0 26px; font-family:var(--serif); font-weight:400; font-size:clamp(44px,5.4vw,84px); line-height:.95; letter-spacing:-.02em; max-width:16ch; }
+  .prose { max-width:64ch; font-family:'EB Garamond', var(--serif); font-size:clamp(19px,1.45vw,22px); line-height:1.5; }
+  .prose p { margin:0 0 1em; }
+  sup a { font-family:var(--mono); font-size:.55em; color:var(--blue); text-decoration:none; padding:0 1px; }
+  @media (max-width:820px){ .part { grid-template-columns:1fr; gap:6px; } }
+
+  /* the instrument: a specimen lab report */
+  .spec { margin-top:34px; max-width:860px; border-top:2px solid var(--ink); }
+  .row { display:grid; grid-template-columns:minmax(150px,210px) minmax(0,1fr) 150px; gap:20px; padding:16px 0; border-bottom:1px solid var(--line); align-items:center; }
+  .row b { font-weight:500; font-size:15px; }
+  .row .how { font-size:14.5px; color:var(--ink2); }
+  .row .src { font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; text-align:right; color:var(--ink2); }
+  .row .src.r { color:var(--blue); }
+  .row.head { padding:10px 0; font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--ink2); }
+  @media (max-width:700px){ .row { grid-template-columns:1fr auto; } .row .how { grid-column:1 / -1; order:3; } }
+
+  .two { display:grid; grid-template-columns:1fr 1fr; gap:clamp(24px,4vw,64px); max-width:980px; margin-top:8px; }
+  .two div { border-top:1px solid var(--ink); padding-top:16px; }
+  .two h3 { margin:0 0 10px; font-family:var(--serif); font-weight:400; font-size:34px; line-height:1; }
+  .two p { margin:0; font-family:'EB Garamond', var(--serif); font-size:19px; line-height:1.45; }
+  @media (max-width:760px){ .two { grid-template-columns:1fr; } }
+
+  .myth { background:var(--ink); color:var(--ivory); }
+  .myth .k { color:var(--lav); }
+  .myth .big { font-family:var(--serif); font-size:clamp(90px,15vw,240px); line-height:.8; letter-spacing:-.04em; margin:0 0 26px; text-decoration:line-through; text-decoration-thickness:.04em; text-decoration-color:var(--blue); }
+
+  .notes { padding:clamp(48px,6vw,90px) var(--gut); display:grid; grid-template-columns:minmax(120px,220px) minmax(0,1fr); gap:clamp(24px,5vw,80px); }
+  .notes ol { margin:0; padding:0; list-style:none; counter-reset:n; max-width:900px; }
+  .notes li { counter-increment:n; display:grid; grid-template-columns:36px 1fr; padding:12px 0; border-top:1px solid var(--line); font-size:14.5px; line-height:1.45; }
+  .notes li::before { content:counter(n); font-family:var(--mono); font-size:11px; color:var(--blue); padding-top:3px; }
+  .notes a { color:inherit; }
+  .notes li:target { background:rgba(22,8,242,.06); }
+  @media (max-width:820px){ .notes { grid-template-columns:1fr; } }
+  .cta { display:inline-flex; align-items:center; min-height:52px; padding:0 22px; background:var(--blue); color:var(--ivory); text-decoration:none; font-size:15px; transition:transform 160ms var(--ease-out); margin-top:10px; }
+  .cta:active { transform:scale(0.97); }
+</style>
+</head>
+<body>
+<nav class="nav" aria-label="Main">
+  <a class="brand" href="index.html">Kleos</a>
+  <div class="links"><a href="collection.html">Collection</a><a href="poise.html">Poise</a><a href="members.html">Members</a></div>
+  <div class="right"><button data-search>Search</button><a class="acct" href="members.html">Account</a><button data-bag data-bagcount>Bag (0)</button></div>
+</nav>
+
+<header class="top">
+  <div>
+    <span class="mono">The method · How Kleos measures</span>
+    <h1>Seconds, <em>not</em> sentences.</h1>
+  </div>
+  <div style="display:flex; flex-direction:column; gap:52px">
+    <div class="plate" role="img" aria-label="A portrait after Rembrandt, in greyscale"></div>
+    <p class="lede">People decide how you come across in the first moments, mostly from how you sound and how you hold yourself. That part can be measured. Measured, it can be trained.</p>
+  </div>
+</header>
+
+<section class="part" aria-labelledby="h1">
+  <div class="k">I · Why it matters</div>
+  <div>
+    <h2 id="h1">The first half-minute is not small talk.</h2>
+    <div class="prose">
+      <p>In 1993, Nalini Ambady and Robert Rosenthal showed strangers silent clips of teachers, some only a few seconds long. Their snap ratings lined up with the ones the teachers’ own students gave after a full term.<sup><a href="#n1">1</a></sup> Psychologists now call these <em>thin slices</em>, and the effect has held up across classrooms, clinics and boardrooms.</p>
+      <p>It isn’t only about being liked. When the same lab played ten-second clips of surgeons talking to patients, with the words filtered out so only the tone was left, the surgeons whose voices sounded more dominant were more likely to have been sued for malpractice.<sup><a href="#n2">2</a></sup> In job interviews, the impression formed in the first minutes of rapport shapes how interviewers score the formal answers that follow.<sup><a href="#n3">3</a></sup> And when MIT researchers measured 138 recorded mock interviews, features a computer could count, such as fluency, filler words and smiling, predicted how people were rated.<sup><a href="#n4">4</a></sup></p>
+      <p>None of that is about looks. It’s pace, pauses, where your voice goes at the end of a sentence, whether your eyes stay with the person. Those are habits, and habits move with practice.</p>
+    </div>
+  </div>
+</section>
+
+<section class="part" aria-labelledby="h2">
+  <div class="k">II · What is measured</div>
+  <div>
+    <h2 id="h2">Numbers from the recording, not an opinion.</h2>
+    <div class="prose"><p>Every word gets a timestamp. Pitch and loudness are tracked through each sentence. On camera, face and posture landmarks show where your eyes go. Each result is placed against a range. Ranges marked <span style="color:var(--blue)">research</span> follow published findings; the rest are Kleos working ranges, labelled as such until a validation study backs them.</p></div>
+    <div class="spec" role="table" aria-label="The measurements">
+      <div class="row head" role="row"><span role="columnheader">Signal</span><span role="columnheader">How it’s measured</span><span role="columnheader" style="text-align:right">Range</span></div>
+      <div class="row" role="row"><b>Pace</b><span class="how">Words per minute, from word timings.</span><span class="src">Kleos</span></div>
+      <div class="row" role="row"><b>Fillers</b><span class="how">Uh, um, like and you know, per hundred words.</span><span class="src r">Research <sup><a href="#n5">5</a></sup></span></div>
+      <div class="row" role="row"><b>Pitch movement</b><span class="how">How far your voice travels within a sentence, in semitones.</span><span class="src r">Research <sup><a href="#n6">6</a></sup></span></div>
+      <div class="row" role="row"><b>Rising endings</b><span class="how">Sentences that end on a rise, so statements sound like questions.</span><span class="src">Kleos</span></div>
+      <div class="row" role="row"><b>Fading endings</b><span class="how">Sentences that lose volume before they finish.</span><span class="src">Kleos</span></div>
+      <div class="row" role="row"><b>Pauses</b><span class="how">The longest silence, and whether it lands as a beat or a loss.</span><span class="src">Kleos</span></div>
+      <div class="row" role="row"><b>First word</b><span class="how">How long before you start.</span><span class="src">Kleos</span></div>
+      <div class="row" role="row"><b>Eyes on the lens</b><span class="how">Share of the take your gaze holds the camera, which is the viewer.</span><span class="src r">Research <sup><a href="#n7">7</a></sup></span></div>
+      <div class="row" role="row"><b>Look-aways</b><span class="how">How often the gaze breaks, per minute.</span><span class="src">Kleos</span></div>
+      <div class="row" role="row"><b>Smiling</b><span class="how">Share of the take with a smile showing.</span><span class="src r">Research <sup><a href="#n4">4</a></sup></span></div>
+    </div>
+  </div>
+</section>
+
+<section class="part" aria-labelledby="h3">
+  <div class="k">III · Judged, and never</div>
+  <div>
+    <h2 id="h3">Where judgement comes in, it says so.</h2>
+    <div class="two">
+      <div><h3>Judged</h3><p>One part is opinion: what you said. Did you answer the question, say something specific and your own, and finish the thought? Poise writes that read and the three tells, must point at something measured or quoted for each one, and it’s labelled <em>judged</em> wherever it appears.</p></div>
+      <div><h3>Never</h3><p>Kleos doesn’t rate your face, body, height, accent or the natural sound of your voice; only what you can train. It isn’t a medical or psychological test and diagnoses nothing. The video is measured and deleted, and the numbers and the read stay with you, unless you choose to help train Poise; then takes are kept for up to a year for rating, and removed when you say so.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="part myth" aria-labelledby="h4">
+  <div class="k">IV · A number we don’t use</div>
+  <div>
+    <p class="big serif" aria-hidden="true">93%</p>
+    <h2 id="h4">“Ninety-three per cent of communication is nonverbal.”</h2>
+    <div class="prose" style="color:var(--pale)"><p>You’ve heard it. It comes from two small 1967 experiments in which people heard single words said in different tones, and its author has said it was never meant for ordinary conversation. Words matter. That’s why Kleos reads what you said as well as how you said it, and keeps the two apart.</p></div>
+  </div>
+</section>
+
+<section class="part" aria-labelledby="h5">
+  <div class="k">V · The limits</div>
+  <div>
+    <h2 id="h5">One take is a snapshot.</h2>
+    <div class="prose">
+      <p>Light, a cheap microphone or a strange question all move the numbers. That’s why the Mirror asks the same question every week, so your takes compare like with like, and why the Index carries a range rather than pretending to a single decimal.</p>
+      <p>The next step is a rater study: real strangers rating thirty-second takes, so every Kleos range can be checked against what people actually perceive. Until then, those ranges say they’re ours.</p>
+      <a class="cta" href="poise.html">Meet Poise</a>
+    </div>
+  </div>
+</section>
+
+<section class="notes" aria-labelledby="hn">
+  <div class="mono" id="hn" style="padding-top:12px">Notes</div>
+  <ol>
+    <li id="n1"><span>Ambady, N. &amp; Rosenthal, R. (1993). Half a minute: Predicting teacher evaluations from thin slices of nonverbal behavior and physical attractiveness. <i>Journal of Personality and Social Psychology</i>, 64(3), 431–441. <a href="https://doi.org/10.1037/0022-3514.64.3.431" rel="noopener" target="_blank">doi.org/10.1037/0022-3514.64.3.431</a></span></li>
+    <li id="n2"><span>Ambady, N., LaPlante, D., Nguyen, T., Rosenthal, R., Chaumeton, N. &amp; Levinson, W. (2002). Surgeons’ tone of voice: A clue to malpractice history. <i>Surgery</i>, 132(1), 5–9. 65 surgeons; content-filtered ten-second clips. <a href="https://doi.org/10.1067/msy.2002.124733" rel="noopener" target="_blank">doi.org/10.1067/msy.2002.124733</a></span></li>
+    <li id="n3"><span>Swider, B. W., Barrick, M. R. &amp; Harris, T. B. (2016). Initial impressions: What they are, what they are not, and how they influence structured interview outcomes. <i>Journal of Applied Psychology</i>, 101(5), 625–638. <a href="https://doi.org/10.1037/apl0000077" rel="noopener" target="_blank">doi.org/10.1037/apl0000077</a></span></li>
+    <li id="n4"><span>Naim, I., Tanveer, M. I., Gildea, D. &amp; Hoque, M. E. (2015). Automated analysis and prediction of job interview performance. 138 recorded interviews; predictions correlated with human ratings above 0.65. <a href="https://arxiv.org/abs/1504.03425" rel="noopener" target="_blank">arxiv.org/abs/1504.03425</a></span></li>
+    <li id="n5"><span>Enfield, N. J. (2017). <i>How We Talk: The Inner Workings of Conversation</i>. In English conversation, uh or um is about one word in fifty for men and one in seventy for women. <a href="https://marginalrevolution.com/marginalrevolution/2017/12/facts-uh-um.html" rel="noopener" target="_blank">summary</a></span></li>
+    <li id="n6"><span>Skarnitzl, R. &amp; Hledíková, H. (2022). Prosodic phrasing of good speakers in English and Czech. <i>Frontiers in Psychology</i>, 13. Reviews charisma research: a wider melodic range, more emphatic accents and fewer disfluencies go with higher ratings. See also Niebuhr, Voße &amp; Brem (2016), <i>Computers in Human Behavior</i>, 64, 366–382. <a href="https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2022.857647/full" rel="noopener" target="_blank">frontiersin.org</a></span></li>
+    <li id="n7"><span>Rogers, S. L., Speelman, C. P., Guidetti, O. &amp; Longmuir, M. (2018). Using dual eye tracking to uncover personal gaze patterns during social interaction. <i>Scientific Reports</i>, 8, 4271. People looked at their partner’s face about 71% of the time while speaking and 90% while listening. <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC5844880" rel="noopener" target="_blank">pmc.ncbi.nlm.nih.gov</a></span></li>
+  </ol>
+</section>
+
+<footer class="foot">
+  <div class="big">Kleos</div>
+  <div class="cols">
+    <div><a href="index.html">Home</a><a href="collection.html">Collection</a><a href="poise.html">Poise</a><a href="method.html">The method</a><a href="members.html">Members</a></div>
+    <div>Saint-Tropez<br>Paris<br>Madrid<br>London<br>New York</div>
+    <div><div style="margin-bottom:8px">What is heard of you?</div>
+      <form id="foot-f" novalidate><label class="sr" for="foot-e">Email</label><input id="foot-e" type="email" placeholder="Leave your email" autocomplete="email"><button type="submit" aria-label="Join the register">Join</button></form>
+      <div id="foot-m" style="margin-top:10px" role="status"></div></div>
+  </div>
+  <div class="fine"><span>© MMXXVI Kleos</span><span>Portrait after Rembrandt, public domain, Cleveland Museum of Art open access</span></div>
+</footer>
+<script src="products.js"></script>
+<script src="k.js"></script>
+</body>
+</html>

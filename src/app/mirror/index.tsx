@@ -15,6 +15,7 @@ import { WEEKLY, EXTRA, weekKey, promptById } from '@/lib/mirror';
 export default function Mirror() {
   const t = useTheme();
   const reads = useStore((s) => s.mirror ?? []);
+  const training = useStore((s) => !!s.trainingConsent);
   const doneThisWeek = reads.some((r) => r.promptId === WEEKLY.id && weekKey(new Date(r.createdAt)) === weekKey());
   const weekly = reads.filter((r) => r.promptId === WEEKLY.id && !r.safety).slice(0, 8).reverse();
   const go = (id: string) => router.push({ pathname: '/mirror/take', params: { prompt: id } });
@@ -77,7 +78,9 @@ export default function Mirror() {
           <RNText style={{ fontFamily: font.medium, fontSize: 14, color: t.accent }}>How Kleos measures →</RNText>
         </Pressable>
         <RNText style={{ marginTop: 10, fontFamily: font.regular, fontSize: 12, lineHeight: 17, color: t.ink3 }}>
-          The video is measured, then deleted. Only the numbers and Poise’s read stay, on this phone.
+          {training
+            ? 'You’ve chosen to help train Poise, so takes are kept for rating for up to 12 months. Turn it off in You and they’re removed.'
+            : 'The video is measured, then deleted. Only the numbers and Poise’s read stay, on this phone.'}
         </RNText>
       </ScrollView>
     </Screen>

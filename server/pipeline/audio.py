@@ -113,10 +113,27 @@ def _words(dg: dict) -> list[Word]:
     return [Word(w["word"], float(w["start"]), float(w["end"]), float(w.get("confidence", 0))) for w in ws]
 
 
+# "like" is a filler only when it isn't doing a job: "I'd like to", "you like it", "looks like rain" are words, not filler.
+_LIKE_KEEPS_BEFORE = {"i", "you", "we", "they", "he", "she", "i'd", "you'd", "we'd", "they'd", "would", "to", "don't", "didn't",
+                      "doesn't", "really", "feel", "feels", "felt", "look", "looks", "looked", "seem", "seems", "sound", "sounds",
+                      "something", "nothing", "anything", "just", "much", "more", "most", "who", "people", "kids", "also"}
+_LIKE_KEEPS_AFTER = {"to", "it", "this", "that", "them", "him", "her", "me", "us", "you", "a", "an", "the", "my", "your", "our", "their", "his"}
+
+
+def _filler_like(toks: list[str], i: int) -> bool:
+    before = toks[i - 1] if i else ""
+    after = toks[i + 1] if i + 1 < len(toks) else ""
+    if before in _LIKE_KEEPS_BEFORE or after in _LIKE_KEEPS_AFTER:
+        return False
+    return True
+
+
 def _find_phrases(words: list[Word], phrases: set[str]) -> list[dict]:
     hits = []
     toks = [re.sub(r"[^a-z']", "", w.word.lower()) for w in words]
     for i, t in enumerate(toks):
+        if t == "like" and "like" in phrases and not _filler_like(toks, i):
+            continue
         if t in phrases:
             hits.append({"word": t, "t": round(words[i].start, 2)})
         if i + 1 < len(toks):
@@ -173,12 +190,16 @@ def analyse(wav_path: str, dg: dict) -> VoiceFacts:
             end_i = min(len(words) - 1, idx + n - 1)
             w = words[end_i]
             idx += n
-            t_end = w.end
-            a = f0[(times >= t_end - 0.6) & (times < t_end - 0.3)]
-            b = f0[(times >= t_end - 0.3) & (times <= t_end)]
+            # the last word's own voiced frames vs the two words before it (word timings, not a fixed window, so
+            # a short final word or Deepgram padding the end with silence doesn't hide the rise)
+            prev_i = max(idx - n, end_i - 2)
+            a = f0[(times >= words[prev_i].start) & (times < w.start)]
+            b = f0[(times >= w.start) & (times <= w.end + 0.15)]
             a = a[~np.isnan(a)]
-            b = b[~np.isnan(b)]
-            if len(a) >= 3 and len(b) >= 3 and np.median(b) > np.median(a) * 1.06:
+            b = b[~np.isnan(b)][-4:]  # the last voiced frames of the final word
+            # 3.5 semitones up from the words before: tuned on evals/calibrate_voice.py (questions read as statements
+            # rose 4–14 st; plain statements stayed under 3.5 bar one)
+            if len(a) >= 3 and len(b) >= 2 and 12 * np.log2(np.median(b) / np.median(a)) > 3.5:
                 upward += 1
                 upward_idx.add(si)
 
@@ -263,9 +284,17 @@ def analyse(wav_path: str, dg: dict) -> VoiceFacts:
     timeline, fades, louds = [], 0, []
     for si, t0, t1, text, n in spans:
         seg = rms_full[(rms_t >= t0) & (rms_t <= t1)]
-        tail = rms_full[(rms_t >= t1 - 0.5) & (rms_t <= t1)]
         loud = float(np.mean(seg) / rms_mean) if len(seg) else 1.0
-        fade = bool(len(seg) > 4 and len(tail) and np.mean(tail) < 0.45 * np.mean(seg))
+        # compare the last ~0.4 s of *voiced* frames with the sentence's voiced level; the silence a transcript
+        # pads onto the last word, and the normal drop of a final consonant, shouldn't count as fading out
+        fade = False
+        if len(seg) > 8:
+            seg_t = rms_t[(rms_t >= t0) & (rms_t <= t1)]
+            on = seg > 0.08 * np.percentile(seg, 90)  # low enough that a real fade stays in; true silence drops out
+            voiced, voiced_t = seg[on], seg_t[on]
+            if len(voiced) > 8:
+                tail = voiced[voiced_t >= voiced_t[-1] - 0.4]
+                fade = bool(len(tail) >= 3 and np.mean(tail) < 0.45 * np.mean(voiced))
         fades += int(fade)
         louds.append(loud)
         tone = f0[(times >= t0) & (times <= t1)]
