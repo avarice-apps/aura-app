@@ -128,15 +128,22 @@ def test_paid_minutes_are_capped():
     acc = accounts.get(acc["id"])
     a = accounts.live_allowance(acc)
     assert a["charge"] == "minutes"
-    # one call can't be charged more than its own ceiling, so spend the week in several calls
-    left = accounts.LIMITS["plus"]["live_s"] - 20
-    while left > 0:
-        chunk = min(left, accounts.LIMITS["plus"]["call_s"])
-        accounts.charge_end(acc, a, chunk, spoke=True)
-        left -= chunk
-    with pytest.raises(accounts.Denied) as e:
-        accounts.live_allowance(acc)
-    assert e.value.reason == "minutes"
+    # a call reserves its whole allowance when it opens; the unused part comes back when it's read
+    before = accounts.remaining(acc, "live_s")
+    accounts.charge_start(acc, a)
+    assert accounts.remaining(acc, "live_s") == before - a["allow_s"]
+    accounts.charge_end(acc, a, 100, spoke=True)
+    assert accounts.remaining(acc, "live_s") == before - 100
+    # spend the week in full calls until it runs out
+    while True:
+        try:
+            a = accounts.live_allowance(acc)
+        except accounts.Denied as e:
+            assert e.reason == "minutes"
+            break
+        accounts.charge_start(acc, a)
+        accounts.charge_end(acc, a, a["allow_s"] + 500, spoke=True)  # can't be charged past its own allowance
+    assert accounts.remaining(acc, "live_s") < 45
 
 
 def test_feature_tiers():

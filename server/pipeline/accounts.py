@@ -11,6 +11,7 @@ How identity works:
 """
 from __future__ import annotations
 
+import contextvars
 import hashlib
 import hmac
 import json
@@ -95,6 +96,7 @@ def db() -> sqlite3.Connection:
         create table if not exists guests_by_ip (ip text not null, at real not null);
         create index if not exists guests_ip on guests_by_ip(ip, at);
         create table if not exists rc_events (id text primary key, at real);
+        create table if not exists apple_nonces (hash text primary key, expires real not null, used real);
         """
     )
     return c
@@ -125,7 +127,7 @@ def subject_of(acc: dict) -> str:
 
 # ---------------------------------------------------------------- guests and tokens
 
-GUESTS_PER_IP_DAY = _int_env("KLEOS_GUESTS_PER_IP_DAY", 25)
+GUESTS_PER_IP_DAY = _int_env("KLEOS_GUESTS_PER_IP_DAY", 400)  # shared networks (campus, carrier NAT) are common
 
 
 def guest(subject: str | None, ip: str) -> tuple[str, dict]:
@@ -208,8 +210,10 @@ def _attach(c: sqlite3.Connection, current: dict | None, field: str, value: str,
         return _issue(c, owner["id"]), dict(owner), False
     if owner:
         # Same person, new phone (or they saved it before). Bring a paid plan bought as a guest along with them.
+        # It moves, it isn't copied: the guest account the phone was using drops to Free.
         if current and current.get("plan") in ("plus", "black") and (current.get("plan_until") or 0) > (owner["plan_until"] or 0):
-            c.execute("update accounts set plan=?, plan_until=?, plan_source=? where id=?", (current["plan"], current["plan_until"], "transfer", owner["id"]))
+            c.execute("update accounts set plan=?, plan_until=?, plan_source=?, plan_checked=? where id=?", (current["plan"], current["plan_until"], "transfer", time.time(), owner["id"]))
+            c.execute("update accounts set plan='free', plan_until=null, plan_source='transferred', plan_checked=? where id=?", (time.time(), current["id"]))
         token = _issue(c, owner["id"])
         return token, dict(c.execute("select * from accounts where id=?", (owner["id"],)).fetchone()), True
     if current:
@@ -272,8 +276,11 @@ def email_start(email: str) -> dict:
     now = time.time()
     with db() as c:
         r = c.execute("select * from email_codes where email=?", (email,)).fetchone()
-        if r and r["sent_at"] and now - r["sent_at"] < 45:
-            raise PermissionError("A code is on its way. Wait a minute before asking again.")
+        if r and r["sent_at"] and now - r["sent_at"] < 45 and r["code_hash"]:
+            if r["expires"] > now and r["tries"] < CODE_TRIES:
+                # Asked twice (or on the app and then the site): the code already sent still works. Go straight to it.
+                return {"sent": True, "already": True}
+            raise PermissionError("Wait a minute, then ask for a new code.")
         ws, wn = (r["window_start"], r["window_sends"]) if r else (now, 0)
         if now - (ws or 0) > 3600:
             ws, wn = now, 0
@@ -341,7 +348,7 @@ def verify_apple(identity_token: str) -> dict:
         head = jwt.get_unverified_header(identity_token)
         jwk = next(k for k in _apple_keys()["keys"] if k["kid"] == head.get("kid"))
         key = jwt.PyJWK(jwk).key
-        auds = [a.strip() for a in os.environ.get("APPLE_AUDIENCES", "com.avarice.kleos,host.exp.Exponent").split(",") if a.strip()]
+        auds = [a.strip() for a in os.environ.get("APPLE_AUDIENCES", "com.avarice.kleos").split(",") if a.strip()]
         claims = jwt.decode(identity_token, key=key, algorithms=["RS256"], audience=auds, issuer=APPLE_ISS)
     except StopIteration:
         raise ValueError("Apple sign-in couldn't be checked. Try again.")
@@ -353,8 +360,33 @@ def verify_apple(identity_token: str) -> dict:
     return claims
 
 
-def apple_sign_in(identity_token: str, current: dict | None, name: str = "") -> tuple[str, dict, bool]:
+NONCE_TTL = 10 * 60
+
+
+def apple_nonce() -> str:
+    """A single-use nonce for Sign in with Apple. The app passes it to Apple; Apple puts it in the token."""
+    n = secrets.token_urlsafe(24)
+    with db() as c:
+        c.execute("delete from apple_nonces where expires < ?", (time.time(),))
+        c.execute("insert into apple_nonces values (?,?,?)", (_hash(n), time.time() + NONCE_TTL, None))
+    return n
+
+
+def _use_nonce(token_nonce: str, nonce: str) -> bool:
+    """The token must carry the nonce we issued (Apple may hand it back as-is or SHA-256 hashed), used once."""
+    if not nonce or not token_nonce:
+        return False
+    if not (hmac.compare_digest(token_nonce.encode(), nonce.encode()) or hmac.compare_digest(token_nonce.encode(), hashlib.sha256(nonce.encode()).hexdigest().encode())):
+        return False
+    with db() as c:
+        r = c.execute("update apple_nonces set used=? where hash=? and used is null and expires > ?", (time.time(), _hash(nonce), time.time()))
+        return r.rowcount == 1
+
+
+def apple_sign_in(identity_token: str, current: dict | None, name: str = "", nonce: str = "") -> tuple[str, dict, bool]:
     claims = verify_apple(identity_token)
+    if not _use_nonce(str(claims.get("nonce") or ""), nonce):
+        raise ValueError("Apple sign-in couldn't be checked. Try again.")
     email = str(claims.get("email") or "").lower() or None
     with _lock, db() as c:
         token, acc, switched = _attach(c, current, "apple_sub", claims["sub"], email if email and EMAIL_RE.match(email) else None)
@@ -394,22 +426,47 @@ def _rc_fetch(account_id: str) -> tuple[str, float | None] | None:
     return best, until
 
 
+_refreshing: set = set()
+
+
+def _refresh_now(account_id: str) -> tuple[str, float | None] | None:
+    got = _rc_fetch(account_id)
+    with db() as c:
+        if got:
+            c.execute("update accounts set plan=?, plan_until=?, plan_source=?, plan_checked=? where id=?", (got[0], got[1], "revenuecat", time.time(), account_id))
+        else:
+            c.execute("update accounts set plan_checked=? where id=?", (time.time(), account_id))
+    return got
+
+
+def _refresh_later(account_id: str) -> None:
+    if account_id in _refreshing or not os.environ.get("REVENUECAT_SECRET_KEY"):
+        return
+    _refreshing.add(account_id)
+
+    def run():
+        try:
+            _refresh_now(account_id)
+        finally:
+            _refreshing.discard(account_id)
+
+    threading.Thread(target=run, daemon=True).start()
+
+
 def plan_of(acc: dict, refresh: bool = False) -> str:
+    """The plan right now. A request never waits on RevenueCat: a stale paid plan is re-checked in the background
+    (the webhook normally keeps it current). refresh=True checks now; call that off the event loop."""
     plan = acc.get("plan") or "free"
     until = acc.get("plan_until")
     active = plan in ("plus", "black") and (until is None or until + GRACE_S > time.time())
-    stale = refresh or (plan != "free" and not active) or (time.time() - (acc.get("plan_checked") or 0) > 6 * 3600 and plan != "free")
-    if stale and (refresh or time.time() - (acc.get("plan_checked") or 0) > 300):
-        got = _rc_fetch(acc["id"])
+    if refresh:
+        got = _refresh_now(acc["id"])
         if got:
             plan, until = got
-            with db() as c:
-                c.execute("update accounts set plan=?, plan_until=?, plan_source=?, plan_checked=? where id=?", (plan, until, "revenuecat", time.time(), acc["id"]))
             acc.update(plan=plan, plan_until=until)
             active = plan != "free"
-        else:
-            with db() as c:
-                c.execute("update accounts set plan_checked=? where id=?", (time.time(), acc["id"]))
+    elif plan != "free" and (not active or time.time() - (acc.get("plan_checked") or 0) > 6 * 3600):
+        _refresh_later(acc["id"])
     return plan if active else "free"
 
 
@@ -518,16 +575,37 @@ def require_tier(acc: dict, feature: str) -> str:
     return plan
 
 
+# Spends made while handling one request. If that request ends in an error (a 4xx/5xx or an exception), the
+# middleware gives them back, so nobody pays for "we couldn't hear you" or a failed upstream call.
+PENDING: contextvars.ContextVar[list | None] = contextvars.ContextVar("kleos_pending_spends", default=None)
+
+
 def spend(acc: dict, kind: str) -> None:
     """Count one use of a metered feature, or refuse."""
     plan = plan_of(acc)
     if remaining(acc, kind, plan) < 1:
         raise Denied(kind, MESSAGES.get(kind, "That's this week's allowance."))
     add_use(acc["id"], kind, 1)
+    pending = PENDING.get()
+    if pending is not None:
+        pending.append((acc["id"], kind))
 
 
 def refund(acc: dict, kind: str) -> None:
+    pending = PENDING.get()
+    if pending is not None and (acc["id"], kind) in pending:
+        pending.remove((acc["id"], kind))  # given back here, so the middleware won't give it back again
     add_use(acc["id"], kind, -1)
+
+
+def settle_request(failed: bool) -> None:
+    pending = PENDING.get()
+    if not pending:
+        return
+    if failed:
+        for aid, kind in pending:
+            add_use(aid, kind, -1)
+    pending.clear()
 
 
 def live_allowance(acc: dict, *, onboarding: bool = False, daily: bool = False, poise: bool = False) -> dict:
@@ -552,7 +630,8 @@ def live_allowance(acc: dict, *, onboarding: bool = False, daily: bool = False, 
 
 
 def charge_start(acc: dict, allowance: dict) -> None:
-    """Counted when the call opens (uses), so a crash can't make calls free. Minutes are counted at the end."""
+    """Counted when the call opens, so a crash or a client that never hangs up can't make calls free.
+    Paid minutes are reserved in full (the call's allow_s) and the unused part is returned by charge_end."""
     aid, ch = acc["id"], allowance["charge"]
     if ch == "onboarding":
         add_use(aid, "onboarding", 1, "all")
@@ -562,13 +641,16 @@ def charge_start(acc: dict, allowance: dict) -> None:
         add_use(aid, "calls", 1)
     elif ch == "credit":
         add_use(aid, "credits", 1, "all")
+    elif ch == "minutes":
+        add_use(aid, "live_s", float(allowance["allow_s"]))  # reserved now; what wasn't used comes back at the end
 
 
 def charge_end(acc: dict, allowance: dict, seconds: float, spoke: bool) -> None:
     """When the call is read back: paid plans pay in seconds; a call where nothing was said is given back."""
     aid, ch = acc["id"], allowance["charge"]
     if ch == "minutes":
-        add_use(aid, "live_s", max(0.0, min(seconds, LIMITS.get(allowance["plan"], LIMITS["plus"])["call_s"] + 60)))
+        used_s = max(0.0, min(float(seconds), float(allowance["allow_s"])))
+        add_use(aid, "live_s", used_s - float(allowance["allow_s"]))
     elif not spoke:
         if ch == "call":
             add_use(aid, "calls", -1)
@@ -607,18 +689,26 @@ def status(acc: dict, refresh: bool = False) -> dict:
 
 # ---------------------------------------------------------------- the site's Members page
 
+def _count(v) -> int:
+    if isinstance(v, bool):
+        return 0
+    if isinstance(v, (int, float)) and v == v:
+        return max(0, min(int(v), 1_000_000))
+    return int(v) if isinstance(v, str) and v.isdigit() and len(v) < 8 else 0
+
+
 def save_summary(acc: dict, body: dict) -> None:
     """A small summary the app sends (Index, streak, recent reads) so Members on the site can show it."""
     keep = {
-        "index": body.get("index") if isinstance(body.get("index"), (int, float)) else None,
+        "index": body.get("index") if isinstance(body.get("index"), (int, float)) and not isinstance(body.get("index"), bool) and 0 <= body.get("index") <= 100 else None,
         "tier": str(body.get("tier") or "")[:20],
-        "streak": int(body.get("streak") or 0) if str(body.get("streak") or "0").isdigit() else 0,
-        "sessions": int(body.get("sessions") or 0) if str(body.get("sessions") or "0").isdigit() else 0,
-        "laurels": int(body.get("laurels") or 0) if str(body.get("laurels") or "0").isdigit() else 0,
+        "streak": _count(body.get("streak")),
+        "sessions": _count(body.get("sessions")),
+        "laurels": _count(body.get("laurels")),
         "archetype": str(body.get("archetype") or "")[:40],
         "recent": [
             {"title": str(r.get("title") or "")[:60], "rating": int(r["rating"]) if isinstance(r.get("rating"), (int, float)) else None, "at": str(r.get("at") or "")[:24]}
-            for r in (body.get("recent") or [])[:8]
+            for r in (body.get("recent") if isinstance(body.get("recent"), list) else [])[:8]
             if isinstance(r, dict)
         ],
     }

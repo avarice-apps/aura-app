@@ -170,21 +170,22 @@ def test_no_audio_means_not_measured_not_neutral(monkeypatch):
 
 
 def test_straight_voice_may_not_swear(monkeypatch):
+    """A straight voice that swears is rewritten on its own by the fast model; the findings stay as they were."""
     bad = _fake_eval()
-    bad["straight"]["script"] = "That was shit, honestly."
+    bad["straight"]["script"] = "That was shit, honestly. Next time, say the number first and stop."
+    calls = []
+
     async def fake_call(model, system, user, **kw):
-        return bad
-    sid = _played_session()
-    assert "straight voice" in converse.evaluate.__code__.co_consts.__repr__() or True
-    err = None
-    # run the evaluator's own check function against the bad output
-    captured = {}
-    async def capture(model, system, user, **kw):
-        captured["check"] = kw["check"]
-        return _fake_eval()
-    monkeypatch.setattr(converse, "_json_call", capture)
-    asyncio.run(converse.evaluate(sid))
-    assert "straight voice" in captured["check"](bad)
+        calls.append(model)
+        if model == converse.M_EVAL:
+            return json.loads(json.dumps(bad))
+        fixed = {"verdict": "It went badly.", "archetype_line": "The Hedge", "script": "That went badly. Next time, say the number first and stop there. One sentence, no question tag, and let them answer."}
+        assert kw["check"](fixed) is None and kw["check"]({"verdict": "x", "script": "shit"}) is not None
+        return fixed
+    monkeypatch.setattr(converse, "_json_call", fake_call)
+    out = asyncio.run(converse.evaluate(_played_session()))
+    assert calls == [converse.M_EVAL, converse.M_CHAR]  # one read, one voice rewrite, no second read
+    assert "shit" not in out["voices"]["straight"]["script"] and out["change"] == bad["change"]
 
 
 def test_resumed_read_judges_only_the_new_turns(monkeypatch):

@@ -27,6 +27,7 @@ def sms(monkeypatch):
     monkeypatch.setenv("TWILIO_FROM", "+15550001111")
     monkeypatch.setenv("TWILIO_AUTH_TOKEN", "tok_test_123")
     monkeypatch.setenv("KLEOS_DIRECT_WEBHOOK_URL", URL)
+    monkeypatch.setenv("KLEOS_SIGNING_KEY", "k" * 40)
 
 
 def person(client, plan=None):
@@ -158,6 +159,7 @@ def test_sendblue_path_secret_and_groups(client, monkeypatch):
     monkeypatch.setenv("KLEOS_DIRECT_CHANNEL", "imessage")
     monkeypatch.setenv("SENDBLUE_FROM", "+15550004444")
     monkeypatch.setenv("SENDBLUE_WEBHOOK_TOKEN", "x" * 32)
+    monkeypatch.setenv("KLEOS_SIGNING_KEY", "k" * 40)
     got = []
     monkeypatch.setattr(direct, "handle", lambda msg, reply: got.append(msg))
     body = {"content": "hi", "from_number": "+15551112222", "message_handle": "h1", "is_outbound": False}
@@ -180,3 +182,61 @@ def test_context_only_keeps_what_was_allowed_and_deletion(client, sms):
     with direct.db() as c:
         assert c.execute("select count(*) from links").fetchone()[0] == 0
         assert c.execute("select count(*) from context").fetchone()[0] == 0
+
+
+def test_needs_a_signing_key(client, sms, monkeypatch):
+    monkeypatch.delenv("KLEOS_SIGNING_KEY")
+    h, _ = person(client, "black")
+    assert client.get("/direct/status", headers=h).json()["enabled"] is False
+    assert client.post("/direct/link", headers=h).status_code == 404
+
+
+def test_codes_are_eight_digits_and_guessing_is_throttled(client, sms):
+    hb, _ = person(client, "black")
+    code = client.post("/direct/link", headers=hb).json()["code"]
+    assert len(code) == 8 and code.isdigit()
+    out = Outbox()
+    guesser = "+15550006666"
+    for i in range(12):
+        run(direct._process(direct.Inbound(event_id=f"g{i}", sender=guesser, text=f"LINK {10000000 + i}"), out))
+    assert len(out.sent) == 1  # one "didn't work" a day, then silence
+    # past the per-sender limit even the right code isn't tried from that number today
+    run(direct._process(direct.Inbound(event_id="g-right", sender=guesser, text=f"LINK {code}"), out))
+    assert client.get("/direct/status", headers=hb).json()["linked"] is False
+    # someone else's real number still links
+    run(direct._process(direct.Inbound(event_id="g-ok", sender="+15550007777", text=f"LINK {code}"), out))
+    assert out.sent[-1][1].startswith("Linked.")
+
+
+def test_unlinked_numbers_get_one_reply_a_day_and_stop_is_silent(client, sms, monkeypatch):
+    out = Outbox()
+    for i in range(5):
+        run(direct._process(direct.Inbound(event_id=f"u{i}", sender="+15550008888", text="hello?"), out))
+        run(direct._process(direct.Inbound(event_id=f"h{i}", sender="+15550008888", text="HELP"), out))
+    assert len(out.sent) == 1
+    hb, _ = person(client, "black")
+    code = client.post("/direct/link", headers=hb).json()["code"]
+    run(direct._process(direct.Inbound(event_id="s0", sender="+15550009999", text=f"LINK {code}"), out))
+    n = len(out.sent)
+    run(direct._process(direct.Inbound(event_id="s1", sender="+15550009999", text="STOP"), out))
+    assert len(out.sent) == n  # the carrier confirms opt-outs; we say nothing
+    assert client.get("/direct/status", headers=hb).json()["linked"] is False
+
+
+def test_every_outgoing_text_counts_against_the_ceiling(client, sms, monkeypatch):
+    monkeypatch.setattr(direct, "OUT_DAILY_CAP", 3)
+    out = Outbox()
+    for i in range(10):
+        run(direct._process(direct.Inbound(event_id=f"c{i}", sender=f"+1555001{i:04d}", text="hi"), out))
+    assert len(out.sent) == 3
+
+
+def test_help_counts_toward_the_rate_limit(client, sms, monkeypatch):
+    monkeypatch.setattr(direct, "PER_HOUR", 2)
+    hb, _ = person(client, "black")
+    code = client.post("/direct/link", headers=hb).json()["code"]
+    out = Outbox()
+    run(direct._process(direct.Inbound(event_id="hl0", sender="+15550001234", text=f"LINK {code}"), out))
+    for i in range(6):
+        run(direct._process(direct.Inbound(event_id=f"hl{i+1}", sender="+15550001234", text="help"), out))
+    assert len(out.sent) == 1 + 2 + 1  # linked, two answers, one "a lot of messages"

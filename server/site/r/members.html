@@ -362,7 +362,9 @@ V.dispatch = () => `<div class="ph1 noprint"><div><h1>Dispatch</h1><div class="d
 // ---------- a real member (signed in with an emailed code; the session is an httpOnly cookie) ----------
 let REAL = null;
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' })[c]);
-const api = (path, body, extra={}) => fetch(path, { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: body ? { 'Content-Type':'application/json', ...extra } : extra, body: body ? JSON.stringify(body) : undefined });
+// Every write says it comes from this page (x-kleos-web): the server refuses cookie-only POSTs without it, which
+// stops another site from submitting forms with a member's cookie.
+const api = (path, body, extra={}) => fetch(path, { method: body ? 'POST' : 'GET', credentials: 'same-origin', headers: body ? { 'Content-Type':'application/json', 'x-kleos-web':'1', ...extra } : extra, body: body ? JSON.stringify(body) : undefined });
 async function loadAccount() {
   try {
     const r = await api('/account');
@@ -478,7 +480,7 @@ $('#ef').onsubmit = async e => {
       const j = await r.json().catch(()=>({}));
       if (!r.ok) { m.textContent = j.detail || 'Couldn’t send a code. Try again in a minute.'; return; }
       pendingEmail=v; $('#ee').hidden=true; $('#ec').hidden=false; $('#ec').focus(); b.textContent='Sign in';
-      m.textContent=`We sent a six-digit code to ${v}. It works for 15 minutes.`;
+      m.textContent = j.already ? `We just sent a code to ${v}. Use that one: it works for 15 minutes.` : `We sent a six-digit code to ${v}. It works for 15 minutes.`;
     } catch (_) { m.textContent='Couldn’t reach Kleos. Try again.'; }
     finally { b.disabled=false; }
     return;
@@ -487,7 +489,7 @@ $('#ef').onsubmit = async e => {
   if (code.length!==6) { m.textContent='The code is six digits.'; return; }
   b.disabled=true; m.textContent='Checking…';
   try {
-    const r = await api('/auth/email/verify', { email: pendingEmail, code }, { 'x-kleos-web':'1' });
+    const r = await api('/auth/email/verify', { email: pendingEmail, code });
     const j = await r.json().catch(()=>({}));
     if (!r.ok) { m.textContent = j.detail || 'That code didn’t work.'; $('#ec').value=''; return; }
     const a = await loadAccount();

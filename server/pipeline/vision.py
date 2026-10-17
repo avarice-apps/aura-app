@@ -134,7 +134,7 @@ async def rate_moment(video: str, note: str = "", tone: str = "real") -> dict:
     words = ""
     try:
         wav = video + ".wav"
-        subprocess.run(["ffmpeg", "-y", "-loglevel", "error", "-i", video, "-ac", "1", "-ar", "16000", wav], check=True)
+        await asyncio.to_thread(subprocess.run, ["ffmpeg", "-y", "-loglevel", "error", "-i", video, "-ac", "1", "-ar", "16000", wav], check=True)
         dg = await audio.transcribe(wav)
         words = (dg.get("results", {}).get("channels", [{}])[0].get("alternatives", [{}])[0].get("transcript", "") or "").strip()
     except Exception:

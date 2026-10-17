@@ -382,6 +382,7 @@ export type Tribunal = {
   expires: number | null;
   seats: Partial<Record<TribunalSeat, { name: string; side: string; left: boolean }>>;
   audience: number;
+  watchers: boolean;
   rules: { what: string; flow: string; who_sees: string; kept: string; fair: string };
   me: { seat: TribunalSeat | 'audience'; host: boolean; submitted: string[] } | null;
   submissions?: { id: string; seat: TribunalSeat; kind: 'opening' | 'rebuttal'; text: string; words: number }[];
@@ -389,7 +390,7 @@ export type Tribunal = {
   result?: TribunalResult;
 };
 
-export async function tribunalCreate(a: { format: TribunalFormat; topic: string; name: string; side?: string }): Promise<Tribunal> {
+export async function tribunalCreate(a: { format: TribunalFormat; topic: string; name: string; side?: string; watchers?: boolean }): Promise<Tribunal> {
   return postJSON<Tribunal>('/tribunal', { ...a, tone: tone() });
 }
 export async function tribunalGet(code: string): Promise<Tribunal> {
@@ -528,10 +529,10 @@ export function reportMic(sessionId: string, diag: Record<string, unknown>) {
   call(`/live/${sessionId}/mic`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(diag) }).catch(() => {});
 }
 
-export async function liveFinish(sessionId: string, conversationId: string): Promise<Evaluation & { scriptAudio: AudioSrc }> {
+export async function liveFinish(sessionId: string, conversationId: string, frames = false): Promise<Evaluation & { scriptAudio: AudioSrc }> {
   // The read can take a while (recording analysis + evaluation). The server answers within ~25s,
-  // or says it's still working; then poll until it's ready.
-  let e = await postJSON<Evaluation & { script_audio?: string; pending?: boolean }>(`/live/${sessionId}/finish`, { conversation_id: conversationId });
+  // or says it's still working; then poll until it's ready. `frames`: camera stills are on their way.
+  let e = await postJSON<Evaluation & { script_audio?: string; pending?: boolean }>(`/live/${sessionId}/finish`, { conversation_id: conversationId, frames });
   const until = Date.now() + 180000;
   while (e.pending && Date.now() < until) {
     await sleep(1000);
@@ -791,7 +792,7 @@ export async function answerChallenge(code: string, rating: number, verdict: str
 
 export type SignedIn = { token?: string; account: Account; switched: boolean };
 
-export async function emailStart(email: string): Promise<{ sent: boolean; dev_code?: string }> {
+export async function emailStart(email: string): Promise<{ sent: boolean; already?: boolean; dev_code?: string }> {
   return postJSON('/auth/email/start', { email });
 }
 
@@ -802,8 +803,14 @@ export async function emailVerify(email: string, code: string): Promise<SignedIn
   return r;
 }
 
-export async function appleSignIn(identityToken: string, name?: string): Promise<SignedIn> {
-  const r = await postJSON<SignedIn>('/auth/apple', { identity_token: identityToken, name: name ?? '' });
+/** Sign in with Apple, step one: a single-use nonce from the server for Apple to put inside its signed token. */
+export async function appleNonce(): Promise<string> {
+  const r = await postJSON<{ nonce: string }>('/auth/apple/nonce', {});
+  return r.nonce;
+}
+
+export async function appleSignIn(identityToken: string, nonce: string, name?: string): Promise<SignedIn> {
+  const r = await postJSON<SignedIn>('/auth/apple', { identity_token: identityToken, nonce, name: name ?? '' });
   if (r.token) await adopt(r.token, r.account);
   return r;
 }

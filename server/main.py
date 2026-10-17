@@ -8,6 +8,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import json
+import logging
 import os
 import re
 import secrets
@@ -65,18 +66,88 @@ async def _denied(request: Request, exc: accounts.Denied):
 # ElevenLabs' /llm calls are exempt (authenticated with the agent secret and bounded by the live session).
 _EXPENSIVE = ("/read", "/fit", "/wardrobe", "/style", "/pressure", "/silence", "/scan", "/live/", "/session/", "/situations/", "/lesson", "/ledger", "/poise/", "/tribunal", "/direct/link", "/portrait", "/duel", "/moment", "/profile", "/clip/", "/redeem", "/challenge", "/auth/", "/table", "/waitlist")
 _LIMITS = ((120, 600), (1000, 86400))  # per caller: 120 per 10 minutes, 1000 per day
-_AUTH_LIMITS = ((20, 600), (100, 86400))  # sign-in attempts per network
+_AUTH_LIMITS = ((30, 600), (200, 86400))  # sign-in attempts per network
+# New installs per network. Campus wifi and mobile carriers put thousands of phones behind one address, so this is
+# generous; it only stops a script minting accounts for their free calls.
+_GUEST_LIMITS = ((60, 600), (400, 86400))
 _hits: dict[str, list[float]] = {}
+
+
+_MAX_BODY = {"/poise/draft/extract": 14 * 1024 * 1024, "/fit": 40 * 1024 * 1024, "/wardrobe": 60 * 1024 * 1024, "/profile": 40 * 1024 * 1024}
+_MAX_MEDIA = 250 * 1024 * 1024  # recorded takes and clips
+_MAX_JSON = 1024 * 1024
+_MEDIA_PATHS = ("/read", "/pressure", "/silence", "/scan", "/duel", "/moment", "/session/", "/live/", "/ledger", "/clip/", "/train/")
+
+
+def _limit_key(request: Request, auth_path: bool) -> str:
+    """Bucket by the verified account, or by network for sign-in and anything without a valid token.
+    A made-up token never gets a fresh bucket."""
+    if auth_path:
+        return "a:" + _client_ip(request)
+    tok = _token(request)
+    acc = accounts.from_token(tok) if tok else None
+    return ("acct:" + acc["id"]) if acc else ("ip:" + _client_ip(request))
+
+
+def _prune_hits(now: float) -> None:
+    for k in [k for k, v in _hits.items() if not v or now - v[-1] > 86400]:
+        _hits.pop(k, None)
+    if len(_hits) > 50000:  # still too many live buckets: drop the least recently used
+        for k, _ in sorted(_hits.items(), key=lambda kv: kv[1][-1])[: len(_hits) - 40000]:
+            _hits.pop(k, None)
+
+
+class _RedactSecrets(logging.Filter):
+    """The Sendblue webhook carries its secret in the path; keep it out of the access log."""
+    _re = re.compile(r"(/direct/sendblue/)[^\s/?]+")
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if isinstance(record.args, tuple):
+            record.args = tuple(self._re.sub(r"\1[redacted]", a) if isinstance(a, str) else a for a in record.args)
+        elif isinstance(record.msg, str):
+            record.msg = self._re.sub(r"\1[redacted]", record.msg)
+        return True
+
+
+logging.getLogger("uvicorn.access").addFilter(_RedactSecrets())
+
+
+@app.middleware("http")
+async def refund_failed(request: Request, call_next):
+    """A metered request that fails doesn't use up an allowance (see accounts.PENDING)."""
+    accounts.PENDING.set([])
+    try:
+        resp = await call_next(request)
+    except BaseException:
+        accounts.settle_request(failed=True)
+        raise
+    accounts.settle_request(failed=resp.status_code >= 400)
+    return resp
 
 
 @app.middleware("http")
 async def rate_limit(request: Request, call_next):
     path = request.url.path
-    if request.method == "POST" and path.startswith(_EXPENSIVE) and not path.startswith("/llm/"):
-        tok = _token(request)
+    # Sizes: refuse oversized bodies before reading them (when the client says how big they are).
+    if request.method == "POST":
+        try:
+            size = int(request.headers.get("content-length") or 0)
+        except ValueError:
+            size = 0
+        cap = next((v for k, v in _MAX_BODY.items() if path.startswith(k)), _MAX_MEDIA if path.startswith(_MEDIA_PATHS) else _MAX_JSON)
+        if size > cap and not path.startswith(("/direct/", "/llm/", "/revenuecat")):
+            return JSONResponse({"detail": "That's too big to send."}, status_code=413)
+        # The site signs in with a cookie. A cookie-only request must come from our own page (it sends this header),
+        # so another site can't post as the person even if a browser relaxes SameSite.
+        if request.cookies.get("kleos_session") and not request.headers.get("authorization") and request.headers.get("x-kleos-web") != "1" and not path.startswith(("/direct/", "/llm/", "/revenuecat", "/waitlist")):
+            return JSONResponse({"detail": "Refused."}, status_code=403)
+    limited = (request.method == "POST" and path.startswith(_EXPENSIVE)) or (request.method == "GET" and path.startswith("/tribunal/"))
+    if limited and not path.startswith("/llm/"):
         auth_path = path.startswith(("/auth/", "/waitlist"))
-        key = ("a:" if auth_path else "") + (("t:" + hashlib.sha256(tok.encode()).hexdigest()[:24]) if tok and not auth_path else "ip:" + _client_ip(request))
-        limits = _AUTH_LIMITS if auth_path else _LIMITS
+        key = _limit_key(request, auth_path)
+        if path == "/auth/guest":
+            key = "g:" + _client_ip(request)
+        limits = _GUEST_LIMITS if path == "/auth/guest" else _AUTH_LIMITS if auth_path else _LIMITS
         now = time.time()
         hits = [t for t in _hits.get(key, []) if now - t < limits[-1][1]]
         for n, window in limits:
@@ -84,9 +155,8 @@ async def rate_limit(request: Request, call_next):
                 return JSONResponse({"detail": "Slow down a little. Try again in a few minutes."}, status_code=429)
         hits.append(now)
         _hits[key] = hits
-        if len(_hits) > 50000:  # keep memory bounded
-            for k in list(_hits)[:10000]:
-                _hits.pop(k, None)
+        if len(_hits) > 50000:
+            _prune_hits(now)
     return await call_next(request)
 
 
@@ -166,7 +236,7 @@ async def waitlist_options():
 
 @app.post("/waitlist")
 async def waitlist(request: Request):
-    body = await request.json()
+    body = await _body(request)
     email = str(body.get("email", "")).strip().lower()[:120]
     if not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email):
         raise HTTPException(422, "That email doesn't look right.")
@@ -219,7 +289,7 @@ async def auth_guest(request: Request):
 async def auth_email_start(request: Request):
     b = await _body(request)
     try:
-        return accounts.email_start(str(b.get("email") or ""))
+        return await asyncio.to_thread(accounts.email_start, str(b.get("email") or ""))  # SMTP can take seconds
     except ValueError as e:
         raise HTTPException(422, str(e))
     except PermissionError as e:
@@ -241,12 +311,18 @@ async def auth_email_verify(request: Request):
     return _signed_in(request, token, acc, switched)
 
 
+@app.post("/auth/apple/nonce")
+async def auth_apple_nonce():
+    """Sign in with Apple, step one: a single-use nonce the app hands to Apple."""
+    return {"nonce": accounts.apple_nonce()}
+
+
 @app.post("/auth/apple")
 async def auth_apple(request: Request):
     b = await _body(request)
     current = _acct(request, required=False)
     try:
-        token, acc, switched = await asyncio.to_thread(accounts.apple_sign_in, str(b.get("identity_token") or ""), current, str(b.get("name") or ""))
+        token, acc, switched = await asyncio.to_thread(accounts.apple_sign_in, str(b.get("identity_token") or ""), current, str(b.get("name") or ""), str(b.get("nonce") or ""))
     except ValueError as e:
         raise HTTPException(422, str(e))
     return _signed_in(request, token, acc, switched)
@@ -262,10 +338,23 @@ async def auth_logout(request: Request):
     return resp
 
 
+_refreshed: dict[str, float] = {}
+
+
+async def _status(acc: dict, refresh: bool) -> dict:
+    """The account, asking RevenueCat directly only when asked, at most every 30 s, and never on the event loop."""
+    if refresh and time.time() - _refreshed.get(acc["id"], 0) > 30:
+        _refreshed[acc["id"]] = time.time()
+        if len(_refreshed) > 20000:
+            _refreshed.clear()
+        return await asyncio.to_thread(accounts.status, acc, True)
+    return accounts.status(acc)
+
+
 @app.get("/account")
 async def account_get(request: Request, refresh: int = 0):
     acc = _acct(request)
-    out = accounts.status(acc, refresh=bool(refresh))
+    out = await _status(acc, bool(refresh))
     out["summary"] = accounts.summary(acc)
     return JSONResponse(out, headers={"Cache-Control": "no-store"})
 
@@ -291,7 +380,7 @@ async def account_summary(request: Request):
 async def account_plan_refresh(request: Request):
     """After a purchase or restore: ask RevenueCat directly instead of waiting for the webhook."""
     acc = _acct(request)
-    return accounts.status(acc, refresh=True)
+    return await _status(acc, True)
 
 
 @app.post("/account/plan/dev")
@@ -349,7 +438,7 @@ async def _save(upload: UploadFile, suffix: str) -> str:
 
 
 async def measure(video_path: str, with_face: bool = True, face_mesh: bool = True) -> tuple[dict, dict]:
-    wav = audio.extract_wav(video_path)
+    wav = await asyncio.to_thread(audio.extract_wav, video_path)  # ffmpeg off the event loop: live calls share it
     dg_task = audio.transcribe(wav)
     face_task = asyncio.to_thread(face.analyse, video_path, 6.0, face_mesh) if with_face else None
     dg = await dg_task
@@ -386,25 +475,18 @@ async def read(
         # learned perception model (if trained) blends into the rubric, weighted by how well it predicts real panels
         scores["axes"], perceived = learned.blend(scores["axes"], facts)
         scores["index"] = round(sum(scores["axes"][k] * w for k, w in rubric.AXIS_WEIGHT.items()))
-        if train_consent == "1" and subject_id:
+        # Only the opt-in recorded on the server counts, and clips are filed under this account's own subject.
+        if accounts.used(acc["id"], "train_consent", "all") >= 1:
             try:
-                train_store.save_clip(video_path=path, subject_id=subject_id, prompt_text=prompt_text, features=facts, rubric=scores)
+                train_store.save_clip(video_path=path, subject_id=accounts.subject_of(acc), prompt_text=prompt_text, features=facts, rubric=scores)
             except Exception:
                 pass
         out = await poise.verdict(prompt_text=prompt_text, voice=v, presence=p, scores=scores, history=hist, name=name, intensity=intensity, deep=deep)
         if out.get("safety"):
             return JSONResponse({"safety": True, "script": out.get("script", "")}, status_code=200)
         vid = f"v_{uuid.uuid4().hex[:12]}"
-        audio_url = None
-        if voice:
-            try:
-                mp3 = await tts.speak(out["script"])
-                fn = f"{vid}.mp3"
-                with open(os.path.join(AUDIO_DIR, fn), "wb") as f:
-                    f.write(mp3)
-                audio_url = f"{PUBLIC_URL}/audio/{fn}"
-            except Exception:
-                audio_url = None
+        # Poise's voice streams on first play from a signed link, instead of making them wait for the whole file.
+        audio_url = _voice_url(out["script"], tts.VOICE_ID) if voice else None
         tells = [{"id": f"t_{i}", **t} for i, t in enumerate(out["tells"])]
         return {
             "id": vid,
@@ -477,7 +559,7 @@ async def tts_get(text: str, voice_id: str | None = None, fast: int = 0, sig: st
     """Voice lines the server itself wrote (replies, Poise's reads). Only signed URLs are served, so this can't be
     used as a free text-to-speech service. Cached after first play; the first play streams straight from ElevenLabs."""
     import hmac as _hm
-    if len(text) > 1200 or not sig or not _hm.compare_digest(sig, _tts_sig(text, voice_id, fast)):
+    if len(text) > 1200 or not sig or not _hm.compare_digest(str(sig).encode(), _tts_sig(text, voice_id, fast).encode()):
         raise HTTPException(403)
     h = hashlib.sha1(f"{voice_id}|{fast}|{text}".encode()).hexdigest()[:16]
     p = os.path.join(AUDIO_DIR, f"tts_{h}.mp3")
@@ -688,8 +770,42 @@ def _scene_gates(acc: dict, b: dict) -> None:
         accounts.require_tier(acc, "rehearse")
 
 
+def _spoke(s: dict) -> bool:
+    return any(t["role"] == "user" and t["text"].strip() and not t.get("context") for t in s["turns"]) or bool(s.get("pending_user"))
+
+
+def _one_call_at_a_time(acc: dict) -> None:
+    """One open call per account: starting a new call hangs up the old one (from then on it only says goodbye)
+    and settles it, so two phones can't run calls side by side on one allowance, and backing out of a call
+    and starting another never gets stuck. A call that was still live is charged up to now; one that had gone
+    quiet (the app crashed, the phone died) is charged up to its last activity."""
+    now = time.time()
+    for old in [x for x in list(converse.SESSIONS.values()) if x.get("account") == acc["id"] and not x.get("settled")]:
+        live_now = not old.get("closed") and old.get("heard") and now - old.get("active_at", old["created"]) < 60
+        old["closed"] = True
+        _settle(old, _spoke(old), ended_at=now if live_now else old.get("active_at"))
+
+
+def _owned(acc: dict, sid) -> dict | None:
+    """A previous call this account may build on (run it back, retry a moment). Anyone else's is refused."""
+    if not sid:
+        return None
+    prev = converse.SESSIONS.get(str(sid))
+    if prev and prev.get("account") and prev["account"] != acc["id"]:
+        raise HTTPException(403, "That call isn't yours.")
+    return prev
+
+
 def _start_scene(acc: dict, b: dict, *, live_call: bool) -> tuple[dict, dict]:
     """Check the allowance, open the scene, count it. Returns (scene, allowance)."""
+    if b.get("resume") is not None and not isinstance(b.get("resume"), dict):
+        raise HTTPException(422, "Bad request.")
+    for k in ("lesson", "user", "profile"):
+        if b.get(k) is not None and not isinstance(b.get(k), dict):
+            b[k] = None
+    _owned(acc, b.get("attempt_of"))
+    _owned(acc, (b.get("resume") or {}).get("session"))
+    _one_call_at_a_time(acc)
     _scene_gates(acc, b)
     allowance = accounts.live_allowance(acc, onboarding=bool(b.get("goal")), daily=bool(b.get("daily_id")), poise=bool(b.get("poise")))
     try:
@@ -704,12 +820,7 @@ def _start_scene(acc: dict, b: dict, *, live_call: bool) -> tuple[dict, dict]:
         raise HTTPException(400, str(e))
     sid = out["session_id"]
     s = converse.SESSIONS[sid]
-    if b.get("resume"):
-        prev = converse.SESSIONS.get(str(b["resume"].get("session") or ""))
-        if prev and prev.get("account") and prev["account"] != acc["id"]:
-            converse.SESSIONS.pop(sid, None)
-            raise HTTPException(403, "That call isn't yours.")
-    s.update(account=acc["id"], allowance=allowance, subject=accounts.subject_of(acc))
+    s.update(account=acc["id"], allowance=allowance, subject=accounts.subject_of(acc), active_at=time.time())
     accounts.charge_start(acc, allowance)
     return out, allowance
 
@@ -719,7 +830,7 @@ def _session_for(request: Request, sid: str) -> dict:
     if s is None:
         raise HTTPException(410, "That call expired. Start a new one.")
     acc = _acct(request, required=False)
-    if s.get("account") and acc and acc["id"] != s["account"]:
+    if s.get("account") and (not acc or acc["id"] != s["account"]):
         raise HTTPException(403, "That call isn't yours.")
     return s
 
@@ -744,28 +855,41 @@ async def live_start(request: Request):
 
 
 @app.get("/live/{sid}/state")
-async def live_state(sid: str):
-    s = converse.SESSIONS.get(sid)
-    if not s:
-        raise HTTPException(410, "session expired")
+async def live_state(sid: str, request: Request):
+    s = _session_for(request, sid)
     chars = [t for t in s["turns"] if t["role"] == "char"]
     last = chars[-1] if chars else {}
     return {"done": bool(s.get("done")), "leaving": bool(last.get("leaving")), "turns": sum(1 for t in s["turns"] if t["role"] == "user"), "interest": last.get("interest"), "trust": last.get("trust")}
 
 
-def _settle(s: dict, spoke: bool) -> None:
-    """Charge the call once: seconds for paid plans; a call where nothing was said is given back."""
+def _settle(s: dict, spoke: bool, ended_at: float | None = None) -> None:
+    """Charge the call once: seconds for paid plans; a call where nothing was said is given back.
+    `ended_at`: for calls that were never hung up properly, the last moment we heard from them."""
     if s.get("settled") or not s.get("account") or not s.get("allowance"):
         return
     s["settled"] = True
     acc = accounts.get(s["account"])
     if acc:
-        accounts.charge_end(acc, s["allowance"], max(0.0, time.time() - s["created"] - 3), spoke)
+        end = min(time.time(), (ended_at + 15) if ended_at else time.time())
+        accounts.charge_end(acc, s["allowance"], max(0.0, end - s["created"] - 3), spoke)
 
 
-async def _read_back(sid: str, cid: str | None, voice: bool) -> dict:
+# Sessions that expire without a read are settled on the way out (their unused minutes come back).
+converse.ON_DROP = lambda s: _settle(s, _spoke(s), ended_at=s.get("active_at"))
+
+
+async def _wait_for_camera(s: dict, limit: float) -> None:
+    """The app uploads the camera stills alongside /finish, not before it. Give them a bounded wait."""
+    ev = s.setdefault("camera_ready", asyncio.Event())
+    try:
+        await asyncio.wait_for(ev.wait(), timeout=limit)
+    except asyncio.TimeoutError:
+        print("camera stills didn't arrive in time; reading without them")
+
+
+async def _read_back(sid: str, cid: str | None, voice: bool, frames: bool = False) -> dict:
     s = converse.SESSIONS[sid]
-    spoke = any(t["role"] == "user" and t["text"].strip() and not t.get("context") for t in s["turns"]) or bool(s.get("pending_user"))
+    spoke = _spoke(s)
     _settle(s, spoke)
     if s["spec"].get("poise"):
         # A talk with Poise has no score. Poise leaves a short note for the chat; ElevenLabs forgets the call.
@@ -783,6 +907,7 @@ async def _read_back(sid: str, cid: str | None, voice: bool) -> dict:
     if s.get("pending_user"):  # he hung up mid-thought after an "Mm-hm": his words still count
         frag = s.pop("pending_user")
         s["turns"].append({"role": "user", "text": frag, "facts": converse.text_facts(frag)})
+    camera = asyncio.create_task(_wait_for_camera(s, 8)) if frames and not s.get("camera") else None
     if cid:
         # The recording takes ElevenLabs a few seconds to finalise. Give the voice measurement a short window,
         # then read the call anyway (voice axes stay neutral without it). The analysis keeps running in the
@@ -797,6 +922,8 @@ async def _read_back(sid: str, cid: str | None, voice: bool) -> dict:
             raise
         except Exception as e:
             print("live analysis failed:", e)
+    if camera:
+        await camera  # usually already done: it ran alongside the recording's analysis
     out = await converse.evaluate(sid)
     if s.get("subject") and not out.get("insufficient"):
         try:
@@ -813,10 +940,11 @@ async def _read_back(sid: str, cid: str | None, voice: bool) -> dict:
 async def live_mic(sid: str, request: Request):
     """The app heard nothing from the mic for several seconds and tried to revive it. Log what the engine reported."""
     try:
-        b = await request.json()
-    except Exception:
-        b = {}
-    print("mic diag", sid, json.dumps(b)[:1500])
+        _session_for(request, sid)
+    except HTTPException:
+        return {"ok": True}  # only the call's own app gets to write to the log
+    b = await _body(request)
+    print("mic diag", sid, json.dumps(b, ensure_ascii=True)[:400])
     return {"ok": True}
 
 
@@ -832,7 +960,7 @@ async def live_finish(sid: str, request: Request, voice: bool = True):
         return s["evaluation"]
     job = s.get("read_job")
     if job is None or (job.done() and job.exception()):
-        job = asyncio.create_task(_read_back(sid, b.get("conversation_id"), voice))
+        job = asyncio.create_task(_read_back(sid, b.get("conversation_id"), voice, frames=b.get("frames") is True))
         s["read_job"] = job
     try:
         return await asyncio.wait_for(asyncio.shield(job), timeout=25)
@@ -858,12 +986,19 @@ async def live_result(sid: str, request: Request):
 @app.post("/llm/v1/chat/completions")
 async def live_llm(request: Request):
     """ElevenLabs calls this for every character reply. Our engine answers, streamed."""
-    if request.headers.get("x-kleos-key") != live.llm_secret():
+    import hmac as _hm
+    if not _hm.compare_digest(str(request.headers.get("x-kleos-key") or "").encode(), live.llm_secret().encode()):
         raise HTTPException(401)
-    b = await request.json()
+    b = await _body(request)
     msgs = b.get("messages") or []
     sid = live.session_from_messages(msgs)
     text = live.last_user_text(msgs)
+    s = converse.SESSIONS.get(sid) if sid else None
+    if s is not None:
+        s["active_at"], s["heard"] = time.time(), True
+        left = converse.time_left(s)
+        if left is not None and left < -90:
+            s["closed"] = True  # well past the allowance: the character only says goodbye from here
     if not sid or sid not in converse.SESSIONS:
         async def bye():
             yield 'data: {"choices":[{"index":0,"delta":{"content":"Sorry, I lost you there."},"finish_reason":null}]}\n\n'
@@ -890,7 +1025,10 @@ async def session_start(request: Request):
 @app.post("/session/{sid}/turn")
 async def session_turn(sid: str, request: Request, audio_file: UploadFile | None = File(None, alias="audio"), video: UploadFile | None = File(None), interrupted: str = Form("0")):
     """One user turn. Send `audio` (voice mode) or `video` (camera mode: face + eyes are measured too)."""
-    _session_for(request, sid)
+    s_ = _session_for(request, sid)
+    if s_.get("closed") and s_.get("settled"):
+        raise HTTPException(410, "This call ended when another one started.")
+    s_.update(active_at=time.time(), heard=True)
     if video is not None:
         path = await _save(video, ".mp4")
         with_face = True
@@ -901,14 +1039,14 @@ async def session_turn(sid: str, request: Request, audio_file: UploadFile | None
         raise HTTPException(422, "send audio or video")
     # Fast path: transcribe, compute word-level facts, let the character reply.
     # Deep voice (pitch, pace timeline, fades) and face analysis run in the background and land before evaluation.
-    wav = audio.extract_wav(path)
+    wav = await asyncio.to_thread(audio.extract_wav, path)  # off the event loop: other people's live calls stream on it
     try:
         dg = await audio.transcribe(wav)
     except Exception:
         os.remove(wav)
         os.remove(path)
         raise HTTPException(502, "Transcription hiccup. Go again, it doesn't count.")
-    quick = audio.quick_facts(dg, audio.duration_of(wav)).to_dict()
+    quick = audio.quick_facts(dg, await asyncio.to_thread(audio.duration_of, wav)).to_dict()
     text = quick.get("transcript") or ""
     if len(text.split()) < 2:
         os.remove(wav)
@@ -943,7 +1081,7 @@ async def session_turn(sid: str, request: Request, audio_file: UploadFile | None
 @app.post("/session/{sid}/evaluate")
 async def session_evaluate(sid: str, request: Request, voice: bool = True):
     s = _session_for(request, sid)
-    _settle(s, any(t["role"] == "user" and t["text"].strip() for t in s["turns"]))
+    _settle(s, _spoke(s))
     try:
         out = await converse.evaluate(sid)
     except KeyError as e:
@@ -1020,7 +1158,7 @@ async def tribunal_create(request: Request):
     b = await _body(request)
     accounts.spend(acc, "duels")
     try:
-        return _tribunal(lambda: tribunal.create(acc, format=str(b.get("format") or ""), topic=str(b.get("topic") or ""), tone=str(b.get("tone") or "real"), name=str(b.get("name") or acc.get("name") or ""), side=str(b.get("side") or "")))
+        return _tribunal(lambda: tribunal.create(acc, format=str(b.get("format") or ""), topic=str(b.get("topic") or ""), tone=str(b.get("tone") or "real"), name=str(b.get("name") or acc.get("name") or ""), side=str(b.get("side") or ""), watchers=b.get("watchers") is True))
     except Exception:
         accounts.refund(acc, "duels")
         raise
@@ -1191,16 +1329,18 @@ async def draft_review(request: Request):
 async def draft_extract(request: Request, image: UploadFile = File(...)):
     """A screenshot of a conversation, turned into who-said-what. Read in memory, never saved."""
     acc = _acct(request)
-    if accounts.used(acc["id"], "extract", accounts.day()) >= EXTRACTS_PER_DAY:
+    # count first, then check, so parallel uploads can't all slip under the cap
+    accounts.add_use(acc["id"], "extract", 1, accounts.day())
+    if accounts.used(acc["id"], "extract", accounts.day()) > EXTRACTS_PER_DAY:
+        accounts.add_use(acc["id"], "extract", -1, accounts.day())
         raise HTTPException(429, "That's a lot of screenshots today. Paste the text instead.")
     raw = await image.read(12 * 1024 * 1024 + 1)
     if len(raw) > 12 * 1024 * 1024:
         raise HTTPException(413, "That image is too big.")
-    jpg = _as_jpeg(raw)
+    jpg = await _jpeg(raw)
     del raw
     if not jpg:
         raise HTTPException(422, "Couldn't open that screenshot. Try again.")
-    accounts.add_use(acc["id"], "extract", 1, accounts.day())
     try:
         return await drafts.extract(jpg)
     except Exception as e:
@@ -1208,10 +1348,19 @@ async def draft_extract(request: Request, image: UploadFile = File(...)):
         raise HTTPException(502, "Couldn't read that screenshot. Paste the text instead.")
 
 
+MAX_PIXELS = 40_000_000  # a 48MP phone photo is fine; a decompression bomb isn't
+
+
+async def _jpeg(raw: bytes) -> bytes | None:
+    """Decode off the event loop: a big HEIC can take a second of CPU."""
+    return await asyncio.to_thread(_as_jpeg, raw)
+
+
 def _as_jpeg(raw: bytes) -> bytes | None:
     """Phones send PNG screenshots and HEIC photos, often mislabelled. Normalise to a JPEG the model accepts."""
     import io
     from PIL import Image
+    Image.MAX_IMAGE_PIXELS = MAX_PIXELS
     try:
         import pillow_heif  # type: ignore
         pillow_heif.register_heif_opener()
@@ -1219,6 +1368,12 @@ def _as_jpeg(raw: bytes) -> bytes | None:
         pass
     try:
         im = Image.open(io.BytesIO(raw))
+        w, h = im.size  # read from the header, before any pixels are decoded
+        if w * h > MAX_PIXELS or w > 12000 or h > 12000:
+            print("image refused: too many pixels", w, h)
+            return None
+        if im.format == "JPEG":
+            im.draft("RGB", (1800, 1800))  # let the decoder downscale as it reads
         im = im.convert("RGB")
         im.thumbnail((1800, 1800))
         out = io.BytesIO()
@@ -1307,11 +1462,12 @@ async def live_frames(sid: str, request: Request, frames: list[UploadFile] = Fil
     and stillness, then deleted. Sent before /finish so the read can use them."""
     s = _session_for(request, sid)
     tmp = tempfile.mkdtemp(prefix="kleos_cam_")
+    ready = s.setdefault("camera_ready", asyncio.Event())
     try:
         n = 0
         for f in frames[:60]:
             raw = await f.read()
-            jpg = _as_jpeg(raw)
+            jpg = await _jpeg(raw)
             if not jpg:
                 continue
             with open(os.path.join(tmp, f"f{n:03d}.jpg"), "wb") as fh:
@@ -1333,6 +1489,7 @@ async def live_frames(sid: str, request: Request, frames: list[UploadFile] = Fil
         return {"camera": None}
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
+        ready.set()  # the read (which may already be waiting) can go
 
 
 # ---------------------------------------------------------------- Aura Replay clips
@@ -1358,7 +1515,7 @@ async def make_clip(sid: str, request: Request):
 
 @app.get("/clips/{name}")
 async def get_clip(name: str):
-    if not re.fullmatch(r"s_[0-9a-f]{12}\.mp4", name):
+    if not re.fullmatch(r"c_[0-9a-f]{24}\.mp4", name):
         raise HTTPException(404)
     p = os.path.join(clips.CLIP_DIR, name)
     if not os.path.exists(p):
@@ -1392,7 +1549,7 @@ async def revenuecat_webhook(request: Request):
     expected = os.environ.get("REVENUECAT_WEBHOOK_AUTH", "")
     import hmac as _hm
     got = request.headers.get("authorization", "")
-    if not expected or not (_hm.compare_digest(got, expected) or _hm.compare_digest(got, f"Bearer {expected}")):
+    if not expected or not (_hm.compare_digest(got.encode(), expected.encode()) or _hm.compare_digest(got.encode(), f"Bearer {expected}".encode())):
         raise HTTPException(401)
     body = await _body(request)
     out = {"referral": referrals.revenue_event(body)}
@@ -1562,7 +1719,7 @@ async def read_fit(request: Request, photos: list[UploadFile] = File(...), tone:
 async def _fit(photos, tone, lane):
     imgs = []
     for f in photos[:3]:
-        jpg = _as_jpeg(await f.read())
+        jpg = await _jpeg(await f.read())
         if jpg:
             imgs.append((jpg, "image/jpeg"))
     if not imgs:
@@ -1592,7 +1749,7 @@ async def wardrobe_scan(request: Request, photos: list[UploadFile] = File(...)):
     accounts.require_tier(_acct(request), "wardrobe")
     imgs = []
     for f in photos[:8]:
-        jpg = _as_jpeg(await f.read())
+        jpg = await _jpeg(await f.read())
         if jpg:
             imgs.append((jpg, "image/jpeg"))
     if not imgs:
@@ -1631,7 +1788,7 @@ async def read_profile(request: Request, shots: list[UploadFile] = File(...), ha
 async def _profile_read(shots, handle, tone):
     imgs = []
     for f in shots[:6]:
-        jpg = _as_jpeg(await f.read())
+        jpg = await _jpeg(await f.read())
         if jpg:
             imgs.append((jpg, "image/jpeg"))
     if not imgs:
@@ -1747,8 +1904,8 @@ def _sit_conn():
 
 @app.post("/situations/{sid}/answer")
 async def situation_answer(sid: str, request: Request):
-    b = await request.json()
-    choice = int(b.get("choice", -1))
+    b = await _body(request)
+    choice = b.get("choice") if isinstance(b.get("choice"), int) and not isinstance(b.get("choice"), bool) else -1
     if not (0 <= choice <= 3) or len(sid) > 64:
         raise HTTPException(422, "bad answer")
     c = _sit_conn()

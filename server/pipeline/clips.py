@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import glob
 import os
+import secrets
 import random
 import subprocess
 import tempfile
@@ -137,9 +138,12 @@ def render(png: str, audio: str, start: float, out: str, dur: float = 15.0) -> N
 
 
 async def make(sid: str, s: dict, evaluation: dict, tts_bytes=None) -> str:
-    """Build (or reuse) the clip for a finished call. Returns the mp4 path."""
+    """Build (or reuse) the clip for a finished call. Returns the mp4 path.
+    The file gets its own random name: the link can be shared without giving away the call's session id."""
     gc()
-    out = clip_path(sid)
+    if not s.get("clip_id"):
+        s["clip_id"] = "c_" + secrets.token_hex(12)
+    out = clip_path(s["clip_id"])
     if os.path.exists(out):
         return out
     tp = evaluation.get("turning_point") or {}

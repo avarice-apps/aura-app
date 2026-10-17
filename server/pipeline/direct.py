@@ -3,7 +3,7 @@
 Off unless KLEOS_DIRECT_CHANNEL is set to "sms" (Twilio) or "imessage" (Sendblue). One channel at a time.
 
 Linking proves you own the number, so a typed number is never trusted:
-  the app asks for a single-use code (10 minutes) -> you text "LINK 123456" to the Kleos number from your phone ->
+  the app asks for a single-use code (10 minutes) -> you text "LINK 12345678" to the Kleos number from your phone ->
   the inbound message's sender is bound to your account. Only a hash of the number is kept; replies go back to the
   number the message came from, so Kleos never needs to store it in the clear. Text UNLINK (or unlink in the app)
   to undo it; linking a number again moves it.
@@ -12,7 +12,10 @@ Every inbound message:
   verify the provider's signature (or the secret webhook path) -> drop duplicates (provider message id) ->
   answer 200 at once -> in the background, per account and in order: entitlement (Black, checked on the server),
   rate limits and a global daily cap, then one bounded task (draft read, or a Poise answer) -> reply.
-Nothing here sends a message to anyone but the person who texted, and only in reply.
+Nothing here sends a message to anyone but the person who texted, and only in reply. Numbers that aren't linked get
+at most one reply a day (so a spoofed sender can't be used to pump texts), failed link attempts are throttled per
+sender and overall, every outgoing text counts against a daily ceiling, and STOP is never answered (the carrier
+confirms opt-outs itself).
 
 Context: Poise Direct sees only what the person allowed in the app (what's coming up, their taste), plus the last
 few messages of this thread. Never coaching history, wardrobe photos or other people's chats. The thread is kept
@@ -41,6 +44,10 @@ KEEP = 30 * 86400
 PER_HOUR = int(os.environ.get("KLEOS_DIRECT_PER_HOUR", "30"))
 PER_DAY = int(os.environ.get("KLEOS_DIRECT_PER_DAY", "120"))
 GLOBAL_DAILY_CAP = int(os.environ.get("KLEOS_DIRECT_DAILY_CAP", "3000"))
+OUT_DAILY_CAP = int(os.environ.get("KLEOS_DIRECT_OUT_CAP", str(GLOBAL_DAILY_CAP * 2)))  # every text we send, any reason
+LINK_FAILS_PER_SENDER = 5  # a day
+LINK_FAILS_OVERALL = 300  # a day, across every sender: past this, linking pauses until tomorrow
+DEDUPE_KEEP = 30 * 86400
 MAX_REPLY = 900
 _locks: dict[str, asyncio.Lock] = {}
 _tasks: set = set()
@@ -52,7 +59,8 @@ def channel() -> str:
 
 
 def enabled() -> bool:
-    return bool(channel()) and bool(number())
+    # The phone-number hashes are keyed by KLEOS_SIGNING_KEY, so it has to be set (and stable) before anyone links.
+    return bool(channel()) and bool(number()) and len(os.environ.get("KLEOS_SIGNING_KEY", "")) >= 32
 
 
 def number() -> str:
@@ -78,7 +86,9 @@ def db() -> sqlite3.Connection:
 
 
 def _salt() -> bytes:
-    s = os.environ.get("KLEOS_SIGNING_KEY") or os.environ.get("ANTHROPIC_API_KEY") or "kleos"
+    s = os.environ.get("KLEOS_SIGNING_KEY", "")
+    if not s:
+        raise RuntimeError("KLEOS_SIGNING_KEY is required for Poise Direct")
     return hashlib.sha256(("direct|" + s).encode()).digest()
 
 
@@ -98,7 +108,7 @@ def addr_hash(addr: str) -> str:
 
 def link_code(acc: dict) -> dict:
     """A single-use code to text from the phone being linked."""
-    code = f"{secrets.randbelow(900000) + 100000}"
+    code = f"{secrets.randbelow(90_000_000) + 10_000_000}"  # 8 digits: guessing one in ten minutes is hopeless
     with db() as c:
         c.execute("delete from codes where account_id=? or expires < ?", (acc["id"], time.time()))
         c.execute("insert into codes values (?,?,?,?)", (hashlib.sha256(code.encode()).hexdigest(), acc["id"], time.time() + CODE_TTL, None))
@@ -123,7 +133,8 @@ def unlink(account_id: str) -> None:
 
 def set_context(acc: dict, body: dict) -> dict:
     """What the person lets Poise Direct know. Only the parts they switched on are stored."""
-    allow = {"occasion": bool((body.get("allow") or {}).get("occasion")), "style": bool((body.get("allow") or {}).get("style"))}
+    asked = body.get("allow") if isinstance(body.get("allow"), dict) else {}
+    allow = {"occasion": asked.get("occasion") is True, "style": asked.get("style") is True}
     keep = {"allow": allow}
     if allow["occasion"] and isinstance(body.get("occasion"), str):
         keep["occasion"] = body["occasion"][:300]
@@ -164,7 +175,7 @@ def twilio_signature_ok(url: str, params: dict, signature: str) -> bool:
         return False
     data = url + "".join(k + str(params[k]) for k in sorted(params))
     expected = base64.b64encode(hmac.new(token.encode(), data.encode(), hashlib.sha1).digest()).decode()
-    return hmac.compare_digest(expected, signature)
+    return hmac.compare_digest(expected.encode(), str(signature).encode())
 
 
 def parse_twilio(params: dict) -> Inbound | None:
@@ -175,7 +186,7 @@ def parse_twilio(params: dict) -> Inbound | None:
 
 def sendblue_path_ok(token: str) -> bool:
     want = os.environ.get("SENDBLUE_WEBHOOK_TOKEN", "")
-    return bool(want) and len(want) >= 24 and hmac.compare_digest(want, token or "")
+    return bool(want) and len(want) >= 24 and hmac.compare_digest(want.encode(), str(token or "").encode())
 
 
 def parse_sendblue(body: dict) -> Inbound | None:
@@ -217,7 +228,7 @@ async def send(to: str, text: str) -> None:
 def first_time(event_id: str) -> bool:
     """At-least-once delivery: the same message can arrive twice. Only the first is processed (and charged)."""
     with db() as c:
-        c.execute("delete from events where created < ?", (time.time() - 7 * 86400,))
+        c.execute("delete from events where created < ?", (time.time() - DEDUPE_KEEP,))
         try:
             c.execute("insert into events values (?,?)", (event_id, time.time()))
             return True
@@ -231,6 +242,12 @@ def _bump(key: str) -> int:
         return c.execute("select n from counters where key=?", (key,)).fetchone()["n"]
 
 
+def _count(key: str) -> int:
+    with db() as c:
+        r = c.execute("select n from counters where key=?", (key,)).fetchone()
+    return r["n"] if r else 0
+
+
 def _notice_once(account_id: str, kind: str) -> bool:
     with db() as c:
         try:
@@ -240,7 +257,8 @@ def _notice_once(account_id: str, kind: str) -> bool:
             return False
 
 
-LINK_RE = re.compile(r"^\s*link\s+(\d{6})\s*$", re.I)
+LINK_RE = re.compile(r"^\s*link\s+(\d{8})\s*$", re.I)
+STOP_RE = re.compile(r"\s*(stop|stopall|unsubscribe|cancel|end|quit|revoke|optout)\s*", re.I)
 HELP = "This is Poise. Text me a message you're about to send and I'll read it first, or ask me anything about tonight. Text UNLINK to disconnect."
 
 
@@ -251,17 +269,45 @@ def handle(msg: Inbound, reply) -> None:
     t.add_done_callback(_tasks.discard)
 
 
+def _capped(reply):
+    """Every text we send counts against one daily ceiling, whatever it's for."""
+    async def send_one(to: str, text: str) -> None:
+        if _bump(f"o:{accounts.day()}") > OUT_DAILY_CAP:
+            print("direct: outgoing ceiling reached, not sending")
+            return
+        await reply(to, text)
+    return send_one
+
+
 async def _process(msg: Inbound, reply) -> None:
+    accounts.PENDING.set(None)  # this runs after the webhook has answered: its spends stand or are refunded here
     sender, text = msg["sender"], (msg["text"] or "").strip()
     h = addr_hash(sender)
+    reply = _capped(reply)
     try:
-        m = LINK_RE.match(text)
-        if m:
-            return await reply(sender, _link(h, m.group(1)))
         with db() as c:
             row = c.execute("select account_id from links where addr_hash=?", (h,)).fetchone()
+        if STOP_RE.fullmatch(text):
+            # Carrier opt-out words: stop replying and say nothing (the carrier sends its own confirmation).
+            if row:
+                unlink(row["account_id"])
+            return
+        m = LINK_RE.match(text)
+        if m:
+            day_ = accounts.day()
+            if _count(f"lf:{h}:{day_}") >= LINK_FAILS_PER_SENDER or _count(f"lf:{day_}") >= LINK_FAILS_OVERALL:
+                return  # too many wrong codes today: no attempt, no reply
+            ok, answer = _link(h, m.group(1))
+            if not ok:
+                _bump(f"lf:{h}:{day_}")
+                _bump(f"lf:{day_}")
+                if not _notice_once("n:" + h, "link"):
+                    return
+            return await reply(sender, answer)
         if not row:
-            return await reply(sender, "This number isn't linked to Kleos. Open Kleos › Poise › Text Poise from Messages to link it.")
+            if _notice_once("n:" + h, "unlinked"):  # once a day per number, so spoofed senders can't pump texts
+                await reply(sender, "This number isn't linked to Kleos. Open Kleos › Poise › Text Poise from Messages to link it.")
+            return
         aid = row["account_id"]
         lock = _locks.setdefault(aid, asyncio.Lock())
         async with lock:  # one at a time per person, in arrival order
@@ -269,26 +315,32 @@ async def _process(msg: Inbound, reply) -> None:
     except Exception as e:
         print("direct: failed", msg.get("event_id"), repr(e)[:160])
         try:
-            await reply(sender, "Something went wrong on my side. Try that again in a minute.")
+            if _notice_once("n:" + h, "error"):
+                await reply(sender, "Something went wrong on my side. Try that again in a minute.")
         except Exception:
             pass
 
 
-def _link(h: str, code: str) -> str:
+def _link(h: str, code: str) -> tuple[bool, str]:
     with db() as c:
         r = c.execute("select * from codes where code_hash=?", (hashlib.sha256(code.encode()).hexdigest(),)).fetchone()
         if not r or r["used"] or r["expires"] < time.time():
-            return "That code didn't work or has expired. Get a new one in Kleos and text it again."
+            return False, "That code didn't work or has expired. Get a new one in Kleos and text it again."
         c.execute("update codes set used=? where code_hash=?", (time.time(), r["code_hash"]))
         c.execute("delete from links where account_id=? or addr_hash=?", (r["account_id"], h))
         c.execute("insert into links values (?,?,?,?)", (h, r["account_id"], channel(), time.time()))
-    return "Linked. " + HELP
+    return True, "Linked. " + HELP
 
 
 async def _answer(aid: str, sender: str, text: str, reply) -> None:
-    if re.fullmatch(r"\s*(unlink|stop|unsubscribe|cancel)\s*", text, re.I):
+    if re.fullmatch(r"\s*unlink\s*", text, re.I):
         unlink(aid)
         return await reply(sender, "Unlinked. Poise won't reply to this number any more. Link it again from Kleos any time.")
+    hour, day_ = time.strftime("%Y%m%d%H"), accounts.day()
+    if _bump(f"h:{aid}:{hour}") > PER_HOUR or _bump(f"d:{aid}:{day_}") > PER_DAY:
+        if _notice_once(aid, "rate"):
+            await reply(sender, "That's a lot of messages. Give it an hour and I'm all yours.")
+        return
     if re.fullmatch(r"\s*(help|info|\?)\s*", text, re.I):
         return await reply(sender, HELP)
     acc = accounts.get(aid)
@@ -300,11 +352,6 @@ async def _answer(aid: str, sender: str, text: str, reply) -> None:
             await reply(sender, "Poise Direct is part of Kleos Black, and this account isn't on Black right now. You can still use Poise in the app.")
         return
     if not text or len(text) < 2:
-        return
-    hour, day_ = time.strftime("%Y%m%d%H"), accounts.day()
-    if _bump(f"h:{aid}:{hour}") > PER_HOUR or _bump(f"d:{aid}:{day_}") > PER_DAY:
-        if _notice_once(aid, "rate"):
-            await reply(sender, "That's a lot of messages. Give it an hour and I'm all yours.")
         return
     if _bump(f"g:{day_}") > GLOBAL_DAILY_CAP:
         if _notice_once(aid, "cap"):
@@ -331,7 +378,10 @@ async def _answer(aid: str, sender: str, text: str, reply) -> None:
 
 def _remember(aid: str, role: str, text: str) -> None:
     with db() as c:
+        c.execute("delete from messages where created < ?", (time.time() - KEEP,))
         c.execute("insert into messages (account_id, role, text, created) values (?,?,?,?)", (aid, role, text[:2000], time.time()))
+        # counters are per hour/day; anything older than two days is dead weight
+        c.execute("delete from counters where key like 'h:%' and substr(key, -10) < ?", (time.strftime("%Y%m%d%H", time.gmtime(time.time() - 2 * 86400)),))
 
 
 DRAFT_RE = re.compile(r"^\s*(draft|check|before i send|read this|how does this sound)\s*[:\-]?\s*", re.I)

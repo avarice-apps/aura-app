@@ -8,7 +8,7 @@ import { Screen, Icon, ICON } from '@/ui';
 import { font, useTheme } from '@/theme';
 import { useStore } from '@/state/store';
 import { Display, Kicker, RowLink, Hair, Pill } from '@/components/Kit';
-import { emailStart, emailVerify, appleSignIn, deleteAccount, updateAccountName } from '@/lib/api';
+import { emailStart, emailVerify, appleNonce, appleSignIn, deleteAccount, updateAccountName } from '@/lib/api';
 import { refreshAccount, signOut } from '@/lib/session';
 import { LEGAL_URL, OFFLINE } from '@/lib/config';
 import { play } from '@/lib/sound';
@@ -53,11 +53,13 @@ export default function AccountScreen() {
   async function withApple() {
     setMsg('');
     try {
-      const cred = await AppleAuthentication.signInAsync({ requestedScopes: [AppleAuthentication.AppleAuthenticationScope.FULL_NAME, AppleAuthentication.AppleAuthenticationScope.EMAIL] });
+      // The nonce ties Apple's token to this one sign-in, so a token can't be replayed later.
+      const nonce = await appleNonce();
+      const cred = await AppleAuthentication.signInAsync({ nonce, requestedScopes: [AppleAuthentication.AppleAuthenticationScope.FULL_NAME, AppleAuthentication.AppleAuthenticationScope.EMAIL] });
       if (!cred.identityToken) throw new Error('Apple didn’t return a sign-in. Try again.');
       setBusy(true);
       const name = [cred.fullName?.givenName, cred.fullName?.familyName].filter(Boolean).join(' ');
-      const r = await appleSignIn(cred.identityToken, name || undefined);
+      const r = await appleSignIn(cred.identityToken, nonce, name || undefined);
       done(r.switched);
     } catch (e: any) {
       if (e?.code === 'ERR_REQUEST_CANCELED') return;
@@ -73,9 +75,9 @@ export default function AccountScreen() {
     setBusy(true);
     setMsg('');
     try {
-      await emailStart(e);
+      const r = await emailStart(e);
       setStep('code');
-      setMsg(`We sent a 6-digit code to ${e}. It works for 15 minutes.`);
+      setMsg(r.already ? `We just sent a code to ${e}. Use that one: it works for 15 minutes.` : `We sent a 6-digit code to ${e}. It works for 15 minutes.`);
     } catch (x: any) {
       setMsg(x?.message ?? 'Couldn’t send the code. Try again in a minute.');
     } finally {

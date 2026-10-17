@@ -109,7 +109,9 @@ async def verdict(*, prompt_text: str, voice: dict, presence: dict, scores: dict
     last_err = None
     for attempt in range(3):
         msgs = [{"role": "user", "content": user if not last_err else f"{user}\n\nYour previous attempt failed a check: {last_err}. Fix it. Return only JSON."}]
-        r = await client.messages.create(model=model, max_tokens=10000, system=SYSTEM, messages=msgs)
+        # The quick read skips the reasoning pass (same verdicts in testing, about half the wait); the deep read keeps it.
+        extra = {} if deep else {"thinking": {"type": "disabled" if "haiku" in model else "between_tools"}}
+        r = await client.messages.create(model=model, max_tokens=10000 if deep else 2500, system=SYSTEM, messages=msgs, **extra)
         raw = "".join(b.text for b in r.content if getattr(b, "type", "") == "text").strip()
         raw = re.sub(r"^```(?:json)?|```$", "", raw, flags=re.M).strip()
         m = re.search(r"\{.*\}", raw, re.S)
@@ -119,6 +121,8 @@ async def verdict(*, prompt_text: str, voice: dict, presence: dict, scores: dict
             last_err = f"invalid JSON (stop={r.stop_reason})"
             continue
         last_err = _guard(out, voice, presence)
+        if last_err:
+            print(f"read retry ({model}): {last_err}")
         if last_err is None:
             out["model"] = model
             return out

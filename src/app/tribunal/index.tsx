@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, ScrollView, TextInput, Pressable, KeyboardAvoidingView, Platform, Text as RNText } from 'react-native';
+import { View, ScrollView, TextInput, Pressable, Switch, KeyboardAvoidingView, Platform, Text as RNText } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Screen, Icon, ICON } from '@/ui';
@@ -25,6 +25,7 @@ export default function NewTribunal() {
   const [topic, setTopic] = useState((preset ?? '').slice(0, 160));
   const [side, setSide] = useState('');
   const [name, setName] = useState(s.name || '');
+  const [watchers, setWatchers] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const [ideas] = useState(() => [...(DUELS.topics as { topic: string }[])].sort(() => 0.5 - Math.random()).slice(0, 4));
@@ -35,7 +36,7 @@ export default function NewTribunal() {
     setBusy(true);
     setErr('');
     try {
-      const v = await tribunalCreate({ format, topic: topic.trim(), name: name.trim(), side: side.trim() || undefined });
+      const v = await tribunalCreate({ format, topic: topic.trim(), name: name.trim(), side: side.trim() || undefined, watchers });
       s.set({ tribunals: [{ code: v.code, topic: v.topic, createdAt: new Date().toISOString() }, ...(s.tribunals ?? [])].slice(0, 20) });
       track('tribunal_create', { format });
       router.replace({ pathname: '/tribunal/[code]', params: { code: v.code, fresh: '1' } });
@@ -83,9 +84,9 @@ export default function NewTribunal() {
               <Kicker>What are you settling?</Kicker>
               <TextInput value={topic} onChangeText={(v) => setTopic(v.slice(0, 160))} placeholder="Whoever cooks shouldn’t do the dishes" placeholderTextColor={t.ink3} multiline style={field} />
               {!topic ? (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
-                  {ideas.map((x) => <Chip key={x.topic} label={x.topic.length > 38 ? x.topic.slice(0, 36) + '…' : x.topic} onPress={() => setTopic(x.topic)} />)}
-                </View>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 12, marginHorizontal: -22 }} contentContainerStyle={{ gap: 8, paddingHorizontal: 22 }}>
+                  {ideas.map((x) => <Chip key={x.topic} label={x.topic} onPress={() => setTopic(x.topic)} />)}
+                </ScrollView>
               ) : null}
             </View>
             {format !== 'common' ? (
@@ -98,9 +99,16 @@ export default function NewTribunal() {
               <Kicker>Your name, as they’ll see it</Kicker>
               <TextInput value={name} onChangeText={(v) => setName(v.slice(0, 24))} placeholder="Name" placeholderTextColor={t.ink3} style={field} />
             </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ flex: 1 }}>
+                <RNText style={{ fontFamily: font.medium, fontSize: 15, color: t.ink }}>Let others watch</RNText>
+                <RNText style={{ fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: t.ink2 }}>Anyone with the code can read along.</RNText>
+              </View>
+              <Switch value={watchers} onValueChange={setWatchers} trackColor={{ true: t.accent }} accessibilityLabel="Let others watch" />
+            </View>
           </View>
           {err ? <RNText style={{ marginTop: 16, fontFamily: font.regular, fontSize: 14, color: t.accent }}>{err}</RNText> : null}
-          <RNText style={{ marginTop: 18, fontFamily: font.regular, fontSize: 12, lineHeight: 17, color: t.ink3 }}>Only the two of you (and anyone you invite to watch) can see it. Nothing from your chats with Poise is used. Deleted after 30 days.</RNText>
+          <RNText style={{ marginTop: 18, fontFamily: font.regular, fontSize: 12, lineHeight: 17, color: t.ink3 }}>{watchers ? 'The two of you, and anyone you give the code to watch, can read it.' : 'Only the two of you can read it.'} Nothing from your chats with Poise is used. Deleted after 30 days.</RNText>
         </ScrollView>
         <View style={{ paddingHorizontal: 22, paddingBottom: 10 }}>
           <Pill label={busy ? 'Opening the court…' : 'Get the invite code'} onPress={create} disabled={!ok || busy} />

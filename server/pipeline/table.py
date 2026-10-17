@@ -31,7 +31,9 @@ def score(players: list[dict]) -> list[dict]:
 
 async def verdict(players: list[dict], tone: str = "real") -> dict:
     clean = []
-    for p in players[:8]:
+    for p in (players if isinstance(players, list) else [])[:8]:
+        if not isinstance(p, dict):
+            continue
         m = MISSIONS.get(str(p.get("mission") or ""))
         if not m:
             continue

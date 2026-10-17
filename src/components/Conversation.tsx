@@ -242,7 +242,7 @@ export function TurnConversation({ args, onDone, onError, label }: { args: Start
       top={phase === 'recording' ? `YOUR TURN · ${left}s` : phase === 'loading' ? 'CALLING' : phase === 'evaluating' ? 'CALL ENDED' : label ? label.toUpperCase() : 'ON THE LINE'}
       dot={phase === 'recording' && left <= 5 ? 'warn' : phase === 'recording' ? 'live' : 'idle'}
       topRight={['', 'EASY', 'REAL', 'HEAT'][pressure]}
-      face={start ? faceFor(start.character, { seed: start.session_id, stranger: !!start.masked }) : null}
+      face={start ? faceFor(start.character, { seed: start.session_id, stranger: !!start.masked }) : args.poise ? faceFor('poise') : null}
       energy={shared}
       who={who}
       idle={phase === 'loading' || phase === 'evaluating' || phase === 'sending'}

@@ -143,6 +143,9 @@ export default function TribunalRoom() {
   const n = wordsIn(text);
   const names = { a: v.seats.a?.name ?? 'Them', b: v.seats.b?.name ?? 'Them' };
   const closed = v.state === 'expired' || v.state === 'abandoned';
+  const canJoin = v.state === 'open';
+  const canWatch = v.watchers && v.state !== 'done';
+  const shutOut = !v.me && !closed && !canJoin && !canWatch;
 
   return (
     <Screen edges={['top', 'bottom']}>
@@ -167,7 +170,12 @@ export default function TribunalRoom() {
           {v.audience ? <RNText style={{ marginTop: 8, fontFamily: font.regular, fontSize: 12.5, color: t.ink3 }}>{v.audience} watching</RNText> : null}
 
           {/* invited: the rules first, then an explicit join */}
-          {!v.me && !closed ? (
+          {shutOut ? (
+            <RNText style={{ marginTop: 24, fontFamily: font.regular, fontSize: 15, lineHeight: 21, color: t.ink2 }}>
+              {v.state === 'done' ? 'This round is over, and it was just for the two of them.' : 'Both seats are taken, and this one’s just for the two of them.'}
+            </RNText>
+          ) : null}
+          {!v.me && !closed && !shutOut ? (
             <Animated.View entering={FadeIn.duration(300)} style={{ marginTop: 24, gap: 14 }}>
               {[v.rules.what, v.rules.flow, v.rules.who_sees, v.rules.fair, v.rules.kept].map((r, i) => (
                 <View key={i} style={{ flexDirection: 'row', gap: 10 }}>
@@ -252,10 +260,10 @@ export default function TribunalRoom() {
             />
             <Pill label={busy ? 'Locking it in…' : 'Lock it in'} onPress={() => send(kind)} disabled={busy || n < 3 || n > limit} />
           </View>
-        ) : !v.me && !closed ? (
+        ) : !v.me && !closed && !shutOut ? (
           <View style={{ paddingHorizontal: 22, paddingBottom: 10, gap: 10 }}>
-            {v.state === 'open' ? <Pill label={busy ? 'Joining…' : 'Join and take the other side'} onPress={() => join('b')} disabled={busy} /> : null}
-            <Pill label="Just watch" quiet onPress={() => join('audience')} disabled={busy} />
+            {canJoin ? <Pill label={busy ? 'Joining…' : 'Join and take the other side'} onPress={() => join('b')} disabled={busy} /> : null}
+            {canWatch ? <Pill label="Just watch" quiet onPress={() => join('audience')} disabled={busy} /> : null}
           </View>
         ) : v.state === 'done' && (mine === 'a' || mine === 'b') ? (
           <View style={{ paddingHorizontal: 22, paddingBottom: 10, flexDirection: 'row', gap: 10 }}>

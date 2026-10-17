@@ -84,6 +84,7 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
   const [turns, setTurns] = useState(0);
   const [err, setErr] = useState('');
   const [retryId, setRetryId] = useState<string | null>(null);
+  const [waited, setWaited] = useState(0); // seconds since hang-up, so the wait says what's happening
   const energy = useSharedValue(0);
   const idle = useSharedValue(0);
   const who = useSharedValue(0); // 1 while they talk
@@ -218,6 +219,15 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
   }, [phase, conv, energy, who]);
 
   useEffect(() => {
+    if (phase !== 'evaluating') return;
+    const t = setInterval(() => setWaited((w) => w + 1), 1000);
+    return () => {
+      clearInterval(t);
+      setWaited(0);
+    };
+  }, [phase]);
+
+  useEffect(() => {
     if (!cameraOn || phase !== 'live' || !camPerm?.granted) return;
     let busy = false;
     const id = setInterval(async () => {
@@ -300,13 +310,13 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
     onError?.(m);
   }
 
-  async function readBack(id: string) {
+  async function readBack(id: string, frames = false) {
     if (!startRef.current) return;
     setErr('');
     setPhase('evaluating');
     let e;
     try {
-      e = await liveFinish(startRef.current.session_id, id);
+      e = await liveFinish(startRef.current.session_id, id, frames);
     } catch (x: any) {
       const m = x?.message ?? 'Poise could not read that one.';
       setErr(m);
@@ -347,15 +357,20 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
       onEnded?.();
     } catch {}
     if (frames.current.length >= 3 && startRef.current) {
-      setPhase('evaluating');
+      // The stills go up while the read starts (the server waits for them), instead of before it.
       const shots = frames.current;
       frames.current = [];
-      await Promise.race([uploadFrames(startRef.current.session_id, shots).catch(() => {}), new Promise((r) => setTimeout(r, 8000))]);
-      shots.forEach((u) => {
-        try {
-          new File(u).delete(); // stills never stay on the phone either
-        } catch {}
-      });
+      uploadFrames(startRef.current.session_id, shots)
+        .catch(() => {})
+        .finally(() =>
+          shots.forEach((u) => {
+            try {
+              new File(u).delete(); // stills never stay on the phone either
+            } catch {}
+          }),
+        );
+      await readBack(id, true);
+      return;
     }
     await readBack(id);
   }
@@ -379,7 +394,11 @@ function Live({ args, onDone, onError, label, timeLimit, onEnded, onLeave, onRea
       : phase === 'evaluating'
         ? isPoise
           ? 'Call ended'
-          : 'Call ended. Poise is reading it back'
+          : waited < 4
+            ? 'Call ended. Poise is listening back'
+            : waited < 9
+              ? 'Measuring how you sounded'
+              : 'Poise is writing your read'
         : phase === 'error'
           ? err
           : turns === 0 && listenMs.current >= 9000 && heard.current < DEAD

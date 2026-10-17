@@ -119,7 +119,7 @@ export default function Direct() {
             {code ? (
               <Animated.View entering={FadeIn.duration(250)} style={{ borderRadius: 22, backgroundColor: t.inverse, padding: 18, gap: 10 }}>
                 <RNText style={{ fontFamily: font.mono, fontSize: 10.5, letterSpacing: 1.6, color: 'rgba(255,255,255,0.75)' }}>{`SEND TO ${code.to}`}</RNText>
-                <RNText selectable style={{ fontFamily: font.mono, fontSize: 30, letterSpacing: 3, color: '#FFF' }}>{code.text}</RNText>
+                <RNText selectable adjustsFontSizeToFit numberOfLines={1} style={{ fontFamily: font.mono, fontSize: 28, letterSpacing: 2, color: '#FFF' }}>{code.text}</RNText>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
                   {code.sms ? (
                     <Pressable onPress={() => Linking.openURL(code.sms!)} style={{ height: 40, paddingHorizontal: 16, borderRadius: 20, backgroundColor: '#FFF', justifyContent: 'center' }}>

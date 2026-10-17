@@ -49,11 +49,11 @@ export default function Play() {
         ? `${mins} live minute${mins === 1 ? '' : 's'} left this week.`
         : 'Talk as long as the scene lasts.';
 
-  // One box for every code: tribunals are six characters starting with T; challenges and duels are five.
+  // One box for every code: tribunals are seven characters starting with T; challenges and duels are five.
   async function join(c: string) {
     setCode('');
     setJoining(false);
-    if (c.length === 6 && c.startsWith('T')) {
+    if (c.length === 7 && c.startsWith('T')) {
       router.push({ pathname: '/tribunal/[code]', params: { code: c } });
       return;
     }
@@ -84,8 +84,8 @@ export default function Play() {
         {/* With friends */}
         <Animated.View entering={FadeInDown.duration(400).delay(40)} style={{ marginTop: 28 }}>
           <Section title="With friends" note="Pass the phone" />
-          <ArtCard art="lovers" height={200} focus="top" onPress={() => router.push('/table')}>
-            <OnBlue kicker="The Table · 3 to 8 players" sub="Poise gives everyone a secret mission. You just talk. Then the reveal.">Poise hosts dinner.</OnBlue>
+          <ArtCard art="lovers" height={200} focus="top" scrim={1} onPress={() => router.push('/table')}>
+            <OnBlue kicker="The Table · 3 to 8 players" sub="Everyone gets a secret mission. Then the reveal.">Poise hosts dinner.</OnBlue>
           </ArtCard>
           <Row gap={10} style={{ marginTop: 10 }}>
             {[
@@ -115,7 +115,7 @@ export default function Play() {
                 <TextInput
                   autoFocus
                   value={code}
-                  onChangeText={(v) => setCode(v.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
+                  onChangeText={(v) => setCode(v.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 7))}
                   placeholder="The code they sent"
                   placeholderTextColor="rgba(255,255,255,0.65)"
                   autoCapitalize="characters"
