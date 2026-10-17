@@ -33,6 +33,7 @@ export default function Play() {
 
   const recent = [
     ...(s.duels ?? []).map((d) => ({ k: `d${d.code}`, title: d.topic, sub: `Duel ${d.code} · ${d.result ? 'judged' : 'waiting'}`, at: d.createdAt, go: () => router.push({ pathname: '/duel/[code]', params: { code: d.code } }) })),
+    ...(s.tribunals ?? []).map((x) => ({ k: `t${x.code}`, title: x.topic, sub: `Tribunal ${x.code}`, at: x.createdAt, go: () => router.push({ pathname: '/tribunal/[code]', params: { code: x.code } }) })),
     ...(s.challenges ?? []).map((c) => ({ k: `c${c.code}`, title: c.title, sub: `Challenge ${c.code}`, at: c.createdAt, go: () => router.push({ pathname: '/challenge/[code]', params: { code: c.code } }) })),
     ...(s.moments ?? []).map((m, i) => ({ k: `m${i}`, title: m.title, sub: `Aura check · ${m.total > 0 ? '+' : ''}${m.total} aura`, at: m.createdAt ?? '', go: () => router.push('/capture') })),
     ...(s.fits ?? []).slice(0, 10).map((f, i) => ({ k: `f${i}`, title: `${f.tier} · ${f.score}`, sub: `Fit check · ${f.verdict}`, at: f.createdAt ?? '', go: () => router.push({ pathname: '/capture', params: { mode: 'fit' } }) })),
@@ -48,10 +49,14 @@ export default function Play() {
         ? `${mins} live minute${mins === 1 ? '' : 's'} left this week.`
         : 'Talk as long as the scene lasts.';
 
-  // One box for both: scene challenges and debate duels share the 5-character code format.
+  // One box for every code: tribunals are six characters starting with T; challenges and duels are five.
   async function join(c: string) {
     setCode('');
     setJoining(false);
+    if (c.length === 6 && c.startsWith('T')) {
+      router.push({ pathname: '/tribunal/[code]', params: { code: c } });
+      return;
+    }
     try {
       await getChallenge(c);
       router.push({ pathname: '/challenge/[code]', params: { code: c } });
@@ -110,16 +115,16 @@ export default function Play() {
                 <TextInput
                   autoFocus
                   value={code}
-                  onChangeText={(v) => setCode(v.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 5))}
-                  placeholder="Five-letter code"
+                  onChangeText={(v) => setCode(v.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6))}
+                  placeholder="The code they sent"
                   placeholderTextColor="rgba(255,255,255,0.65)"
                   autoCapitalize="characters"
                   autoCorrect={false}
-                  onSubmitEditing={() => code.length === 5 && join(code)}
+                  onSubmitEditing={() => code.length >= 5 && join(code)}
                   style={{ flex: 1, fontFamily: code ? font.mono : font.regular, fontSize: 15, letterSpacing: code ? 3 : 0, color: '#FFF' }}
                 />
-                <Pressable disabled={code.length < 5} onPress={() => join(code)} style={{ height: 36, paddingHorizontal: 14, borderRadius: 10, backgroundColor: code.length === 5 ? '#FFF' : 'rgba(255,255,255,0.2)', justifyContent: 'center' }}>
-                  <RNText style={{ fontFamily: font.medium, fontSize: 13, color: code.length === 5 ? t.inverse : 'rgba(255,255,255,0.7)' }}>Join</RNText>
+                <Pressable disabled={code.length < 5} onPress={() => join(code)} style={{ height: 36, paddingHorizontal: 14, borderRadius: 10, backgroundColor: code.length >= 5 ? '#FFF' : 'rgba(255,255,255,0.2)', justifyContent: 'center' }}>
+                  <RNText style={{ fontFamily: font.medium, fontSize: 13, color: code.length >= 5 ? t.inverse : 'rgba(255,255,255,0.7)' }}>Join</RNText>
                 </Pressable>
               </Animated.View>
             ) : (
@@ -133,6 +138,14 @@ export default function Play() {
               </Row>
             )}
           </View>
+          <Pressable onPress={() => { play('select'); router.push('/tribunal'); }} style={({ pressed }) => ({ marginTop: 10, borderRadius: 22, backgroundColor: t.card, borderWidth: 1, borderColor: t.line, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 14, opacity: pressed ? 0.85 : 1 })}>
+            <View style={{ flex: 1, gap: 3 }}>
+              <RNText style={{ fontFamily: font.mono, fontSize: 10.5, letterSpacing: 1.4, color: t.ink3 }}>TRIBUNAL · IN WRITING</RNText>
+              <RNText style={{ fontFamily: font.serif, fontSize: 26, lineHeight: 28, color: t.ink }}>Settle something.</RNText>
+              <RNText style={{ fontFamily: font.regular, fontSize: 13, lineHeight: 18, color: t.ink2 }}>An opening each, one reply, then Poise rules. Draws allowed. Or find where you actually disagree.</RNText>
+            </View>
+            <Statue name="bust" height={86} />
+          </Pressable>
           <Row gap={10} style={{ marginTop: 10 }}>
             {[
               { k: 'fit', label: 'Fit check', sub: 'Yours or a friend’s. Honest.', art: 'pitt' as const, go: () => router.push({ pathname: '/capture', params: { mode: 'fit' } }) },

@@ -163,7 +163,8 @@ async def _json_call(model: str, system: str, user, max_tokens: int = 3000, trie
             msg = user if not err else f"{user}\n\n{fix}"
         # Thinking is allowed for evaluation-quality calls; leave headroom so the JSON answer always fits.
         # think=False: no reasoning pass. Same verdicts in testing, about half the wait (the read after a call).
-        extra = {} if think else {"thinking": {"type": "between_tools"}}
+        # Haiku takes "disabled"; the larger models take "between_tools" (sending the wrong one is a 400).
+        extra = {} if think else {"thinking": {"type": "disabled" if "haiku" in model else "between_tools"}}
         r = await _client().messages.create(model=model, max_tokens=max_tokens + (6000 if think else 0), system=system, messages=[{"role": "user", "content": msg}], **extra)
         raw = "".join(b.text for b in r.content if getattr(b, "type", "") == "text")
         m = re.search(r"\{.*\}", raw, re.S)

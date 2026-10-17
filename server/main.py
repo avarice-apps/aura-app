@@ -21,7 +21,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, Response, HTMLResponse, FileResponse, StreamingResponse, RedirectResponse
 from fastapi import Request
 
-from pipeline import audio, face, rubric, poise, tts, converse, live, vision, duel, legal, referrals, clips, accounts, table, drafts
+from pipeline import audio, face, rubric, poise, tts, converse, live, vision, duel, legal, referrals, clips, accounts, table, drafts, tribunal
 from training import store as train_store, learned
 
 app = FastAPI(title="Kleos", version="0.2")
@@ -63,7 +63,7 @@ async def _denied(request: Request, exc: accounts.Denied):
 # Every expensive endpoint costs real money (models, voice). Cap requests per caller so nobody can use the server
 # as a free AI proxy. Allowances per plan are enforced per account (pipeline/accounts.py); this is the outer fence.
 # ElevenLabs' /llm calls are exempt (authenticated with the agent secret and bounded by the live session).
-_EXPENSIVE = ("/read", "/fit", "/wardrobe", "/style", "/pressure", "/silence", "/scan", "/live/", "/session/", "/situations/", "/lesson", "/ledger", "/poise/", "/portrait", "/duel", "/moment", "/profile", "/clip/", "/redeem", "/challenge", "/auth/", "/table", "/waitlist")
+_EXPENSIVE = ("/read", "/fit", "/wardrobe", "/style", "/pressure", "/silence", "/scan", "/live/", "/session/", "/situations/", "/lesson", "/ledger", "/poise/", "/tribunal", "/portrait", "/duel", "/moment", "/profile", "/clip/", "/redeem", "/challenge", "/auth/", "/table", "/waitlist")
 _LIMITS = ((120, 600), (1000, 86400))  # per caller: 120 per 10 minutes, 1000 per day
 _AUTH_LIMITS = ((20, 600), (100, 86400))  # sign-in attempts per network
 _hits: dict[str, list[float]] = {}
@@ -316,6 +316,10 @@ async def account_delete(request: Request):
             fn(subj)
         except Exception:
             pass
+    try:
+        tribunal.delete_for(acc["id"])
+    except Exception:
+        pass
     accounts.delete(acc)
     resp = JSONResponse({"deleted": True, "duels": n})
     resp.delete_cookie("kleos_session")
@@ -997,6 +1001,88 @@ async def _ledger(text: str, context: str, tone: str, user: str, audio_file):
     out = await converse.ledger(story, context, tone, user_d)
     out["story"] = story
     return out
+
+
+# ---------------------------------------------------------------- tribunals
+
+def _tribunal(fn):
+    """Round rules become HTTP answers: 403 not a member, 404 unknown code, 409 wrong phase, 410 expired."""
+    try:
+        return fn()
+    except tribunal.Refused as e:
+        raise HTTPException(e.status, e.message)
+
+
+@app.post("/tribunal")
+async def tribunal_create(request: Request):
+    acc = _acct(request)
+    b = await _body(request)
+    accounts.spend(acc, "duels")
+    try:
+        return _tribunal(lambda: tribunal.create(acc, format=str(b.get("format") or ""), topic=str(b.get("topic") or ""), tone=str(b.get("tone") or "real"), name=str(b.get("name") or acc.get("name") or ""), side=str(b.get("side") or "")))
+    except Exception:
+        accounts.refund(acc, "duels")
+        raise
+
+
+@app.get("/tribunal/{code}")
+async def tribunal_get(code: str, request: Request):
+    acc = _acct(request, required=False)
+    return JSONResponse(_tribunal(lambda: tribunal.view(code, acc)), headers={"Cache-Control": "no-store"})
+
+
+@app.post("/tribunal/{code}/join")
+async def tribunal_join(code: str, request: Request):
+    acc = _acct(request)
+    b = await _body(request)
+    seat = "audience" if b.get("seat") == "audience" else "b"
+    return _tribunal(lambda: tribunal.join(code, acc, name=str(b.get("name") or acc.get("name") or ""), side=str(b.get("side") or ""), seat=seat, accept=b.get("accept") is True))
+
+
+@app.post("/tribunal/{code}/submit")
+async def tribunal_submit(code: str, request: Request):
+    acc = _acct(request)
+    b = await _body(request)
+    out, ready = _tribunal(lambda: tribunal.submit(code, acc, kind=str(b.get("kind") or ""), text=str(b.get("text") or "")))
+    if ready:
+        tribunal.start_judging(out["code"])
+    return out
+
+
+@app.post("/tribunal/{code}/judge")
+async def tribunal_rejudge(code: str, request: Request):
+    """If a ruling failed, either participant can ask again. Members only; finished rounds return their result."""
+    acc = _acct(request)
+    v = _tribunal(lambda: tribunal.view(code, acc))
+    if not v.get("me") or v["me"]["seat"] not in ("a", "b"):
+        raise HTTPException(403, "Only the two people in this tribunal can ask for the ruling.")
+    if v["state"] == "judging":
+        tribunal.start_judging(v["code"])
+    return v
+
+
+@app.post("/tribunal/{code}/leave")
+async def tribunal_leave(code: str, request: Request):
+    acc = _acct(request)
+    return _tribunal(lambda: tribunal.leave(code, acc))
+
+
+@app.post("/tribunal/{code}/report")
+async def tribunal_report(code: str, request: Request):
+    acc = _acct(request)
+    b = await _body(request)
+    return _tribunal(lambda: tribunal.report(code, acc, str(b.get("reason") or "")))
+
+
+@app.post("/tribunal/{code}/rematch")
+async def tribunal_rematch(code: str, request: Request):
+    acc = _acct(request)
+    accounts.spend(acc, "duels")
+    try:
+        return _tribunal(lambda: tribunal.rematch(code, acc))
+    except Exception:
+        accounts.refund(acc, "duels")
+        raise
 
 
 # ---------------------------------------------------------------- before I send this

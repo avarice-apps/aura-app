@@ -8,7 +8,7 @@ import { Screen, Icon, ICON } from '@/ui';
 import { font, useTheme } from '@/theme';
 import { useStore } from '@/state/store';
 import { Display, Kicker, RowLink, Hair, Pill } from '@/components/Kit';
-import { emailStart, emailVerify, appleSignIn, deleteAccount } from '@/lib/api';
+import { emailStart, emailVerify, appleSignIn, deleteAccount, updateAccountName } from '@/lib/api';
 import { refreshAccount, signOut } from '@/lib/session';
 import { LEGAL_URL, OFFLINE } from '@/lib/config';
 import { play } from '@/lib/sound';
@@ -39,6 +39,9 @@ export default function AccountScreen() {
   }, []);
 
   function done(switched: boolean) {
+    // The name you use in the app is the name the Members page greets.
+    const st = useStore.getState();
+    if (st.name.trim() && !st.account?.name) updateAccountName(st.name.trim()).then(() => refreshAccount()).catch(() => {});
     play('cleared');
     setMsg(switched ? 'Welcome back. This phone is now on your saved account.' : 'Saved. Your plan and progress follow you now.');
     setStep('email');

@@ -352,6 +352,59 @@ export async function readShot(uri: string): Promise<{ messages: ShotMessage[]; 
   return postForm('/poise/draft/extract', form, 60000);
 }
 
+// ------------------------------------------------------------------ tribunals
+
+export type TribunalFormat = 'settle' | 'tribunal' | 'common';
+export type TribunalSeat = 'a' | 'b';
+export type TribunalResult = {
+  outcome: 'a' | 'b' | 'draw' | 'insufficient' | 'none' | 'declined';
+  winner: string | null;
+  margin: 'clear' | 'close' | null;
+  split: boolean;
+  verdict: string;
+  theatre: string | null;
+  observations: Partial<Record<TribunalSeat, { id: string; quote: string; note: string; kind: string }>>;
+  decisive: { id: string; seat: TribunalSeat; quote: string; why: string } | null;
+  unverified: { id: string; seat: TribunalSeat; claim: string }[];
+  common: { needs: Record<TribunalSeat, string>; disputed: string[]; agreed: string[]; next_steps: string[] } | null;
+  delivery: string;
+  declined_reason: string | null;
+  rubric_version: string;
+  note: string;
+};
+export type Tribunal = {
+  code: string;
+  format: TribunalFormat;
+  topic: string;
+  tone: 'real' | 'unfiltered';
+  state: 'open' | 'openings' | 'rebuttals' | 'judging' | 'done' | 'expired' | 'abandoned';
+  limits: { opening: number; rebuttal: number };
+  expires: number | null;
+  seats: Partial<Record<TribunalSeat, { name: string; side: string; left: boolean }>>;
+  audience: number;
+  rules: { what: string; flow: string; who_sees: string; kept: string; fair: string };
+  me: { seat: TribunalSeat | 'audience'; host: boolean; submitted: string[] } | null;
+  submissions?: { id: string; seat: TribunalSeat; kind: 'opening' | 'rebuttal'; text: string; words: number }[];
+  waiting_for?: TribunalSeat[];
+  result?: TribunalResult;
+};
+
+export async function tribunalCreate(a: { format: TribunalFormat; topic: string; name: string; side?: string }): Promise<Tribunal> {
+  return postJSON<Tribunal>('/tribunal', { ...a, tone: tone() });
+}
+export async function tribunalGet(code: string): Promise<Tribunal> {
+  return getJSON<Tribunal>(`/tribunal/${encodeURIComponent(code.toUpperCase())}`);
+}
+export async function tribunalJoin(code: string, a: { name: string; side?: string; seat?: 'b' | 'audience' }): Promise<Tribunal> {
+  return postJSON<Tribunal>(`/tribunal/${encodeURIComponent(code)}/join`, { ...a, accept: true });
+}
+export async function tribunalSubmit(code: string, kind: 'opening' | 'rebuttal', text: string): Promise<Tribunal> {
+  return postJSON<Tribunal>(`/tribunal/${encodeURIComponent(code)}/submit`, { kind, text });
+}
+export async function tribunalAction(code: string, action: 'judge' | 'leave' | 'rematch' | 'report', body: Record<string, unknown> = {}): Promise<any> {
+  return postJSON(`/tribunal/${encodeURIComponent(code)}/${action}`, body);
+}
+
 // ------------------------------------------------------------------ scan
 
 export async function scan(a: { videoUri: string; prompt: string; consent: boolean; isSelf: boolean; name: string }): Promise<ScanResult> {

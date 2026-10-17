@@ -60,7 +60,7 @@ class FakeModel:
         self.calls = 0
         self.prompts = []
 
-    async def __call__(self, model, system, user, max_tokens=0, tries=3, check=None, allow_slang=False, think=True):
+    async def __call__(self, model, system, user, max_tokens=0, tries=3, check=None, allow_slang=False, think=True, temperature=None):
         self.prompts.append(user)
         err = None
         for _ in range(tries):

@@ -119,6 +119,7 @@ type State = {
   /** Local usage counts at the moment the server last reported the account (see plan.remaining). */
   lastSync?: { calls: number; clips: number; poise: number; profiles: number; fits: number };
   challenges: { code: string; title: string; createdAt: string; mine: boolean }[];
+  tribunals: { code: string; topic: string; createdAt: string }[];
   // actions
   set: (p: Partial<State>) => void;
   addSession: (r: SessionRecord) => void;
@@ -151,6 +152,7 @@ const initial = {
   occasion: undefined as Occasion | undefined,
   callNotes: [] as CallNote[],
   drafts: [] as import('@/lib/types').DraftEntry[],
+  tribunals: [] as { code: string; topic: string; createdAt: string }[],
   ob: {},
   sessions: [] as SessionRecord[],
   receipts: [] as Receipt[],
