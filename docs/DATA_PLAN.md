@@ -62,7 +62,7 @@ Then the site can say "checked against N ratings from real people", and the "Kle
 
 **What you'd need to do:**
 - Create a Prolific researcher account and add funds. I can't do that, because it involves payment.
-- Approve the recording page. I drafted one, `server/training/study.html`, with full consent and BIPA wording, 18+, a 12-month retention policy and withdrawal through Prolific. It isn't wired to the server: the endpoint was held back for your decision, because it means collecting face measurements from paid strangers.
+- Approve the recording page. I drafted one (kept out of the repo until you decide), with full consent and BIPA wording, 18+, a 12-month retention policy and withdrawal through Prolific. It isn't wired to the server: the endpoint was held back for your decision, because it means collecting face measurements from paid strangers.
 
 ### 3. Openly licensed speech, voice only (free; norms and robustness)
 - **Mozilla Common Voice** (CC0) and **LibriSpeech** (CC BY 4.0) are read speech.
