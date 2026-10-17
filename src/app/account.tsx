@@ -12,6 +12,7 @@ import { emailStart, emailVerify, appleSignIn, deleteAccount, updateAccountName 
 import { refreshAccount, signOut } from '@/lib/session';
 import { LEGAL_URL, OFFLINE } from '@/lib/config';
 import { play } from '@/lib/sound';
+import { syncSummary } from '@/lib/summary';
 
 const PLAN = { free: 'Free', plus: 'Kleos+', black: 'Kleos Black' } as const;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -42,6 +43,7 @@ export default function AccountScreen() {
     // The name you use in the app is the name the Members page greets.
     const st = useStore.getState();
     if (st.name.trim() && !st.account?.name) updateAccountName(st.name.trim()).then(() => refreshAccount()).catch(() => {});
+    syncSummary().catch(() => {});
     play('cleared');
     setMsg(switched ? 'Welcome back. This phone is now on your saved account.' : 'Saved. Your plan and progress follow you now.');
     setStep('email');
