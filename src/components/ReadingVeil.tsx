@@ -33,17 +33,17 @@ const BEAT_MS = 2200;
  * and a few words that change as it works. `leaving` plays the hand-off to the result: the light swells and the
  * whole veil dissolves (about 450 ms), so the read arrives out of it rather than cutting in.
  */
-export function ReadingVeil({ face, leaving = false }: { face?: any; leaving?: boolean }) {
+export function ReadingVeil({ face, leaving = false, lines = LINES, kicker = 'THE READ' }: { face?: any; leaving?: boolean; lines?: string[]; kicker?: string }) {
   const t = useTheme();
   const { width, height } = useWindowDimensions();
   const still = useReducedMotion();
   const [line, setLine] = useState(0);
 
   useEffect(() => {
-    if (line >= LINES.length - 1) return;
+    if (line >= lines.length - 1) return;
     const id = setTimeout(() => setLine((l) => l + 1), line === 0 ? 1600 : 2300);
     return () => clearTimeout(id);
-  }, [line]);
+  }, [line, lines.length]);
 
   // A slow heartbeat you can feel, in time with the face's pulse: lub (soft), dub (light), rest.
   useEffect(() => {
@@ -77,7 +77,7 @@ export function ReadingVeil({ face, leaving = false }: { face?: any; leaving?: b
       </View>
 
       <View style={{ position: 'absolute', left: 0, right: 0, bottom: height * 0.16, alignItems: 'center', paddingHorizontal: 32, gap: 10 }}>
-        <RNText style={{ fontFamily: font.mono, fontSize: 11, letterSpacing: 2.4, color: t.ink3 }}>THE READ</RNText>
+        <RNText style={{ fontFamily: font.mono, fontSize: 11, letterSpacing: 2.4, color: t.ink3 }}>{kicker}</RNText>
         <View style={{ height: 44, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' }}>
           <Animated.Text
             key={line}
@@ -85,7 +85,7 @@ export function ReadingVeil({ face, leaving = false }: { face?: any; leaving?: b
             exiting={FadeOut.duration(320)}
             style={{ position: 'absolute', fontFamily: font.serif, fontSize: 34, lineHeight: 40, color: t.ink, textAlign: 'center' }}
           >
-            {LINES[line]}
+            {lines[line]}
           </Animated.Text>
         </View>
       </View>

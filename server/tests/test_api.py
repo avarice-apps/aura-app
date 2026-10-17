@@ -251,3 +251,14 @@ def test_asking_twice_reuses_the_code_unless_it_was_used(client):
     assert client.post("/auth/email/verify", json={"email": "twice@example.com", "code": a["dev_code"]}, headers=h).status_code == 200
     c = client.post("/auth/email/start", json={"email": "twice@example.com"}, headers={"x-forwarded-for": "8.8.1.1"}).json()
     assert c.get("dev_code") and not c.get("already")  # a fresh code, since the first was used
+
+
+def test_lab_report_bands_and_what_it_leaves_out():
+    from pipeline import lab
+    voice = {"word_count": 80, "duration_s": 30, "wpm": 160, "filler_count": 4, "hedge_count": 1, "apology_count": 0, "pitch_variance": 0.8,
+             "longest_pause_s": 2.5, "first_word_s": 0.4, "sentence_count": 5, "upward_endings": 3, "fade_endings": 0}
+    ms = {m["key"]: m for m in lab.measures(voice, {"available": False})}
+    assert ms["pace"]["status"] == "in" and ms["fillers"]["status"] == "high" and ms["melody"]["status"] == "low"
+    assert ms["pause"]["status"] == "high" and ms["uptalk"]["status"] == "high" and "eyes" not in ms  # no face, no eye measure
+    assert ms["fillers"]["source"] == "research" and ms["fillers"]["ref"] in lab.REFS
+    assert lab.measures({"word_count": 3, "duration_s": 2}, {}) == []  # too little to measure honestly

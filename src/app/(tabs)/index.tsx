@@ -11,6 +11,7 @@ import { today } from '@/lib/dailies';
 import { STRANGERS } from '@/lib/faces';
 import { Display, Kicker, RowLink, Pill, Hair } from '@/components/Kit';
 import { occasionFresh, whenLabel } from '@/lib/occasion';
+import { WEEKLY, weekKey } from '@/lib/mirror';
 
 const TIER = (n: number) => (n >= 85 ? 'Gravity' : n >= 72 ? 'Magnetic' : n >= 60 ? 'Composed' : n >= 45 ? 'Present' : 'Faint');
 
@@ -21,6 +22,7 @@ const TIER = (n: number) => (n >= 85 ? 'Gravity' : n >= 72 ? 'Magnetic' : n >= 6
 export default function Today() {
   const t = useTheme();
   const s = useStore();
+  const mirrorDone = (s.mirror ?? []).some((r) => r.promptId === WEEKLY.id && weekKey(new Date(r.createdAt)) === weekKey());
   const idx = auraIndex(s.sessions);
   const next = nextLesson(s.laurels);
   const hour = new Date().getHours();
@@ -105,6 +107,7 @@ export default function Today() {
           />
           {!occ ? <RowLink title="Something coming up?" sub="Tell Poise. Get the look and the practice for it." onPress={() => router.push('/occasion')} /> : null}
           {occ && !first ? <RowLink title="Continue your Path" sub={`${next.lesson.title} · 3 minutes`} onPress={lesson} /> : null}
+          {!mirrorDone ? <RowLink title="This week’s Mirror" sub="Thirty seconds on camera. See what moved." onPress={() => router.push('/mirror')} /> : null}
           <RowLink title="Situation of the day" sub="Ten seconds to read the room" dim={doneToday.includes('situation')} onPress={() => router.push('/situations')} />
           {evening ? (
             <RowLink title="Tonight’s debrief" sub="One moment from today, with Poise" dim={doneToday.includes('debrief')} onPress={() => router.navigate({ pathname: '/(tabs)/poise', params: { mode: 'debrief' } })} />

@@ -246,3 +246,39 @@ export type DraftRead = {
   version?: string;
 };
 export type DraftEntry = { id: string; createdAt: string; draft: string; convo?: ShotMessage[]; to?: string; intent?: string; outcome?: string; read: DraftRead };
+
+/** One measure on The Mirror's lab report: measured from the recording, with the band it's compared to. */
+export type LabMeasure = {
+  key: string;
+  label: string;
+  value: number;
+  display: string;
+  band: [number, number];
+  scale: [number, number];
+  status: 'in' | 'low' | 'high';
+  /** "research": a published finding (see How Kleos measures). "kleos": our own working threshold. */
+  source: 'research' | 'kleos';
+  note: string;
+  ref?: string | null;
+};
+
+/** The Mirror: thirty seconds on camera, measured, then read. */
+export type MirrorRead = {
+  id: string;
+  promptId: string;
+  prompt: string;
+  index: number;
+  band: number;
+  axes: Record<string, number>;
+  archetype: string;
+  tells: { id: string; title: string; evidence: string; axis: string }[];
+  drill: { title: string; body: string; minutes: number };
+  script: string;
+  audioUrl?: string | null;
+  landed?: { score: number; why: string } | null;
+  measures: LabMeasure[];
+  lab?: { in: number; total: number };
+  transcript?: string;
+  createdAt: string;
+  safety?: boolean;
+};

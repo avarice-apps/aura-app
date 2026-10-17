@@ -1,5 +1,5 @@
 import { API_URL, OFFLINE } from './config';
-import type { BuiltFit, DraftRead, Duel, Evaluation, FitRead, Lesson, Moment, ProfileRead, Receipt, ScanResult, SessionStart, ShotMessage, StyleProfile, StyleRead, Swatch, TurnResult, WardrobeItem } from './types';
+import type { MirrorRead, BuiltFit, DraftRead, Duel, Evaluation, FitRead, Lesson, Moment, ProfileRead, Receipt, ScanResult, SessionStart, ShotMessage, StyleProfile, StyleRead, Swatch, TurnResult, WardrobeItem } from './types';
 import { useReads, pickDetail } from './reads';
 import { useStore, type Goal, type Account } from '@/state/store';
 import { File, Directory, Paths } from 'expo-file-system';
@@ -905,4 +905,21 @@ export async function reportClientError(error: Error, path?: string): Promise<vo
       body: JSON.stringify({ message: String(error?.message ?? error).slice(0, 300), stack: String(error?.stack ?? '').slice(0, 1500), path: path ?? '' }),
     });
   } catch {}
+}
+
+// ------------------------------------------------------------------ The Mirror
+
+/** Thirty seconds on the front camera: measured (voice, eyes, posture), then read by Poise. */
+export async function readTake(a: { videoUri: string; promptId: string; prompt: string; history: { index: number; archetype: string; createdAt: string }[] }): Promise<MirrorRead> {
+  const form = new FormData();
+  form.append('video', fileField(a.videoUri, 'take.mp4', 'video/mp4'));
+  form.append('prompt_id', a.promptId);
+  form.append('prompt_text', a.prompt);
+  form.append('name', useStore.getState().name ?? '');
+  form.append('intensity', tone() === 'unfiltered' ? 'unsparing' : 'straight');
+  form.append('history', JSON.stringify(a.history.slice(0, 3)));
+  form.append('voice', 'true');
+  const r = await postForm<any>('/read', form, 120000);
+  if (r?.safety) return { id: `v_${Date.now()}`, promptId: a.promptId, prompt: a.prompt, index: 0, band: 0, axes: {}, archetype: '', tells: [], drill: { title: '', body: '', minutes: 0 }, script: r.script ?? '', measures: [], createdAt: new Date().toISOString(), safety: true };
+  return { ...r, measures: r.measures ?? [], createdAt: new Date().toISOString() } as MirrorRead;
 }

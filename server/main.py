@@ -22,7 +22,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import JSONResponse, Response, HTMLResponse, FileResponse, StreamingResponse, RedirectResponse
 from fastapi import Request
 
-from pipeline import audio, face, rubric, poise, tts, converse, live, vision, duel, legal, referrals, clips, accounts, table, drafts, tribunal, direct
+from pipeline import lab, audio, face, rubric, poise, tts, converse, live, vision, duel, legal, referrals, clips, accounts, table, drafts, tribunal, direct
 from training import store as train_store, learned
 
 app = FastAPI(title="Kleos", version="0.2")
@@ -466,7 +466,12 @@ async def read(
     accounts.spend(acc, "scans")
     path = await _save(video, ".mp4")
     try:
-        hist = json.loads(history or "[]")
+        try:
+            hist = json.loads(history or "[]")
+        except ValueError:
+            hist = []
+        hist = [h for h in hist if isinstance(h, dict)][:3] if isinstance(hist, list) else []
+        prompt_text, name = _cap(prompt_text, 300), _cap(name, 40)
         v, p = await measure(path)
         if v["word_count"] < 6:
             raise HTTPException(422, "We couldn't hear enough. Try again, closer to the mic.")
@@ -484,6 +489,12 @@ async def read(
         out = await poise.verdict(prompt_text=prompt_text, voice=v, presence=p, scores=scores, history=hist, name=name, intensity=intensity, deep=deep)
         if out.get("safety"):
             return JSONResponse({"safety": True, "script": out.get("script", "")}, status_code=200)
+        # What they said, judged (labelled as such); everything else on the report is measured.
+        landed = out.get("landed") if isinstance(out.get("landed"), dict) else {}
+        if isinstance(landed.get("score"), (int, float)):
+            scores["axes"]["read"] = rubric.clamp(landed["score"])
+            scores["index"] = round(sum(scores["axes"][k] * w for k, w in rubric.AXIS_WEIGHT.items()))
+        ms = lab.measures(v, p)
         vid = f"v_{uuid.uuid4().hex[:12]}"
         # Poise's voice streams on first play from a signed link, instead of making them wait for the whole file.
         audio_url = _voice_url(out["script"], tts.VOICE_ID) if voice else None
@@ -502,6 +513,11 @@ async def read(
             "facts": facts,
             "perceived": perceived,
             "model": out.get("model"),
+            "landed": {"score": scores["axes"]["read"], "why": str(landed.get("why") or "")[:160]} if landed else None,
+            "measures": ms,
+            "lab": lab.summary(ms),
+            "transcript": v.get("transcript", ""),
+            "prompt": prompt_text,
         }
     finally:
         if os.path.exists(path):

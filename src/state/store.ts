@@ -78,6 +78,7 @@ type State = {
   callNotes: CallNote[];
   /** Before I send this: recent draft reads. Kept on this phone only, and only for 30 days. */
   drafts: import('@/lib/types').DraftEntry[];
+  mirror: import('@/lib/types').MirrorRead[];
   // onboarding scratch
   ob: { quickCorrect?: number; first?: Evaluation; firstSession?: string; second?: Evaluation };
   // progress
@@ -152,6 +153,7 @@ const initial = {
   occasion: undefined as Occasion | undefined,
   callNotes: [] as CallNote[],
   drafts: [] as import('@/lib/types').DraftEntry[],
+  mirror: [] as import('@/lib/types').MirrorRead[],
   tribunals: [] as { code: string; topic: string; createdAt: string }[],
   ob: {},
   sessions: [] as SessionRecord[],
