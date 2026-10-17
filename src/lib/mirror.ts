@@ -32,3 +32,9 @@ export function weekKey(d = new Date()) {
 }
 
 export const SECONDS = 30;
+
+export function titleOf(a?: string) {
+  if (!a) return '';
+  const s = a.replace(/^the\s+/i, '');
+  return `The ${s.charAt(0).toUpperCase()}${s.slice(1)}`;
+}

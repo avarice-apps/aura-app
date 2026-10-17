@@ -81,12 +81,6 @@ export default function Play() {
           </ArtCard>
         </Animated.View>
 
-        {/* The Mirror */}
-        <Animated.View entering={FadeInDown.duration(400).delay(20)} style={{ marginTop: 10 }}>
-          <ArtCard art="aurelius" height={150} focus="top" scrim={1} onPress={() => router.push('/mirror')}>
-            <OnBlue kicker="The Mirror · 30 seconds on camera" sub="Measured, then read. Same question weekly.">See what they see.</OnBlue>
-          </ArtCard>
-        </Animated.View>
 
         {/* With friends */}
         <Animated.View entering={FadeInDown.duration(400).delay(40)} style={{ marginTop: 28 }}>

@@ -6,13 +6,13 @@ import { Screen, Icon, ICON, Statue } from '@/ui';
 import { font, useTheme } from '@/theme';
 import { useStore } from '@/state/store';
 import { Display, Kicker, Pill, RowLink, Hair, Chip } from '@/components/Kit';
-import { WEEKLY, EXTRA, weekKey, promptById } from '@/lib/mirror';
+import { WEEKLY, EXTRA, weekKey, promptById, titleOf } from '@/lib/mirror';
 
 /**
  * The Mirror: thirty seconds on camera, answering one question. Voice, eyes and stillness are measured; then Poise
  * reads it. The same question every week, so the takes line up and you can see what moved.
  */
-export default function Mirror() {
+export function MirrorHome({ inTab = false }: { inTab?: boolean }) {
   const t = useTheme();
   const reads = useStore((s) => s.mirror ?? []);
   const training = useStore((s) => !!s.trainingConsent);
@@ -21,12 +21,12 @@ export default function Mirror() {
   const go = (id: string) => router.push({ pathname: '/mirror/take', params: { prompt: id } });
 
   return (
-    <Screen edges={['top', 'bottom']}>
-      <View style={{ paddingHorizontal: 22, paddingTop: 8 }}>
+    <Screen edges={inTab ? ['top'] : ['top', 'bottom']}>
+      {inTab ? null : <View style={{ paddingHorizontal: 22, paddingTop: 8 }}>
         <Pressable onPress={() => router.back()} hitSlop={10} accessibilityLabel="Back" style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: t.line, alignItems: 'center', justifyContent: 'center' }}>
           <Icon d={ICON.back} size={16} color={t.ink} />
         </Pressable>
-      </View>
+      </View>}
       <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 12, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         <Animated.View entering={FadeInDown.duration(400)} style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8 }}>
           <View style={{ flex: 1, gap: 10 }}>
@@ -87,11 +87,6 @@ export default function Mirror() {
   );
 }
 
-export function titleOf(a?: string) {
-  if (!a) return '';
-  const s = a.replace(/^the\s+/i, '');
-  return `The ${s.charAt(0).toUpperCase()}${s.slice(1)}`;
-}
 
 /** Your Index on the weekly question, take by take. */
 function Trend({ points }: { points: number[] }) {

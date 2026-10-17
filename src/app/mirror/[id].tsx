@@ -8,8 +8,8 @@ import { useStore } from '@/state/store';
 import { Pill } from '@/components/Kit';
 import { HearPoise } from '@/components/Results';
 import { LabPanel } from '@/components/LabPanel';
-import { promptById } from '@/lib/mirror';
-import { titleOf } from './index';
+import { promptById, titleOf } from '@/lib/mirror';
+
 
 const ART: Record<string, ArtName> = {
   hedge: 'man', apologist: 'aphrodite', sprinter: 'athlete', statue: 'vespasian', pleaser: 'lisa', blade: 'trajan', anchor: 'aurelius', current: 'apollo',
@@ -27,7 +27,7 @@ export default function MirrorRead() {
       <Screen edges={['top', 'bottom']}>
         <View style={{ flex: 1, padding: 28, justifyContent: 'center', gap: 12 }}>
           <RNText style={{ fontFamily: font.serif, fontSize: 32, color: t.ink }}>That take isn’t here any more.</RNText>
-          <Pill label="Back to the Mirror" onPress={() => router.replace('/mirror')} />
+          <Pill label="Back to the Mirror" onPress={() => router.navigate('/(tabs)/mirror')} />
         </View>
       </Screen>
     );
@@ -38,7 +38,7 @@ export default function MirrorRead() {
   return (
     <Screen edges={['top', 'bottom']}>
       <View style={{ paddingHorizontal: 20, paddingTop: 8, flexDirection: 'row', justifyContent: 'space-between' }}>
-        <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/mirror'))} hitSlop={10} accessibilityLabel="Back" style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: t.line, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={() => (router.canGoBack() ? router.back() : router.navigate('/(tabs)/mirror'))} hitSlop={10} accessibilityLabel="Back" style={{ width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: t.line, alignItems: 'center', justifyContent: 'center' }}>
           <Icon d={ICON.back} size={16} color={t.ink} />
         </Pressable>
       </View>
@@ -107,7 +107,7 @@ export default function MirrorRead() {
       </ScrollView>
       <View style={{ paddingHorizontal: 20, paddingBottom: 10, gap: 8 }}>
         <Pill label="Take it again" onPress={() => router.replace({ pathname: '/mirror/take', params: { prompt: r.promptId } })} />
-        <Pill label="Done" quiet onPress={() => router.replace('/mirror')} />
+        <Pill label="Done" quiet onPress={() => router.navigate('/(tabs)/mirror')} />
       </View>
     </Screen>
   );

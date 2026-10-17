@@ -2,7 +2,8 @@ import React from 'react';
 import { View, ScrollView, Pressable, Text as RNText } from 'react-native';
 import { router } from 'expo-router';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
-import { Screen, Statue, ICON, Chevron } from '@/ui';
+import { Screen, Statue, ICON, Icon, ArtCard, OnBlue, Section } from '@/ui';
+import { Image } from 'expo-image';
 import { font, useTheme } from '@/theme';
 import { useStore, auraIndex } from '@/state/store';
 import { nextLesson, ALL_MISSIONS } from '@/lib/progress';
@@ -36,6 +37,7 @@ export default function Today() {
 
   return (
     <Screen>
+      {BACKDROP ? <Backdrop /> : null}
       <ScrollView contentContainerStyle={{ paddingHorizontal: 22, paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
         {/* header */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 10 }}>
@@ -96,19 +98,43 @@ export default function Today() {
           </Pressable>
         ) : null}
 
-        {/* the short list */}
-        <Animated.View entering={FadeIn.duration(500).delay(120)} style={{ marginTop: 22 }}>
-          <RowLink
-            first
-            thumb={STRANGERS[new Date().getDate() % STRANGERS.length]}
-            title={dailyDone ? 'Daily Side Quest · done' : 'Daily Side Quest'}
-            sub={dailyDone ? 'Back tomorrow with someone new.' : 'Someone’s about to call. You find out who when it connects.'}
-            onPress={() => router.push('/daily')}
-          />
-          {!occ ? <RowLink title="Something coming up?" sub="Tell Poise. Get the look and the practice for it." onPress={() => router.push('/occasion')} /> : null}
-          {occ && !first ? <RowLink title="Continue your Path" sub={`${next.lesson.title} · 3 minutes`} onPress={lesson} /> : null}
-          {!mirrorDone ? <RowLink title="This week’s Mirror" sub="Thirty seconds on camera. See what moved." onPress={() => router.push('/mirror')} /> : null}
-          <RowLink title="Situation of the day" sub="Ten seconds to read the room" dim={doneToday.includes('situation')} onPress={() => router.push('/situations')} />
+        {/* today: one bold card, two pictures, then the small things */}
+        <Animated.View entering={FadeInDown.duration(450).delay(80)} style={{ marginTop: 26, gap: 10 }}>
+          <Section title="Today" note={s.streak > 0 ? `${s.streak}-day streak` : undefined} />
+          <Pressable onPress={() => { play('select'); router.push('/daily'); }} style={({ pressed }) => ({ borderRadius: 24, backgroundColor: dailyDone ? t.card : t.accent, borderWidth: dailyDone ? 1 : 0, borderColor: t.line, padding: 18, flexDirection: 'row', alignItems: 'center', gap: 14, transform: [{ scale: pressed ? 0.985 : 1 }] })}>
+            <Image source={STRANGERS[new Date().getDate() % STRANGERS.length]} style={{ width: 54, height: 54, borderRadius: 27, backgroundColor: t.cardAlt }} contentFit="cover" />
+            <View style={{ flex: 1, gap: 3 }}>
+              <RNText style={{ fontFamily: font.mono, fontSize: 10.5, letterSpacing: 1.4, color: dailyDone ? t.ink3 : 'rgba(255,255,255,0.75)' }}>{dailyDone ? 'DAILY SIDE QUEST · DONE' : 'DAILY SIDE QUEST'}</RNText>
+              <RNText style={{ fontFamily: font.medium, fontSize: 18, lineHeight: 22, letterSpacing: -0.4, color: dailyDone ? t.ink : '#FFF' }}>{dailyDone ? 'Back tomorrow with someone new.' : 'Someone’s about to call you.'}</RNText>
+            </View>
+            {!dailyDone ? (
+              <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon d={ICON.play} size={16} color={t.accent} fill={t.accent} />
+              </View>
+            ) : null}
+          </Pressable>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <View style={{ flex: 1 }}>
+              <ArtCard art="youth" height={196} focus="top" scrim={0.95} onPress={() => router.navigate('/(tabs)/mirror')}>
+                <OnBlue kicker={mirrorDone ? 'Mirror · done' : 'The Mirror'} size={19}>{mirrorDone ? 'See what moved' : 'This week’s take'}</OnBlue>
+              </ArtCard>
+            </View>
+            <View style={{ flex: 1 }}>
+              {occ ? (
+                <ArtCard art="tennis" height={196} focus="top" scrim={0.95} onPress={lesson}>
+                  <OnBlue kicker="The Path" size={19}>{next.lesson.title}</OnBlue>
+                </ArtCard>
+              ) : (
+                <ArtCard art="seaside" height={196} focus="top" scrim={0.95} onPress={() => router.push('/occasion')}>
+                  <OnBlue kicker="Coming up?" size={19}>Get ready for it</OnBlue>
+                </ArtCard>
+              )}
+            </View>
+          </View>
+        </Animated.View>
+
+        <Animated.View entering={FadeIn.duration(500).delay(160)} style={{ marginTop: 18 }}>
+          <RowLink first title="Situation of the day" sub="Ten seconds to read the room" dim={doneToday.includes('situation')} onPress={() => router.push('/situations')} />
           {evening ? (
             <RowLink title="Tonight’s debrief" sub="One moment from today, with Poise" dim={doneToday.includes('debrief')} onPress={() => router.navigate({ pathname: '/(tabs)/poise', params: { mode: 'debrief' } })} />
           ) : (
@@ -117,15 +143,32 @@ export default function Today() {
           <Hair />
         </Animated.View>
 
-        {/* the Index, small */}
-        <Pressable onPress={() => router.navigate('/(tabs)/you')} style={{ marginTop: 22, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Kicker>Aura Index</Kicker>
-          <RNText style={{ fontFamily: font.medium, fontSize: 15, color: t.ink }}>{idx === null ? 'after your first read' : `${idx} · ${TIER(idx)}`}</RNText>
-          <View style={{ flex: 1 }} />
-          {s.streak > 0 ? <RNText style={{ fontFamily: font.mono, fontSize: 11, letterSpacing: 1, color: t.ink3 }}>{s.streak}-DAY STREAK</RNText> : null}
-          <Chevron />
-        </Pressable>
+        {/* the Index, on its own plate */}
+        <Animated.View entering={FadeIn.duration(500).delay(220)} style={{ marginTop: 22 }}>
+          <ArtCard art="vespasian" height={170} focus="top" onPress={() => router.navigate('/(tabs)/you')}>
+            <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+              <View style={{ gap: 2 }}>
+                <RNText style={{ fontFamily: font.mono, fontSize: 10.5, letterSpacing: 1.4, color: 'rgba(255,255,255,0.75)' }}>AURA INDEX</RNText>
+                <RNText style={{ fontFamily: font.medium, fontSize: 17, color: '#FFF' }}>{idx === null ? 'After your first read' : TIER(idx)}</RNText>
+              </View>
+              <RNText style={{ fontFamily: font.medium, fontSize: 64, lineHeight: 64, letterSpacing: -2, color: '#FFF' }}>{idx ?? '—'}</RNText>
+            </View>
+          </ArtCard>
+        </Animated.View>
       </ScrollView>
     </Screen>
+  );
+}
+
+// Two cobalt engravings at opposite corners, turned toward each other across the page, very faint.
+const BACKDROP = true;
+function Backdrop() {
+  const t = useTheme();
+  const o = t.dark ? 0.16 : 0.11;
+  return (
+    <View pointerEvents="none" style={{ position: 'absolute', inset: 0 }}>
+      <Statue name="engrAthlete" height={300} style={{ position: 'absolute', top: 40, right: -110, opacity: o, transform: [{ rotate: '-14deg' }, { scaleX: -1 }] }} />
+      <Statue name="engrAntinoos" height={320} style={{ position: 'absolute', bottom: -40, left: -120, opacity: o, transform: [{ rotate: '12deg' }] }} />
+    </View>
   );
 }
