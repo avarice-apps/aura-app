@@ -4,84 +4,159 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
-<title>Kleos · Collection</title>
+<title>Kleos · La Maison</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 fill=%27%231608F2%27/%3E%3Ctext x=%2732%27 y=%2747%27 font-family=%27Georgia,serif%27 font-size=%2742%27 text-anchor=%27middle%27 fill=%27%23F1EBDD%27%3EK%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=EB+Garamond:ital@0;1&family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="k.css">
 <style>
-  .top { padding:clamp(110px,14vw,170px) var(--gut) 28px; display:grid; grid-template-columns:1fr auto; gap:24px; align-items:end; }
-  .top h1 { margin:0; font-family:var(--serif); font-weight:400; font-size:clamp(64px,10vw,168px); line-height:.86; letter-spacing:-.03em; }
-  .top p { margin:14px 0 0; max-width:46ch; color:var(--ink2); }
-  .tabs { position:relative; display:flex; gap:4px; border:1px solid var(--line); padding:4px; align-self:end; }
-  .tabs .thumb { position:absolute; top:4px; bottom:4px; left:0; background:var(--ink); transition:transform 300ms var(--ease-out), width 300ms var(--ease-out); z-index:0; }
-  .tabs button { position:relative; z-index:1; border:0; background:none; padding:10px 16px; cursor:pointer; font-size:14px; white-space:nowrap; transition:color 200ms ease, transform 160ms var(--ease-out); }
-  .tabs button:active { transform:scale(0.97); }
-  .tabs button[aria-selected="true"] { color:var(--paper); }
-  @media (max-width:760px){ .top { grid-template-columns:1fr; } .tabs { justify-self:start; } }
-  .line { padding:24px var(--gut) clamp(64px,8vw,120px); }
-  .line > header { display:flex; justify-content:space-between; align-items:baseline; gap:20px; flex-wrap:wrap; border-top:1px solid var(--line); padding:22px 0 30px; }
-  .line > header h2 { margin:0; font-family:var(--mono); font-weight:400; font-size:11px; letter-spacing:.14em; text-transform:uppercase; }
-  .line > header h2 em { font-style:normal; color:var(--ink2); }
-  .line > header span { color:var(--ink2); font-size:14px; }
-  .grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:clamp(18px,2.4vw,36px) clamp(14px,2vw,28px); }
-  @media (max-width:1100px){ .grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
-  @media (max-width:700px){ .grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
-  .line.night { background:var(--claret); color:var(--blush); padding-top:48px; }
-  .line.night > header { border-top-color:rgba(242,217,218,.25); }
-  .line.night > header span, .line.night > header h2 em, .line.night .card .pr, .line.night .card .sub { color:#D9AEB3; }
-  .line.night .card .ph { background:#5A1B19; }
-  [hidden] { display:none!important; }
+  .chead { padding:calc(var(--ann) + 78px) 0 0; }
+  .crumbs { display:flex; justify-content:space-between; align-items:center; gap:16px; padding:0 var(--gut) 0 16px; }
+  .crumbs nav { display:flex; gap:8px; color:var(--ink2); } .crumbs nav a { text-decoration:none; } .crumbs nav b { font-weight:500; color:var(--ink); }
+  .ft { flex:none; white-space:nowrap; background:none; border:0; cursor:pointer; padding:8px 0; color:inherit; transition:transform 160ms var(--ease-out); } .ft:active { transform:scale(0.97); }
+  .title { display:grid; grid-template-columns:1fr auto; align-items:end; gap:24px; padding:clamp(36px,6vw,84px) var(--gut) 26px 16px; }
+  .title h1 { margin:0; font-family:var(--serif); font-weight:400; font-size:clamp(52px,7.4vw,120px); line-height:.86; letter-spacing:-.025em; }
+  .title p { margin:14px 0 0; max-width:48ch; font-family:var(--book); font-size:18px; line-height:1.4; color:var(--ink2); }
+  .title .count { color:var(--ink2); }
+  .bar { position:sticky; top:calc(var(--ann) + 58px); z-index:20; background:rgba(250,245,235,.96); border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+  .bar .rows { display:flex; flex-wrap:nowrap; justify-content:space-between; align-items:center; gap:20px; padding:0 var(--gut) 0 16px; }
+  .chips { display:flex; gap:22px; overflow-x:auto; min-width:0; flex:1; scrollbar-width:none; } .chips::-webkit-scrollbar { display:none; }
+  .chips button { position:relative; flex:none; background:none; border:0; cursor:pointer; padding:15px 0; color:var(--ink2); transition:color 150ms ease; }
+  .chips button[aria-pressed="true"] { color:var(--ink); }
+  .chips button::after { content:''; position:absolute; left:0; right:0; bottom:10px; height:1px; background:currentColor; transform:scaleX(0); transform-origin:left; transition:transform 260ms var(--ease-out); }
+  .chips button[aria-pressed="true"]::after { transform:scaleX(1); }
+  @media (hover:hover) and (pointer:fine){ .chips button:hover { color:var(--ink); } }
+  /* filter panel: opens under the bar, grid-rows trick so height animates without measuring */
+  .panel { display:grid; grid-template-rows:0fr; transition:grid-template-rows 320ms var(--ease-out); }
+  .panel.open { grid-template-rows:1fr; }
+  .panel > div { overflow:hidden; }
+  .panel .in { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:28px; padding:22px var(--gut) 26px 16px; border-top:1px solid var(--line); }
+  .panel h3 { margin:0 0 10px; font-size:10px; font-weight:500; letter-spacing:.07em; text-transform:uppercase; color:var(--ink2); }
+  .opts { display:flex; flex-wrap:wrap; gap:6px; }
+  .opts button { background:none; border:1px solid var(--line); padding:9px 12px; cursor:pointer; font-size:11px; font-weight:500; letter-spacing:.07em; text-transform:uppercase; display:inline-flex; gap:8px; align-items:center; transition:transform 160ms var(--ease-out), border-color 150ms ease, background-color 150ms ease, color 150ms ease; }
+  .opts button:active { transform:scale(0.97); }
+  .opts button[aria-pressed="true"] { border-color:var(--ink); background:var(--ink); color:var(--paper); }
+  .opts i { width:10px; height:10px; box-shadow:inset 0 0 0 1px rgba(13,11,30,.25); }
+  @media (max-width:720px){ .panel .in { grid-template-columns:1fr; gap:20px; } .bar .rows .chips { gap:18px; } }
+  .grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:30px 4px; padding:4px 0 clamp(64px,8vw,120px); }
+  @media (max-width:1000px){ .grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+  @media (max-width:700px){ .grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px 4px; } .card .sw { display:none; } .card .meta { flex-direction:column; gap:2px; padding:9px 10px 0; } }
+  .tile { grid-column:span 2; position:relative; overflow:hidden; background:var(--paper2); text-decoration:none; color:var(--ink); min-height:100%; }
+  .tile img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:transform 900ms var(--ease-out); }
+  @media (hover:hover) and (pointer:fine){ .tile:hover img { transform:scale(1.02); } }
+  .tile .cap { position:absolute; left:14px; bottom:14px; background:var(--paper); padding:7px 10px; }
+  @media (max-width:700px){ .tile { aspect-ratio:10/7; min-height:0; } }
+  .none { grid-column:1/-1; padding:80px 16px; font-family:var(--book); font-size:19px; color:var(--ink2); }
+  .none button { font:inherit; background:none; border:0; text-decoration:underline; cursor:pointer; padding:0; color:var(--ink); }
+  .svc { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border-top:1px solid var(--line); }
+  .svc > div { padding:28px clamp(18px,2.4vw,32px) 34px; border-left:1px solid var(--line); display:grid; gap:8px; align-content:start; }
+  .svc > div:first-child { border-left:0; }
+  .svc p { margin:0; font-family:var(--book); font-size:16px; line-height:1.4; color:var(--ink2); }
+  @media (max-width:820px){ .svc { grid-template-columns:1fr 1fr; } .svc > div:nth-child(3) { border-left:0; } .svc > div:nth-child(n+3) { border-top:1px solid var(--line); } }
+  @media (max-width:720px){ .chead { padding-top:calc(var(--ann) + 66px); } .bar { top:calc(var(--ann) + 50px); } .title { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
 <nav class="nav solid" data-solid="1" aria-label="Main">
-  <a class="brand" href="index.html">Kleos</a>
   <div class="links"><a href="collection.html" aria-current="page">Collection</a><a href="poise.html">Poise</a><a href="members.html">Members</a></div>
-  <div class="right"><button class="bagbtn" data-bag data-bagcount>Bag</button></div>
+  <a class="brand" href="index.html">Kleos</a>
+  <div class="right"><button data-search>Search</button><a class="acct" href="members.html">Account</a><button data-bag data-bagcount>Bag (0)</button></div>
 </nav>
 
-<header class="top">
-  <div>
-    <h1>The collection</h1>
-    <p>Reserve now and we hold your piece until orders open: members on 11 November, everyone else on the 13th. Each piece is one of a hundred, numbered inside the collar.</p>
-  </div>
-  <div class="tabs" role="tablist" aria-label="Lines"><span class="thumb" aria-hidden="true"></span>
-    <button role="tab" aria-selected="true" data-f="all">Everything</button>
-    <button role="tab" aria-selected="false" data-f="cote">La Côte</button>
-    <button role="tab" aria-selected="false" data-f="night">Chez moi</button>
+<header class="chead">
+  <div class="crumbs cap"><nav aria-label="Breadcrumb"><a href="index.html">Home</a><span>/</span><a href="collection.html">Collection</a><span id="crumb2" hidden>/</span><b id="crumb3"></b></nav></div>
+  <div class="title">
+    <div><h1 id="h1">La Maison</h1><p id="lede"></p></div>
+    <span class="cap count" id="count"></span>
   </div>
 </header>
 
-<section class="line" id="cote" aria-labelledby="h-cote">
-  <header><h2 id="h-cote">La Côte <em>· Issue Nº 001 · fifteen pieces</em></h2><span>Riviera prints in one blue, linen for the deck</span></header>
-  <div class="grid stagger" id="gc"></div>
-</section>
-<section class="line night" id="night" aria-labelledby="h-night">
-  <header><h2 id="h-night">Chez moi <em>· Nº 002 · the night line</em></h2><span>Nº 002 · reserve now, ships in winter</span></header>
-  <div class="grid stagger" id="gn"></div>
+<div class="bar">
+  <div class="rows cap">
+    <div class="chips" id="lines" role="group" aria-label="Line"></div>
+    <button class="ft cap" id="ft" aria-expanded="false" aria-controls="panel">Filter</button>
+  </div>
+  <div class="panel" id="panel"><div><div class="in">
+    <div><h3>Type</h3><div class="opts" id="types"></div></div>
+    <div><h3>Colour</h3><div class="opts" id="cols"></div></div>
+    <div><h3>Sort</h3><div class="opts" id="sorts"></div></div>
+  </div></div></div>
+</div>
+
+<main class="grid" id="g" aria-live="polite"></main>
+
+<section class="svc" aria-label="Service">
+  <div><span class="cap">Made to order</span><p>Cut and printed for you once orders open. Nothing is charged to reserve.</p></div>
+  <div><span class="cap">Free shipping over $150</span><p>Tracked, within fourteen days of your order.</p></div>
+  <div><span class="cap">Returns in 14 days</span><p>A returned piece goes to the next name on the register.</p></div>
+  <div><span class="cap">Repairs for life</span><p>By the number inside the collar.</p></div>
 </section>
 
 <footer class="foot">
-  <div class="big">Kleos</div>
+  <svg class="seal" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47" fill="none" stroke="currentColor" stroke-width="1"/><circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width=".6"/><text x="50" y="63" text-anchor="middle" font-family="Instrument Serif,serif" font-size="40" fill="currentColor">K</text><g fill="none" stroke="currentColor" stroke-width=".9"><path d="M28 70c-6-8-7-20-2-29M72 70c6-8 7-20 2-29"/><path d="M27 62c-4 0-7-2-8-5 4 0 7 2 8 5zM25 53c-4-1-6-3-6-6 3 1 6 3 6 6zM26 45c-3-1-5-4-4-7 3 2 4 4 4 7zM73 62c4 0 7-2 8-5-4 0-7 2-8 5zM75 53c4-1 6-3 6-6-3 1-6 3-6 6zM74 45c3-1 5-4 4-7-3 2-4 4-4 7z"/></g></svg>
   <div class="cols">
-    <div><a href="index.html">Home</a><a href="poise.html">Poise</a><a href="members.html">Members</a></div>
+    <div><a href="collection.html?line=marbres">Les Marbres</a><a href="collection.html?line=cote">La Côte</a><a href="collection.html?line=nuit">Chez moi</a><a href="poise.html">Poise</a><a href="members.html">Members</a></div>
     <div>Saint-Tropez<br>Paris<br>Madrid<br>London<br>New York</div>
     <div><div style="margin-bottom:8px">What is heard of you?</div>
       <form id="foot-f" novalidate><label class="sr" for="foot-e">Email</label><input id="foot-e" type="email" placeholder="Leave your email" autocomplete="email"><button type="submit" aria-label="Join the register">Join</button></form>
       <div id="foot-m" style="margin-top:10px;color:var(--ivory)" role="status"></div></div>
   </div>
-  <div class="fine"><span>© MMXXVI Kleos</span><span>Prints after paintings in the public domain, Cleveland Museum of Art open access</span></div>
+  <div class="fine"><span>© MMXXVI Kleos</span><span>Prints after works in the public domain, Cleveland Museum of Art open access, CC0</span></div>
 </footer>
+<script src="products.js"></script>
 <script src="k.js"></script>
 <script>
-  K.P.forEach(p => document.getElementById(p.line === 'night' ? 'gn' : 'gc').appendChild(K.card(p)));
-  const tabs = document.querySelectorAll('.tabs button');
-  function thumb(){ const on=[...tabs].find(t=>t.getAttribute('aria-selected')==='true'); const th=document.querySelector('.tabs .thumb'); if(on&&th){ th.style.width=on.offsetWidth+'px'; th.style.transform=`translateX(${on.offsetLeft}px)`; } }
-  addEventListener('resize', thumb); requestAnimationFrame(thumb); if (document.fonts) document.fonts.ready.then(thumb);
-  function filt(f){ tabs.forEach(t => t.setAttribute('aria-selected', t.dataset.f === f)); thumb(); document.getElementById('cote').hidden = f === 'night'; document.getElementById('night').hidden = f === 'cote'; }
-  tabs.forEach(t => t.onclick = () => { filt(t.dataset.f); try { history.replaceState(null,'', t.dataset.f === 'all' ? location.pathname : '#' + t.dataset.f); } catch(_){} });
-  if (location.hash === '#night' || location.hash === '#cote') filt(location.hash.slice(1));
+(() => {
+  const $ = id => document.getElementById(id);
+  const LEDE = {
+    all:'Eighty-six pieces in three lines. Marble heads in Kleos blue, the coast in summer, and the night line for the bar that stays open. Reserve now; members order first on 11 November.',
+    marbres:'Heads and figures from the museum’s open collection, cut clean and printed in one blue. The label from the wall goes underneath.',
+    cote:'The Riviera and the Channel coast: villas, regattas, lemons, the beach at Deauville. Knits for the deck, linen for dinner after.',
+    nuit:'Martinis, long tables, the walk home when the sun’s already up. Saint-Tropez, Paris, Madrid, Mayfair.',
+  };
+  const TILES = { all:[[8,'img/hero_boats.png','La Côte · Boats at Berck, after Manet','cote'],[22,'img/hero_moon.png','Chez moi · the night line','nuit']], cote:[[8,'img/hero_villa.png','Villa Kleos · Trouville, after Caillebotte','cote']], nuit:[[8,'img/hero_moon.png','Chez moi · after midnight','nuit']], marbres:[] };
+  const COLOURS = [['white','White','#FAF9F6'],['cream','Cream & ivory','#ECE2CB'],['navy','Navy','#1B1E4B'],['black','Black & espresso','#16151A'],['blush','Blush & claret','#F0D3D1'],['butter','Butter','#F1E1A6'],['blue','Blue','#CBDBEA']];
+  const colMatch = (p, c) => { const s = p.colour.toLowerCase(); return c === 'cream' ? /cream|ivory/.test(s) : c === 'black' ? /black|espresso/.test(s) : c === 'blush' ? /blush|claret/.test(s) : c === 'blue' ? /blue|sky/.test(s) : s.includes(c); };
+  const SORTS = [['featured','Featured'],['low','Price, low to high'],['high','Price, high to low'],['az','A to Z']];
+  const q = new URLSearchParams(location.search);
+  const st = { line: q.get('line') || ({ '#night':'nuit', '#cote':'cote' })[location.hash] || 'all', type: q.get('type') || 'all', col: q.get('col') || 'all', sort: q.get('sort') || 'featured' };
+  if (!K.LINES[st.line]) st.line = 'all';
+
+  function chips(el, list, key) {
+    el.innerHTML = list.map(([v, l, sw]) => `<button type="button" data-v="${v}" aria-pressed="${st[key] === v}">${sw ? `<i style="background:${sw}"></i>` : ''}${l}</button>`).join('');
+    el.querySelectorAll('button').forEach(b => b.onclick = () => { st[key] = (key !== 'line' && key !== 'sort' && st[key] === b.dataset.v) ? 'all' : b.dataset.v; paint(); });
+  }
+  function paint() {
+    chips($('lines'), [['all','All'], ...Object.entries(K.LINES)], 'line');
+    chips($('types'), Object.entries(K.TYPES), 'type');
+    chips($('cols'), COLOURS.map(([v, l, h]) => [v, l, h]), 'col');
+    chips($('sorts'), SORTS, 'sort');
+    const name = st.line === 'all' ? 'La Maison' : K.LINES[st.line];
+    $('h1').textContent = name; $('lede').textContent = LEDE[st.line];
+    $('crumb3').textContent = st.line === 'all' ? '' : name; $('crumb2').hidden = st.line === 'all';
+    document.title = 'Kleos · ' + name;
+    let list = K.P.filter(p => (st.line === 'all' || p.sec === st.line) && (st.type === 'all' || p.type === st.type) && (st.col === 'all' || colMatch(p, st.col)));
+    if (st.sort === 'low') list = [...list].sort((a, b) => (a.earned ? 1e4 : a.price) - (b.earned ? 1e4 : b.price));
+    if (st.sort === 'high') list = [...list].sort((a, b) => b.price - a.price);
+    if (st.sort === 'az') list = [...list].sort((a, b) => a.name.localeCompare(b.name));
+    const n = (st.type !== 'all' ? 1 : 0) + (st.col !== 'all' ? 1 : 0) + (st.sort !== 'featured' ? 1 : 0);
+    $('ft').textContent = n ? `Filter (${n})` : 'Filter';
+    $('count').textContent = `${list.length} ${list.length === 1 ? 'piece' : 'pieces'}`;
+    const g = $('g'); g.classList.remove('stagger'); g.innerHTML = '';
+    if (!list.length) { g.innerHTML = '<p class="none">Nothing in that combination. <button type="button" id="clr">Clear the filters</button></p>'; $('clr').onclick = () => { st.type = 'all'; st.col = 'all'; paint(); }; }
+    const tiles = (st.type === 'all' && st.col === 'all' && st.sort === 'featured') ? TILES[st.line] : [];
+    list.forEach((p, i) => {
+      g.appendChild(K.card(p));
+      const t = tiles.find(t => t[0] === i + 1);
+      if (t && list.length > i + 3) { const a = document.createElement('a'); a.className = 'tile'; a.href = 'collection.html?line=' + t[3]; a.innerHTML = `<img src="${t[1]}" alt="" loading="lazy"><span class="cap">${t[2]}</span>`; g.appendChild(a); }
+    });
+    void g.offsetWidth; g.classList.add('stagger'); K.stagger(g.parentNode);
+    const u = new URLSearchParams(); Object.entries(st).forEach(([k, v]) => { if (v !== 'all' && v !== 'featured') u.set(k, v); });
+    try { history.replaceState(null, '', location.pathname + (u.toString() ? '?' + u : '')); } catch (_) {}
+  }
+  $('ft').onclick = () => { const p = $('panel'), o = !p.classList.contains('open'); p.classList.toggle('open', o); $('ft').setAttribute('aria-expanded', o); };
+  paint();
+})();
 </script>
 </body>
 </html>

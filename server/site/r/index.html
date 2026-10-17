@@ -7,7 +7,7 @@
 <title>Kleos · La Côte</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 fill=%27%231608F2%27/%3E%3Ctext x=%2732%27 y=%2747%27 font-family=%27Georgia,serif%27 font-size=%2742%27 text-anchor=%27middle%27 fill=%27%23F1EBDD%27%3EK%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=EB+Garamond:ital@0;1&family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="k.css">
 <style>
   /* Three planes everywhere: big type at the back, the thing in the middle, the controls on top.
@@ -44,12 +44,9 @@
   @media (max-width:760px){ .plate { min-height:92svh; padding:14vh var(--gut) 20vh; } .plate .back { font-size:30vw; } .plate .mid { height:min(56svh,520px); } .plate .top { bottom:92px; } .plate .top .l { display:none; } }
 
   /* the other twelve, kept small */
-  .rest { padding:clamp(48px,7vw,96px) var(--gut) clamp(72px,9vw,130px); }
+  .rest-unused { padding:clamp(48px,7vw,96px) var(--gut) clamp(72px,9vw,130px); }
   .rest .head { display:flex; justify-content:space-between; align-items:baseline; gap:16px; margin-bottom:22px; }
   .rest .head a { font-size:14px; }
-  .grid6 { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:clamp(10px,1.6vw,22px); }
-  @media (max-width:1100px){ .grid6 { grid-template-columns:repeat(4,minmax(0,1fr)); } }
-  @media (max-width:640px){ .grid6 { grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; } .grid6 .card .sub, .grid6 .card .tag { display:none; } .grid6 .card .nm { font-size:12.5px; } .grid6 .card .pr { font-size:12px; } }
 
   /* ---- Chez moi ---- */
   .night { position:relative; background:var(--claret); color:var(--blush); overflow:hidden; }
@@ -59,7 +56,7 @@
   .night h2 { margin:0; font-family:var(--serif); font-style:italic; font-weight:400; font-size:clamp(96px,17vw,280px); line-height:.82; letter-spacing:-.03em; }
   .night .lede { margin:0; max-width:44ch; font-size:15px; color:#E9C3C7; }
   .night .mono { color:#E9C3C7; }
-  .night .cards { position:relative; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:clamp(14px,2vw,28px); padding:0 var(--gut) clamp(72px,9vw,130px); }
+  .night .cards { position:relative; display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:4px; padding:0 0 clamp(110px,12vw,190px); }
   .night .card .ph { background:#5A1B19; }
   .night .card .pr, .night .card .sub { color:#D9AEB3; }
   @media (max-width:900px){ .night .cards { grid-template-columns:repeat(2,minmax(0,1fr)); } }
@@ -89,13 +86,35 @@
   .poise .top .l { margin:6px 0 0; font-size:15px; color:var(--pale); max-width:34ch; }
   @media (max-width:760px){ .poise .back { font-size:42vw; } .poise .top { flex-direction:column; align-items:flex-start; bottom:92px; } .poise .top .l { max-width:none; } }
   @media (prefers-reduced-motion:reduce){ .poise .ring::before, .bars i { animation:none; } .bars i { transform:scaleY(.5); } }
+
+  /* ---- the split: one editorial image, one shelf ---- */
+  .split { display:grid; grid-template-columns:1fr 1fr; background:var(--paper); }
+  .split .ed { position:relative; display:block; overflow:hidden; min-height:min(92vh,880px); background:var(--paper2); text-decoration:none; }
+  .split .ed img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:transform 900ms var(--ease-out); }
+  @media (hover:hover) and (pointer:fine){ .split .ed:hover img { transform:scale(1.02); } }
+  .split .ed .cap { position:absolute; left:24px; bottom:22px; color:var(--ink); background:var(--paper); padding:7px 10px; }
+  .car { display:flex; flex-direction:column; justify-content:center; padding:clamp(28px,4vw,56px) 0; min-width:0; }
+  .carhead, .carfoot { display:flex; justify-content:space-between; align-items:center; padding:0 clamp(20px,3vw,40px); }
+  .carhead { margin-bottom:18px; } .carhead h2 { margin:0; }
+  .carfoot { margin-top:18px; } .carfoot button { background:none; border:0; cursor:pointer; padding:8px 0; color:inherit; transition:transform 160ms var(--ease-out); } .carfoot button:active { transform:scale(0.97); }
+  .track { display:grid; grid-auto-flow:column; grid-auto-columns:calc((100% - 4px) / 2); gap:4px; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; padding:0 clamp(20px,3vw,40px); scroll-padding:0 clamp(20px,3vw,40px); }
+  .track::-webkit-scrollbar { display:none; }
+  .track .card { scroll-snap-align:start; }
+  @media (max-width:820px){ .split { grid-template-columns:1fr; } .split .ed { min-height:72vh; } .track { grid-auto-columns:72%; } }
+  .night .card .ph { background:#5A1B19; } .night .card .sw i { box-shadow:inset 0 0 0 1px rgba(242,217,218,.35); }
+  .nmore { position:relative; display:flex; justify-content:center; padding:0 var(--gut) clamp(72px,9vw,120px); margin-top:calc(-1 * clamp(40px,6vw,90px)); }
+  .svc { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border-top:1px solid var(--line); }
+  .svc > div { padding:28px clamp(18px,2.4vw,32px) 34px; border-left:1px solid var(--line); display:grid; gap:8px; align-content:start; }
+  .svc > div:first-child { border-left:0; }
+  .svc p { margin:0; font-family:var(--book); font-size:16px; line-height:1.4; color:var(--ink2); }
+  @media (max-width:820px){ .svc { grid-template-columns:1fr 1fr; } .svc > div:nth-child(3) { border-left:0; } .svc > div:nth-child(n+3) { border-top:1px solid var(--line); } }
 </style>
 </head>
 <body>
 <nav class="nav" aria-label="Main">
   <a class="brand" href="index.html">Kleos</a>
   <div class="links"><a href="collection.html">Collection</a><a href="poise.html">Poise</a><a href="members.html">Members</a></div>
-  <div class="right"><button class="bagbtn" data-bag data-bagcount>Bag</button></div>
+  <div class="right"><button data-search>Search</button><a class="acct" href="members.html">Account</a><button data-bag data-bagcount>Bag (0)</button></div>
 </nav>
 
 <header class="hero">
@@ -103,7 +122,7 @@
   <div class="in">
     <h1><span>La</span> <span>Côte</span></h1>
     <div class="side">
-      <span class="mono">Issue Nº 001 · fifteen pieces · made once</span>
+      <span class="mono">La Maison · Issue Nº 001 · eighty-six pieces</span>
       <p>Members order from 11 November. Everyone else on the 13th.</p>
       <a class="btn fill" href="collection.html">See the collection</a>
     </div>
@@ -112,7 +131,7 @@
 
 <section aria-label="Three pieces from the Issue">
   <article class="plate" id="p1">
-    <span class="n">01 / 15</span>
+    <span class="n">Issue Nº 001 · 01</span>
     <h2 class="back" aria-hidden="true"><span>Villa</span><span>Kleos</span></h2>
     <img class="mid reveal" src="img/villa_tee_b.webp" alt="Villa Kleos T-shirt, back: Caillebotte’s villas above Trouville, printed in blue">
     <div class="top">
@@ -122,7 +141,7 @@
     </div>
   </article>
   <article class="plate alt ink r" id="p2">
-    <span class="n">02 / 15</span>
+    <span class="n">Issue Nº 001 · 02</span>
     <h2 class="back" aria-hidden="true"><span>Rowing</span><span>Club</span></h2>
     <img class="mid reveal" src="img/rowing_long_b.webp" alt="Kleos Rowing Club long sleeve, back: Eakins’ pair turning the stake, in an arch">
     <div class="top">
@@ -132,7 +151,7 @@
     </div>
   </article>
   <article class="plate" id="p3">
-    <span class="n">03 / 15</span>
+    <span class="n">Issue Nº 001 · 03</span>
     <h2 class="back" aria-hidden="true"><span>Régates</span></h2>
     <img class="mid reveal" src="img/regates_crew_b.webp" alt="Régates crewneck, back: Manet’s boats off Berck in an oval">
     <div class="top">
@@ -143,9 +162,13 @@
   </article>
 </section>
 
-<section class="rest" aria-labelledby="h-rest">
-  <div class="head"><span class="mono" id="h-rest">The other twelve</span><a class="link" href="collection.html">All fifteen</a></div>
-  <div class="grid6 stagger" id="g6"></div>
+<section class="split" aria-labelledby="h-edit">
+  <a class="ed" href="collection.html?line=cote"><img src="img/hero_rowing.png" alt="Two oarsmen turning the stake, after Eakins, printed in Kleos blue" loading="lazy"><span class="cap">La Côte · Shop the line</span></a>
+  <div class="car">
+    <div class="carhead"><h2 class="cap" id="h-edit">The launch edit</h2><a class="cap link" href="collection.html">View all</a></div>
+    <div class="track" id="edit" tabindex="0" aria-label="Twelve pieces, scroll sideways"></div>
+    <div class="carfoot"><button class="cap" id="prev" aria-label="Previous">Prev</button><span class="cap" id="ec">01 / 12</span><button class="cap" id="next" aria-label="Next">Next</button></div>
+  </div>
 </section>
 
 <section class="night" aria-labelledby="h-night">
@@ -156,6 +179,7 @@
     <p class="lede">Martinis, long tables, the walk home when the sun’s already up. Saint-Tropez, Paris, Madrid, Mayfair.</p>
   </div>
   <div class="cards stagger" id="nc"></div>
+  <div class="nmore"><a class="btn ivory" href="collection.html?line=nuit">Shop Chez moi</a></div>
 </section>
 
 <section class="label-sec" aria-labelledby="h-label">
@@ -188,10 +212,18 @@
   </div>
 </section>
 
+<section class="svc" aria-label="Service">
+  <div><span class="cap">Made to order</span><p>Cut and printed for you once orders open. Nothing is charged to reserve.</p></div>
+  <div><span class="cap">Free shipping over $150</span><p>Tracked, within fourteen days of your order.</p></div>
+  <div><span class="cap">Returns in 14 days</span><p>A returned piece goes to the next name on the register.</p></div>
+  <div><span class="cap">Repairs for life</span><p>By the number inside the collar.</p></div>
+</section>
+
 <footer class="foot">
+  <svg class="seal" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="47" fill="none" stroke="currentColor" stroke-width="1"/><circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width=".6"/><text x="50" y="63" text-anchor="middle" font-family="Instrument Serif,serif" font-size="40" fill="currentColor">K</text><g fill="none" stroke="currentColor" stroke-width=".9"><path d="M28 70c-6-8-7-20-2-29M72 70c6-8 7-20 2-29"/><path d="M27 62c-4 0-7-2-8-5 4 0 7 2 8 5zM25 53c-4-1-6-3-6-6 3 1 6 3 6 6zM26 45c-3-1-5-4-4-7 3 2 4 4 4 7zM73 62c4 0 7-2 8-5-4 0-7 2-8 5zM75 53c4-1 6-3 6-6-3 1-6 3-6 6zM74 45c3-1 5-4 4-7-3 2-4 4-4 7z"/></g></svg>
   <div class="big">Kleos</div>
   <div class="cols">
-    <div><a href="collection.html">Collection</a><a href="collection.html#night">Chez moi</a><a href="poise.html">Poise</a><a href="members.html">Members</a></div>
+    <div><a href="collection.html">Collection</a><a href="collection.html?line=nuit">Chez moi</a><a href="poise.html">Poise</a><a href="members.html">Members</a></div>
     <div>Saint-Tropez<br>Paris<br>Madrid<br>London<br>New York</div>
     <div>
       <div style="margin-bottom:8px">What is heard of you?</div>
@@ -202,11 +234,17 @@
   <div class="fine"><span>© MMXXVI Kleos</span><span>Prints after paintings in the public domain, Cleveland Museum of Art open access</span></div>
 </footer>
 
+<script src="products.js"></script>
 <script src="k.js"></script>
 <script>
   document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => K.openPiece(b.dataset.open)));
-  ['bains_tee','quarterzip','oxford','linen_trouser','stripe_trouser','laurel_cap'].forEach(i => document.getElementById('g6').appendChild(K.card(K.byId[i])));
-  ['dry_tee','dernier_baby','sobremesa_long','insomnie_baby'].forEach(i => { const c = K.card(K.byId[i]); const ph = c.querySelector('.ph'); const f = ph.querySelector('.f'), b = ph.querySelector('.b'); f.classList.replace('f','b'); b.classList.replace('b','f'); document.getElementById('nc').appendChild(c); });
+  const edit = document.getElementById('edit');
+  K.P.filter(p => p.edit).forEach(p => edit.appendChild(K.card(p)));
+  ['lights','nobody','dernier_baby','sobremesa_long'].forEach(i => document.getElementById('nc').appendChild(K.card(K.byId[i])));
+  // carousel: native scroll-snap; the buttons only nudge it
+  const step = d => { const c = edit.firstElementChild; if (c) edit.scrollBy({ left: d * (c.offsetWidth + 4), behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); };
+  document.getElementById('prev').onclick = () => step(-1); document.getElementById('next').onclick = () => step(1);
+  edit.addEventListener('scroll', () => { const c = edit.firstElementChild; if (!c) return; const i = Math.round(edit.scrollLeft / (c.offsetWidth + 4)) + 1; document.getElementById('ec').textContent = String(Math.min(i, 12)).padStart(2, '0') + ' / 12'; }, { passive:true });
 </script>
 </body>
 </html>

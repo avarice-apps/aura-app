@@ -113,7 +113,7 @@ async def release(path: str, request: Request, k: str = ""):
     if not _preview_ok(request.cookies.get("kleos_preview", "")):
         raise HTTPException(404)
     path = path or "index.html"
-    if not re.fullmatch(r"(img/)?[A-Za-z0-9_.-]{1,80}", path) or ".." in path:
+    if not re.fullmatch(r"(img/(m/)?)?[A-Za-z0-9_.-]{1,80}", path) or ".." in path:
         raise HTTPException(404)
     full = os.path.join(_RELEASE, path)
     if not os.path.isfile(full):

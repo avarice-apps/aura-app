@@ -7,7 +7,7 @@
 <title>Kleos · Poise</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 fill=%27%231608F2%27/%3E%3Ctext x=%2732%27 y=%2747%27 font-family=%27Georgia,serif%27 font-size=%2742%27 text-anchor=%27middle%27 fill=%27%23F1EBDD%27%3EK%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=EB+Garamond:ital@0;1&family=Geist:wght@400;500&family=Geist+Mono:wght@400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="k.css">
 <style>
   body { background:var(--ink); color:var(--ivory); }
@@ -82,7 +82,7 @@
 <nav class="nav" data-dark="1" aria-label="Main">
   <a class="brand" href="index.html">Kleos</a>
   <div class="links"><a href="collection.html">Collection</a><a href="poise.html" aria-current="page">Poise</a><a href="members.html">Members</a></div>
-  <div class="right"><button class="bagbtn" data-bag data-bagcount>Bag</button></div>
+  <div class="right"><button data-search>Search</button><a class="acct" href="members.html">Account</a><button data-bag data-bagcount>Bag (0)</button></div>
 </nav>
 
 <header class="hero">
@@ -163,6 +163,7 @@
   </div>
   <div class="fine"><span>© MMXXVI Kleos</span><span>Paintings after Rembrandt, public domain, Cleveland Museum of Art open access</span></div>
 </footer>
+<script src="products.js"></script>
 <script src="k.js"></script>
 <script>
   const steps=[...document.querySelectorAll('.step')], scr=[...document.querySelectorAll('.scr')];
