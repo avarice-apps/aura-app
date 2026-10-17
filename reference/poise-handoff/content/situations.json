@@ -1,0 +1,1682 @@
+[
+  {
+    "id": "S01",
+    "guidance_ids": [
+      "K01"
+    ],
+    "title": "The internship interrogation",
+    "category": "social",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "Dinner with your partner's friends. Someone turns every introduction into a recruiting screen.",
+    "opening_line": "So what do you actually do there?",
+    "complication": "They ask whether your parent got you the internship.",
+    "user_objective": "Answer honestly without making your entire introduction a defence.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Answer honestly without making your entire introduction a defence. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"It's quite a prestigious programme actually.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Answer honestly without making your entire introduction a defence.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "It's quite a prestigious programme actually.",
+    "feedback_example": "You answered a question about your job with the company's ranking.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Give one concrete task; acknowledge help if true; redirect only after answering."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S02",
+    "guidance_ids": [
+      "K02"
+    ],
+    "title": "The borrowed yacht personality",
+    "category": "social",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "A friend introduces you at a marina lunch. You are a guest, not the owner.",
+    "opening_line": "Is this yours?",
+    "complication": "Someone asks what boat your family has.",
+    "user_objective": "Correct the assumption casually and stay in the conversation.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Correct the assumption casually and stay in the conversation. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"We have access to a few.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Correct the assumption casually and stay in the conversation.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "We have access to a few.",
+    "feedback_example": "You rented a personality before anyone asked for one.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Say whose guest you are; share what you actually enjoy about the day."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S03",
+    "guidance_ids": [
+      "K03"
+    ],
+    "title": "The table has lore",
+    "category": "social",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You arrive at a dinner where everyone has known each other since school.",
+    "opening_line": "Wait, were you there for the Ibiza thing?",
+    "complication": "The story resumes without explaining the names.",
+    "user_objective": "Find a way in without pretending to remember.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Find a way in without pretending to remember. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Oh my God, classic James. Who is James?\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Find a way in without pretending to remember.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Oh my God, classic James. Who is James?",
+    "feedback_example": "You joined the inside joke before joining the conversation.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Ask one useful context question at a pause; contribute when there is a real connection."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S04",
+    "guidance_ids": [
+      "K04"
+    ],
+    "title": "The pronunciation correction",
+    "category": "social",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You mispronounce someone's name at a party.",
+    "opening_line": "It's Sahar, actually.",
+    "complication": "You are tempted to explain how bad you are with names.",
+    "user_objective": "Repair once and continue naturally.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Repair once and continue naturally. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"I'm SO bad at foreign names, sorry, I'm the worst.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Repair once and continue naturally.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "I'm SO bad at foreign names, sorry, I'm the worst.",
+    "feedback_example": "They corrected a name. You made them manage your apology.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Repeat the corrected name once if helpful; a short apology is enough."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S05",
+    "guidance_ids": [
+      "K05"
+    ],
+    "title": "The outfit tribunal",
+    "category": "social",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "Your friends are getting ready. One laughs at your unusual shoes.",
+    "opening_line": "Are those ironic?",
+    "complication": "A second person starts recording their own outfit nearby.",
+    "user_objective": "Own your preference or change it without asking for a referendum.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Own your preference or change it without asking for a referendum. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"They're more expensive than yours.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Own your preference or change it without asking for a referendum.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "They're more expensive than yours.",
+    "feedback_example": "You defended the shoes with a receipt.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Name what you like; avoid attacking their outfit; ask not to be filmed if needed."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S06",
+    "guidance_ids": [
+      "K06"
+    ],
+    "title": "The expensive bill",
+    "category": "social",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "A birthday dinner ends. People propose splitting equally; you ordered much less.",
+    "opening_line": "It's only another eighty each.",
+    "complication": "The organiser calls itemising embarrassing.",
+    "user_objective": "State your limit without apologising for your finances.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: State your limit without apologising for your finances. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Fine, whatever. I'll just not eat tomorrow.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "State your limit without apologising for your finances.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Fine, whatever. I'll just not eat tomorrow.",
+    "feedback_example": "You said yes, then invoiced everyone emotionally.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Offer your actual share and tip; keep the boundary concrete."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S07",
+    "guidance_ids": [
+      "K07"
+    ],
+    "title": "The party exit",
+    "category": "social",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You want to leave a flat party. Your friend keeps restarting the goodbye.",
+    "opening_line": "One more drink. Don't be boring.",
+    "complication": "Your ride is arriving.",
+    "user_objective": "Leave warmly without negotiating your departure.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Leave warmly without negotiating your departure. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Maybe, I don't know, I probably should go.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Leave warmly without negotiating your departure.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Maybe, I don't know, I probably should go.",
+    "feedback_example": "You announced a departure and opened a consultation.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Give one clear goodbye and act on it; no elaborate excuse is required."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S08",
+    "guidance_ids": [
+      "K08"
+    ],
+    "title": "The name-drop loop",
+    "category": "social",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "Someone at dinner mentions the same famous acquaintance for the fourth time.",
+    "opening_line": "He literally told me that backstage.",
+    "complication": "They ask whether you know anyone in that circle.",
+    "user_objective": "Keep curiosity without competing for proximity.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Keep curiosity without competing for proximity. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"My cousin basically knows his manager.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Keep curiosity without competing for proximity.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "My cousin basically knows his manager.",
+    "feedback_example": "You entered a networking competition nobody needed to win.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Ask about the actual experience or move to a shared topic; don't invent connections."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S09",
+    "guidance_ids": [
+      "K09"
+    ],
+    "title": "The second location",
+    "category": "social",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "A first date is pleasant but you want to go home.",
+    "opening_line": "Come on, my place is five minutes away.",
+    "complication": "They interpret your hesitation as a challenge.",
+    "user_objective": "Decline clearly without having to justify it.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Decline clearly without having to justify it. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"I guess if you promise nothing happens.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Decline clearly without having to justify it.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "I guess if you promise nothing happens.",
+    "feedback_example": "A boundary isn't a negotiation prompt. You can just go home.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "State your choice; suggest another date only if you want one; end if pressure continues."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S10",
+    "guidance_ids": [
+      "K10"
+    ],
+    "title": "The interview date",
+    "category": "social",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You have asked six questions and your date has asked none.",
+    "opening_line": "Yeah. Anyway, what else do you want to know?",
+    "complication": "They give another short answer.",
+    "user_objective": "Test reciprocity without turning it into a prosecution.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Test reciprocity without turning it into a prosecution. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"So where do you see yourself in five years?\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Test reciprocity without turning it into a prosecution.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "So where do you see yourself in five years?",
+    "feedback_example": "This date has developed a human-resources department.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Share something of your own and leave space; you may decide there is no fit."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S11",
+    "guidance_ids": [
+      "K11"
+    ],
+    "title": "The delayed reply",
+    "category": "social",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "Someone replies after four days with a friendly but vague message.",
+    "opening_line": "Sorry, insane week haha.",
+    "complication": "Your friends tell you to wait exactly four days back.",
+    "user_objective": "Reply according to your interest and limits, without invented mind-reading.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Reply according to your interest and limits, without invented mind-reading. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Took you long enough, princess.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Reply according to your interest and limits, without invented mind-reading.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Took you long enough, princess.",
+    "feedback_example": "You wanted a date and sent a disciplinary notice.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Offer one concrete plan if interested; accept ambiguity; don't diagnose their motives."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S12",
+    "guidance_ids": [
+      "K12"
+    ],
+    "title": "The ex at the function",
+    "category": "social",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "Your ex arrives with someone new at a mutual friend's birthday.",
+    "opening_line": "Hey. Didn't know you'd be here.",
+    "complication": "A friend watches for your reaction.",
+    "user_objective": "Keep the host's evening intact and choose your own distance.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Keep the host's evening intact and choose your own distance. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Wow, upgraded quickly.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Keep the host's evening intact and choose your own distance.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Wow, upgraded quickly.",
+    "feedback_example": "You gave the room the scene it was waiting for.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "A brief greeting or polite exit is sufficient; no performance of being unbothered."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S13",
+    "guidance_ids": [
+      "K13"
+    ],
+    "title": "The meeting credit thief",
+    "category": "work_and_relationships",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "A colleague presents the idea you shared privately yesterday.",
+    "opening_line": "I had a thought about simplifying onboarding.",
+    "complication": "Your manager praises it.",
+    "user_objective": "Restore attribution while moving the work forward.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Restore attribution while moving the work forward. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Interesting how SOME people get ideas.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Restore attribution while moving the work forward.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Interesting how SOME people get ideas.",
+    "feedback_example": "You brought a grievance in subtitles. Say the contribution out loud.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Reference the earlier discussion and your contribution; ask to own a concrete next step."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S14",
+    "guidance_ids": [
+      "K14"
+    ],
+    "title": "The intern goes blank",
+    "category": "work_and_relationships",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "Your manager asks for a project update while a senior leader listens.",
+    "opening_line": "Where are we on the analysis?",
+    "complication": "You have not finished one important section.",
+    "user_objective": "Give an accurate status and next step.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Give an accurate status and next step. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Basically it's sort of almost pretty much done.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Give an accurate status and next step.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Basically it's sort of almost pretty much done.",
+    "feedback_example": "That sentence was bubble wrap around an unfinished task.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Lead with done, blocked, next; distinguish uncertainty from failure."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S15",
+    "guidance_ids": [
+      "K15"
+    ],
+    "title": "The unpaid extra shift",
+    "category": "work_and_relationships",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "A manager asks you to stay after your agreed shift.",
+    "opening_line": "We're a family here. Can you help us out?",
+    "complication": "You have a commitment and need to leave.",
+    "user_objective": "Communicate availability without promising work you cannot do.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Communicate availability without promising work you cannot do. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"I suppose my evening doesn't matter.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Communicate availability without promising work you cannot do.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "I suppose my evening doesn't matter.",
+    "feedback_example": "The boundary disappeared and the resentment stayed.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "State when you leave and what handover you can complete; don't invent legal claims."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S16",
+    "guidance_ids": [
+      "K16"
+    ],
+    "title": "The salary silence",
+    "category": "work_and_relationships",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You have asked for a raise after explaining your contribution.",
+    "opening_line": "That's above what we budgeted.",
+    "complication": "The manager goes quiet.",
+    "user_objective": "Hold the request and explore the decision process.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Hold the request and explore the decision process. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Okay never mind, any increase is fine.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Hold the request and explore the decision process.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Okay never mind, any increase is fine.",
+    "feedback_example": "You negotiated against yourself before they made an offer.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Ask what would support approval or agree a review date; silence alone is not rejection."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S17",
+    "guidance_ids": [
+      "K17"
+    ],
+    "title": "The wrong Slack channel",
+    "category": "work_and_relationships",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You posted an irritated comment in the project channel instead of a private chat.",
+    "opening_line": "Did you mean to send that here?",
+    "complication": "The person discussed is present.",
+    "user_objective": "Own the mistake and address the substance without adding theatre.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Own the mistake and address the substance without adding theatre. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"It was a joke, relax.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Own the mistake and address the substance without adding theatre.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "It was a joke, relax.",
+    "feedback_example": "The message was bad. Calling everyone humourless added a sequel.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Acknowledge the message; apologise for the manner; move sensitive detail to an appropriate discussion."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S18",
+    "guidance_ids": [
+      "K18"
+    ],
+    "title": "The client says premium",
+    "category": "work_and_relationships",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "A client dislikes a design but offers no useful direction.",
+    "opening_line": "Can it feel more premium?",
+    "complication": "They mention three incompatible reference brands.",
+    "user_objective": "Turn taste language into a decision.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Turn taste language into a decision. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Sure, I'll make it pop more.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Turn taste language into a decision.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Sure, I'll make it pop more.",
+    "feedback_example": "You accepted a revision request made entirely of fog.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Ask which reference element matters; offer two concrete directions and a trade-off."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S19",
+    "guidance_ids": [
+      "K19"
+    ],
+    "title": "The fake expert trap",
+    "category": "work_and_relationships",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "At a networking event someone assumes you know a specialist subject.",
+    "opening_line": "You'll know this—what do you think of the new architecture?",
+    "complication": "You recognise only half the terms.",
+    "user_objective": "Be credible by being accurate about your knowledge.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Be credible by being accurate about your knowledge. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Obviously it's a paradigm shift.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Be credible by being accurate about your knowledge.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Obviously it's a paradigm shift.",
+    "feedback_example": "You used six syllables to avoid saying you haven't read it.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Say what you know, identify the gap, ask a specific question."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S20",
+    "guidance_ids": [
+      "K20"
+    ],
+    "title": "The team interruption",
+    "category": "work_and_relationships",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You are explaining a risk and a colleague repeatedly talks over you.",
+    "opening_line": "Yeah, yeah, but the real issue is—",
+    "complication": "The meeting is running late.",
+    "user_objective": "Finish the necessary point without escalating the whole meeting.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Finish the necessary point without escalating the whole meeting. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Can you EVER let anyone speak?\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Finish the necessary point without escalating the whole meeting.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Can you EVER let anyone speak?",
+    "feedback_example": "You had a useful point. Now the room is discussing your tone.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Use a short floor-holding line and state the risk concisely."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S21",
+    "guidance_ids": [
+      "K21"
+    ],
+    "title": "The group-chat screenshot",
+    "category": "work_and_relationships",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "A friend forwards a private message to the group for entertainment.",
+    "opening_line": "Tell me this isn't insane.",
+    "complication": "Others ask you to add a brutal reply.",
+    "user_objective": "Decline the pile-on without writing a moral essay.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Decline the pile-on without writing a moral essay. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Send me their profile, I need more material.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Decline the pile-on without writing a moral essay.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Send me their profile, I need more material.",
+    "feedback_example": "You turned someone else's awkward message into a group project.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Don't amplify private details; suggest handling it directly or change the topic."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S22",
+    "guidance_ids": [
+      "K22"
+    ],
+    "title": "The friend who roasts too far",
+    "category": "work_and_relationships",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "Your friend repeats a joke about something you asked them to stop mentioning.",
+    "opening_line": "It's just banter.",
+    "complication": "The group laughs awkwardly.",
+    "user_objective": "Set a boundary without needing the group to vote.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Set a boundary without needing the group to vote. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"You're all terrible people.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Set a boundary without needing the group to vote.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "You're all terrible people.",
+    "feedback_example": "Aim at the joke that crossed the line, not the entire room.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Name the behaviour and ask them to stop; leave or follow up privately if needed."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S23",
+    "guidance_ids": [
+      "K23"
+    ],
+    "title": "The flatmate sink summit",
+    "category": "work_and_relationships",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "Dishes have sat for three days. Your flatmate says they are busy.",
+    "opening_line": "You could have just washed them.",
+    "complication": "You have already cleaned twice this week.",
+    "user_objective": "Agree on a workable division instead of litigating character.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Agree on a workable division instead of litigating character. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"You're disgusting and always have been.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Agree on a workable division instead of litigating character.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "You're disgusting and always have been.",
+    "feedback_example": "You wanted a clean sink and opened a character trial.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Describe the recurring task, your limit and a specific proposed agreement."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S24",
+    "guidance_ids": [
+      "K24"
+    ],
+    "title": "The invite omission",
+    "category": "work_and_relationships",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You discover friends made plans without you.",
+    "opening_line": "It was super last minute.",
+    "complication": "You don't know whether the exclusion was deliberate.",
+    "user_objective": "Ask directly if useful without treating a photo as proof of rejection.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Ask directly if useful without treating a photo as proof of rejection. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Nice to know who my real friends are.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Ask directly if useful without treating a photo as proof of rejection.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Nice to know who my real friends are.",
+    "feedback_example": "You posted the verdict before asking the question.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Describe what you noticed; ask one genuine question; allow an unflattering but uncertain answer."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S25",
+    "guidance_ids": [
+      "K25"
+    ],
+    "title": "The international dinner",
+    "category": "work_and_relationships",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "People compare schools, cities and summer plans. You did not share that upbringing.",
+    "opening_line": "Where did you summer growing up?",
+    "complication": "Someone assumes you attended boarding school.",
+    "user_objective": "Answer from your own life without apologising or borrowing status.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Answer from your own life without apologising or borrowing status. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Mostly Europe. You know how it is.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Answer from your own life without apologising or borrowing status.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Mostly Europe. You know how it is.",
+    "feedback_example": "You don't need a fictional childhood to stay at the table.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Give a real detail you like; ask a genuine follow-up rather than competing."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S26",
+    "guidance_ids": [
+      "K26"
+    ],
+    "title": "The accent comment",
+    "category": "work_and_relationships",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "Someone interrupts your story to imitate your accent.",
+    "opening_line": "Say that again, it's hilarious.",
+    "complication": "They insist it is a compliment.",
+    "user_objective": "Choose whether to set a boundary or move on; both can be valid.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Choose whether to set a boundary or move on; both can be valid. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Sorry, I'll try to sound normal.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Choose whether to set a boundary or move on; both can be valid.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Sorry, I'll try to sound normal.",
+    "feedback_example": "Your accent wasn't the interruption. Their impression was.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Address the imitation if unwanted; no advice to erase an accent."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S27",
+    "guidance_ids": [
+      "K27"
+    ],
+    "title": "The sober explanation",
+    "category": "work_and_relationships",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You order a soft drink at a party.",
+    "opening_line": "Why aren't you drinking? Are you on something?",
+    "complication": "They keep offering alcohol.",
+    "user_objective": "Keep your choice without disclosing private information.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Keep your choice without disclosing private information. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"I'll have one so everyone stops asking.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Keep your choice without disclosing private information.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "I'll have one so everyone stops asking.",
+    "feedback_example": "You don't owe the room a drink or your medical history.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "A short answer is sufficient; repeat the boundary if necessary."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S28",
+    "guidance_ids": [
+      "K28"
+    ],
+    "title": "The networking escape room",
+    "category": "work_and_relationships",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "Someone has been pitching their startup to you for ten minutes.",
+    "opening_line": "And the token layer is where it gets really interesting.",
+    "complication": "They ignore your first attempt to leave.",
+    "user_objective": "Exit clearly and politely.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Exit clearly and politely. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Wow, fascinating, go on.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Exit clearly and politely.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Wow, fascinating, go on.",
+    "feedback_example": "You gave a standing ovation to the conversation you wanted to escape.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Acknowledge the conversation, state you are moving on, and leave."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S29",
+    "guidance_ids": [
+      "K29"
+    ],
+    "title": "The black-tie ambiguity",
+    "category": "style",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You have a wedding invite saying black tie, a navy suit and clean trainers.",
+    "opening_line": "Can I get away with this?",
+    "complication": "You have a small budget and no time for delivery.",
+    "user_objective": "Identify the dress-code gap without equating cost with worth.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Identify the dress-code gap without equating cost with worth. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Just buy designer loafers.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Identify the dress-code gap without equating cost with worth.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Just buy designer loafers.",
+    "feedback_example": "The invitation specified a dress code, not a credit limit.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Ask about host flexibility; prioritise borrowing or existing appropriate footwear; don't invent wardrobe items."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S30",
+    "guidance_ids": [
+      "K30"
+    ],
+    "title": "The gallery opening",
+    "category": "style",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You want an interesting outfit for a gallery event without feeling costumed.",
+    "opening_line": "I want to look like I belong, but not like I'm pretending to own the gallery.",
+    "complication": "You own black trousers, a cream knit and a patterned shirt.",
+    "user_objective": "Build from actual items and one deliberate focal point.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Build from actual items and one deliberate focal point. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Wear all black. That's what creative people do.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Build from actual items and one deliberate focal point.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Wear all black. That's what creative people do.",
+    "feedback_example": "An entire industry doesn't have one uniform.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Offer the patterned shirt with black trousers or the quiet knit option; explain the different impression."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S31",
+    "guidance_ids": [
+      "K31"
+    ],
+    "title": "The sensory compromise",
+    "category": "style",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You have a long dinner and hate stiff collars and scratchy fabric.",
+    "opening_line": "I want polished, but I can't spend three hours fighting my clothes.",
+    "complication": "The most formal item you own is uncomfortable.",
+    "user_objective": "Treat comfort as a real constraint.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Treat comfort as a real constraint. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Beauty is pain, just deal with it.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Treat comfort as a real constraint.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Beauty is pain, just deal with it.",
+    "feedback_example": "If the outfit ruins your evening, it failed the brief.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Use confirmed comfortable pieces; offer a softer alternative or layer; do not prescribe enduring discomfort."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S32",
+    "guidance_ids": [
+      "K32"
+    ],
+    "title": "The office-to-club pivot",
+    "category": "style",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You have work, then a birthday, and cannot go home.",
+    "opening_line": "One bag. No full outfit change.",
+    "complication": "You own a plain top, blazer, dark trousers and two shoe options.",
+    "user_objective": "Make one practical transition using owned items.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Make one practical transition using owned items. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Bring three outfits just in case.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Make one practical transition using owned items.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Bring three outfits just in case.",
+    "feedback_example": "You asked for a transition and got a moving service.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Choose a base outfit; name one removable layer or accessory change; account for walking."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S33",
+    "guidance_ids": [
+      "K33"
+    ],
+    "title": "The weather-blind fit",
+    "category": "style",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You send an outfit photo for an outdoor evening event.",
+    "opening_line": "Does this work for tonight?",
+    "complication": "The app has no weather data or location.",
+    "user_objective": "Give a visual opinion while exposing the practical unknown.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Give a visual opinion while exposing the practical unknown. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"It won't rain, you'll be fine.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Give a visual opinion while exposing the practical unknown.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "It won't rain, you'll be fine.",
+    "feedback_example": "A good colour combination is not a weather forecast.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Discuss visible coordination; ask temperature or suggest a conditional layer."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S34",
+    "guidance_ids": [
+      "K34"
+    ],
+    "title": "The quiet luxury costume",
+    "category": "style",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You like old-money references but the outfit feels borrowed from a character.",
+    "opening_line": "Do I look rich enough?",
+    "complication": "You are wearing several obvious status cues at once.",
+    "user_objective": "Translate the goal into a coherent personal look.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Translate the goal into a coherent personal look. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"You look lower class without a watch.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Translate the goal into a coherent personal look.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "You look lower class without a watch.",
+    "feedback_example": "A watch can't rescue an outfit that's doing an ancestry audition.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Ask what impression matters; suggest simplifying one element; never infer wealth from appearance."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S35",
+    "guidance_ids": [
+      "K35"
+    ],
+    "title": "The maximalist correction",
+    "category": "style",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "Poise suggested neutrals. You say you want bright colour and visible jewellery.",
+    "opening_line": "Stop dressing me like an estate agent.",
+    "complication": "You have already saved this preference.",
+    "user_objective": "Correct the recommendation and respect the preference.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Correct the recommendation and respect the preference. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Trust me, minimalism is more sophisticated.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Correct the recommendation and respect the preference.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Trust me, minimalism is more sophisticated.",
+    "feedback_example": "Your taste wasn't the bug. Ignoring it was.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Acknowledge the miss; build around a named colourful owned item; don't defend the original taste."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S36",
+    "guidance_ids": [
+      "K36"
+    ],
+    "title": "The blurry wardrobe photo",
+    "category": "style",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "A low-light image shows a dark jacket with an unreadable label.",
+    "opening_line": "Is this wool? Can I wear it in the rain?",
+    "complication": "The fabric and care label cannot be identified.",
+    "user_objective": "Separate visible description from unknown material properties.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Separate visible description from unknown material properties. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Definitely cashmere, probably waterproof.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Separate visible description from unknown material properties.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Definitely cashmere, probably waterproof.",
+    "feedback_example": "That is a dark photograph, not a fabric certificate.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Describe only what is visible; request the label or user confirmation."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S37",
+    "guidance_ids": [
+      "K37"
+    ],
+    "title": "The pass-the-phone peacock",
+    "category": "play_and_feedback",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "Friends opt into a fifteen-second introduction game.",
+    "opening_line": "Tell us why you should get the last seat at dinner.",
+    "complication": "One player is quiet but gives a sharp, relevant answer.",
+    "user_objective": "Reward the actual round performance, not loudness or appearance.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Reward the actual round performance, not loudness or appearance. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Loudest player wins because confidence.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Reward the actual round performance, not loudness or appearance.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Loudest player wins because confidence.",
+    "feedback_example": "Volume won the microphone. It didn't automatically win the round.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Use the same prompt and rubric; label the verdict as a game result."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S38",
+    "guidance_ids": [
+      "K38"
+    ],
+    "title": "The debate with no point",
+    "category": "play_and_feedback",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "Two friends debate whether voice notes should be illegal.",
+    "opening_line": "You have forty-five seconds. Make the case.",
+    "complication": "One player insults the opponent but gives no argument.",
+    "user_objective": "Judge the argument and response, with room for comedy.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Judge the argument and response, with room for comedy. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"You're just boring and nobody likes your voice.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Judge the argument and response, with room for comedy.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "You're just boring and nobody likes your voice.",
+    "feedback_example": "You attacked the speaker because the argument hadn't arrived.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Reward a claim, support and engagement; a joke can help but is not evidence."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S39",
+    "guidance_ids": [
+      "K39"
+    ],
+    "title": "The confident wrong answer",
+    "category": "play_and_feedback",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "A player states a dubious statistic with total confidence.",
+    "opening_line": "Ninety percent of people agree with me.",
+    "complication": "The other player asks for a source.",
+    "user_objective": "Handle unsupported factual claims without rewarding certainty.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Handle unsupported factual claims without rewarding certainty. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Sounds convincing, bonus points.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Handle unsupported factual claims without rewarding certainty.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Sounds convincing, bonus points.",
+    "feedback_example": "You delivered the statistic like you personally counted everyone.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Mark the claim unverified; assess reasoning separately; don't invent a fact-check."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S40",
+    "guidance_ids": [
+      "K40"
+    ],
+    "title": "The accidental monologue",
+    "category": "play_and_feedback",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "A player tells a story about missing a train.",
+    "opening_line": "So first I need to explain the entire group dynamic.",
+    "complication": "The listener asks what happened next.",
+    "user_objective": "Find the event and ending without forcing an artificial time rule.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Find the event and ending without forcing an artificial time rule. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Anyway, that's just context. There are seven more people.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Find the event and ending without forcing an artificial time rule.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Anyway, that's just context. There are seven more people.",
+    "feedback_example": "The train left. Your introduction didn't.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Start near the change; keep one useful detail; end when the point lands."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S41",
+    "guidance_ids": [
+      "K41"
+    ],
+    "title": "The pause panic",
+    "category": "play_and_feedback",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You pause to think during a difficult question.",
+    "opening_line": "Take your time.",
+    "complication": "The transcript records a three-second silence.",
+    "user_objective": "Keep an effective pause from becoming a fabricated weakness.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Keep an effective pause from becoming a fabricated weakness. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Three seconds of silence means low confidence.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Keep an effective pause from becoming a fabricated weakness.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Three seconds of silence means low confidence.",
+    "feedback_example": "A pause is not a confession.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Assess the answer and context; don't deduct for silence by default."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S42",
+    "guidance_ids": [
+      "K42"
+    ],
+    "title": "The literal answer",
+    "category": "play_and_feedback",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "A character asks a vague question and the player answers literally.",
+    "opening_line": "What's your deal?",
+    "complication": "The player asks what the character means.",
+    "user_objective": "Allow clarification and different communication styles.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Allow clarification and different communication styles. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Everyone knows what that means, stop being weird.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Allow clarification and different communication styles.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Everyone knows what that means, stop being weird.",
+    "feedback_example": "Asking what someone means is allowed. This isn't a telepathy exam.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Reward a useful clarification; don't infer diagnosis or require performative banter."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S43",
+    "guidance_ids": [
+      "K43"
+    ],
+    "title": "The comeback that costs you",
+    "category": "play_and_feedback",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "A colleague makes a mild joke and you have a devastating reply ready.",
+    "opening_line": "Big presentation voice today.",
+    "complication": "Your reply would embarrass them in front of their manager.",
+    "user_objective": "Choose whether a comeback serves the actual goal.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Choose whether a comeback serves the actual goal. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"At least I have something worth presenting.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Choose whether a comeback serves the actual goal.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "At least I have something worth presenting.",
+    "feedback_example": "You won the imaginary roast battle and complicated Tuesday.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Offer a light response, direct boundary or no response; don't assume domination is success."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S44",
+    "guidance_ids": [
+      "K44"
+    ],
+    "title": "The apology with a press release",
+    "category": "play_and_feedback",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You were late and your friend waited twenty minutes.",
+    "opening_line": "I wish you'd just texted.",
+    "complication": "You have a long explanation involving transport and your phone.",
+    "user_objective": "Repair the impact with ownership and a next step.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Repair the impact with ownership and a next step. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"I'm sorry you feel that way, but you know how busy I am.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Repair the impact with ownership and a next step.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "I'm sorry you feel that way, but you know how busy I am.",
+    "feedback_example": "That apology came with terms and conditions.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Acknowledge the wait, apologise, explain briefly if useful and say what changes."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S45",
+    "guidance_ids": [
+      "K45"
+    ],
+    "title": "The missed joke recovery",
+    "category": "play_and_feedback",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You make a joke and nobody reacts.",
+    "opening_line": "Anyway—",
+    "complication": "You are tempted to explain why it was funny.",
+    "user_objective": "Move on without punishing the audience or yourself.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Move on without punishing the audience or yourself. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"You guys just don't get my humour.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Move on without punishing the audience or yourself.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "You guys just don't get my humour.",
+    "feedback_example": "The joke missed. The audience didn't owe you an appeal hearing.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "A light acknowledgement is optional; return to the conversation."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S46",
+    "guidance_ids": [
+      "K46"
+    ],
+    "title": "The profile read",
+    "category": "play_and_feedback",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You ask Poise to review your own public-facing profile.",
+    "opening_line": "Does this make me look interesting or like I'm trying too hard?",
+    "complication": "The supplied images reveal little context.",
+    "user_objective": "Describe presentation choices and the impression they may create.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Describe presentation choices and the impression they may create. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"You are clearly insecure and low status.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Describe presentation choices and the impression they may create.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "You are clearly insecure and low status.",
+    "feedback_example": "Three captions about not caring is quite a lot of administration for not caring.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Discuss repetition, captions and visible choices; don't infer personality, income or desirability as fact."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S47",
+    "guidance_ids": [
+      "K47"
+    ],
+    "title": "The outward-camera request",
+    "category": "play_and_feedback",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You point the camera toward an uninvolved person at a café.",
+    "opening_line": "Rate his aura. Be brutal.",
+    "complication": "The person has not agreed to participate.",
+    "user_objective": "Redirect the game to an opted-in participant without a lecture.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Redirect the game to an opted-in participant without a lecture. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"He looks socially weak.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Redirect the game to an opted-in participant without a lecture.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "He looks socially weak.",
+    "feedback_example": "Get your friend in the game first. Strangers aren't bonus rounds.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Offer to rate the user's own round or a consenting friend's performance."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  },
+  {
+    "id": "S48",
+    "guidance_ids": [
+      "K48"
+    ],
+    "title": "The retry that wasn't better",
+    "category": "play_and_feedback",
+    "audience": "Adults; select by interests and situation, never inferred wealth, diagnosis or appearance.",
+    "setting": "You repeat a scene after receiving feedback.",
+    "opening_line": "Was that better?",
+    "complication": "The second attempt is longer but repeats the same avoidance.",
+    "user_objective": "Give an honest comparison and one narrower retry.",
+    "duration_seconds": {
+      "min": 60,
+      "max": 180
+    },
+    "director_notes": "Play one person with a motive, not a coach. Start with the opening. Reveal the complication only if the exchange reaches it naturally. Do not force hostility.",
+    "branches": {
+      "effective": "If the user makes a credible move toward this objective, respond naturally: Give an honest comparison and one narrower retry. Acknowledge a clear boundary; do not punish it to prolong play.",
+      "ambiguous": "Ask one context-specific follow-up. Do not interpret hesitation as failure.",
+      "ineffective": "If the user says something like \"Massive improvement, ten out of ten.\", challenge its substance once, without inventing public humiliation.",
+      "exit": "Allow an ordinary exit or a clear no to end the scene. End immediately on stop."
+    },
+    "success_evidence": [
+      "Give an honest comparison and one narrower retry.",
+      "A concrete user turn supports the finding; a different culturally or personally appropriate response may also succeed."
+    ],
+    "failure_example": "Massive improvement, ten out of ten.",
+    "feedback_example": "More words. Same dodge. Try answering the actual question first.",
+    "retry": {
+      "restore": "Snapshot immediately before the selected exchange; remove subsequent turns and private reactions from the retry context.",
+      "instruction": "Compare equivalent evidence; acknowledge any real improvement; don't award progress automatically."
+    },
+    "style_bridge": "Offer an outfit step only if the user has a relevant occasion and wants one; use confirmed owned items."
+  }
+]

@@ -1,0 +1,26 @@
+{
+  "version": "0.1.0",
+  "date": "2026-10-17",
+  "cards": 48,
+  "situations": 48,
+  "test_cases": 160,
+  "static_validation": "passed",
+  "model_validation": "not_run",
+  "sha256": {
+    "IMPLEMENTATION.md": "0ed2cbee17de9fd82d890095a18739c648124fc98ab7098eae295acf21e456ff",
+    "UI-HANDOFF.md": "023591966b93521a7e746126cf27f9bf2a90e0a87faa85d63d39aba17dfff237",
+    "START-HERE.md": "839473b6c60e98f457238c2846bc87884ebbdd197285ebaa2b3f3ef6f444c07f",
+    "CLAUDE-IMPLEMENTATION-PROMPT.md": "9c7cf8f9c40a136eaca57bcc07b126a2bbc58d6853a32f929c467d71416e4624",
+    "DIALOGUE-DIRECTION.md": "aed2117038510c3642c87c2fc4862aa9da66ae9e929a5af8f14f6fac9e38866a",
+    "kleos-ui.html": "7a68f1786d9c856f5cb2dcab9c9222cec4437f96d7cb492abe37469b65075360",
+    "content/situations.json": "f66df33fdb8deca6f5a86ae79f92f2819ca0ee32dd4074fc09abd5c08a068569",
+    "content/guidance-cards.json": "5637fb35ad698175d32214a43b73014665729d5de9d812b82fdeca46bdcde4fd",
+    "content/CARDS-AND-SITUATIONS.md": "ef8458a4df2da34d64be43bcb860002782995eee5f1cdab9328127246823485a",
+    "evaluation/validate_pack.py": "f5a969b88b490e918804e3968d634a9c956d287e530da8798043cf2254ab0053",
+    "evaluation/REVIEW-PROTOCOL.md": "676b6455a8b4406fc3123df4fa79bf95d03be5da87ab7030ac3bb0ae5fecd85c",
+    "evaluation/validation.jsonl": "73d0fc6fcd0cace624fb5bdbf4e0b4974851cb8e4a1463e63fdd0b7a8ecbc5a9",
+    "evaluation/reserved.jsonl": "b1328370510b983a31ac678f735521e15e8d2b130e52001c699250e9cf418f8e",
+    "evaluation/development.jsonl": "4f545015cde90a61daf8d5f5f65e659bd5551f0c8f78a6376cba0f787193b22e",
+    "evaluation/TEST-CASES.md": "5deff954fe9144d3d83e397427231b7ee68bfcba21f343aa366f21477a745dea"
+  }
+}

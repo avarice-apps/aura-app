@@ -93,9 +93,24 @@ def create_ambassador(code: str, name: str, pct: float = AMBASSADOR_PCT) -> dict
     return {"code": code, "name": name, "pct": pct}
 
 
+def _dashboard_secret() -> str:
+    """The admin key if set; otherwise a random secret kept on the server's volume (never a guessable default)."""
+    if os.environ.get("AURA_ADMIN_KEY"):
+        return os.environ["AURA_ADMIN_KEY"]
+    path = os.path.join(os.path.dirname(DB), "dashboard.secret")
+    try:
+        with open(path) as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        val = secrets.token_urlsafe(32)
+        with open(path, "w") as f:
+            f.write(val)
+        return val
+
+
 def dashboard_key(code: str) -> str:
-    secret = os.environ.get("AURA_ADMIN_KEY", "dev")
-    return hmac.new(secret.encode(), _norm(code).encode(), hashlib.sha256).hexdigest()[:12]
+    return hmac.new(_dashboard_secret().encode(), _norm(code).encode(), hashlib.sha256).hexdigest()[:16]
 
 
 # ---------------------------------------------------------------- redeem, activate, pay

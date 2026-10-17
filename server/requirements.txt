@@ -1,11 +1,14 @@
-fastapi
-uvicorn[standard]
-python-multipart
-httpx
+# Web and API clients: pinned to a compatible range (a major-version jump can break us silently).
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1
+python-multipart>=0.0.9,<0.1
+httpx>=0.27,<0.29
+anthropic>=1.0,<2
+pyjwt[crypto]>=2.8,<3
+# Signal processing and vision: wheels must exist for the image's Python, so these follow the platform.
 librosa
 numpy
 soundfile
-anthropic
 mediapipe
 opencv-python-headless
 scikit-learn

@@ -1,0 +1,77 @@
+{
+ "version": "0.2.0",
+ "briefs": [
+  {
+   "id": "b-s29",
+   "title": "The black-tie ambiguity",
+   "occasion": "You have a wedding invite saying black tie, a navy suit and clean trainers.",
+   "ask": "Can I get away with this?",
+   "constraint": "You have a small budget and no time for delivery.",
+   "objective": "Identify the dress-code gap without equating cost with worth.",
+   "card": "K29"
+  },
+  {
+   "id": "b-s30",
+   "title": "The gallery opening",
+   "occasion": "You want an interesting outfit for a gallery event without feeling costumed.",
+   "ask": "I want to look like I belong, but not like I'm pretending to own the gallery.",
+   "constraint": "You own black trousers, a cream knit and a patterned shirt.",
+   "objective": "Build from actual items and one deliberate focal point.",
+   "card": "K30"
+  },
+  {
+   "id": "b-s31",
+   "title": "The sensory compromise",
+   "occasion": "You have a long dinner and hate stiff collars and scratchy fabric.",
+   "ask": "I want polished, but I can't spend three hours fighting my clothes.",
+   "constraint": "The most formal item you own is uncomfortable.",
+   "objective": "Treat comfort as a real constraint.",
+   "card": "K31"
+  },
+  {
+   "id": "b-s32",
+   "title": "The office-to-club pivot",
+   "occasion": "You have work, then a birthday, and cannot go home.",
+   "ask": "One bag. No full outfit change.",
+   "constraint": "You own a plain top, blazer, dark trousers and two shoe options.",
+   "objective": "Make one practical transition using owned items.",
+   "card": "K32"
+  },
+  {
+   "id": "b-s33",
+   "title": "The weather-blind fit",
+   "occasion": "You send an outfit photo for an outdoor evening event.",
+   "ask": "Does this work for tonight?",
+   "constraint": "The app has no weather data or location.",
+   "objective": "Give a visual opinion while exposing the practical unknown.",
+   "card": "K33"
+  },
+  {
+   "id": "b-s34",
+   "title": "The quiet luxury costume",
+   "occasion": "You like old-money references but the outfit feels borrowed from a character.",
+   "ask": "Do I look rich enough?",
+   "constraint": "You are wearing several obvious status cues at once.",
+   "objective": "Translate the goal into a coherent personal look.",
+   "card": "K34"
+  },
+  {
+   "id": "b-s35",
+   "title": "The maximalist correction",
+   "occasion": "Poise suggested neutrals. You say you want bright colour and visible jewellery.",
+   "ask": "Stop dressing me like an estate agent.",
+   "constraint": "You have already saved this preference.",
+   "objective": "Correct the recommendation and respect the preference.",
+   "card": "K35"
+  },
+  {
+   "id": "b-s36",
+   "title": "The blurry wardrobe photo",
+   "occasion": "A low-light image shows a dark jacket with an unreadable label.",
+   "ask": "Is this wool? Can I wear it in the rain?",
+   "constraint": "The fabric and care label cannot be identified.",
+   "objective": "Separate visible description from unknown material properties.",
+   "card": "K36"
+  }
+ ]
+}
